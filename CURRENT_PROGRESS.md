@@ -22,145 +22,121 @@ This document represents the current repository state at the time of inspection.
 
 ---
 
-## IMPLEMENTED ROUTES — CA NEXUS CORE
+## PHASE 2 — COMPLIANCE ENGINE AND SPECIALIZED WORKSPACES — **PARTIALLY IMPLEMENTED (BUILD FAILING)**
+
+### Overall Phase 2 Completion: **~40%** (Routes created but TypeScript errors prevent build)
+
+### Implemented Routes (Created but with TypeScript Errors)
 
 | Route | Status | Description |
 |---|---|---|
-| `/dashboard/default` | ✅ **COMPLETE** | Daily Command Centre dashboard with KPIs, urgent work, deadlines, team workload |
-| `/dashboard/clients` | ✅ **COMPLETE** | Client List with DataTable, FilterBar, search, pagination, Create Client dialog |
-| `/dashboard/clients/[clientId]` | ✅ **COMPLETE** | **Client 360** — 14 tabs: Overview, Matters, Compliance, Tasks, Documents, Communications, Conversations, Billing, Profile, Contacts, Registrations, Licenses, Activity, Onboarding |
-| `/dashboard/matters` | ✅ **COMPLETE** | Matter List with 7 filtered views (All, My, Pending, In Progress, Review, Overdue, Completed), search, multi-filter, pagination |
-| `/dashboard/matters/[matterId]` | ✅ **COMPLETE** | **Matter Detail** — 12 tabs: Overview, Lifecycle, Tasks, Checklist, Subtasks, Documents, Communications, Time, Review, Collaboration, Billing, Activity — with 11-stage lifecycle visualization |
-| `/dashboard/tasks` | ✅ **COMPLETE** | Task Inbox with CA Nexus data (mockTasks), 7 filtered views, search, filters, pagination |
-| `/dashboard/tasks/[taskId]` | ✅ **COMPLETE** | **Task Detail** — 10 tabs: Overview, Status, Subtasks, Checklists, Comments, Documents, Dependencies, Time, Review, Activity |
+| `/dashboard/compliance` | ⚠️ **CREATED - TS ERRORS** | Compliance Overview list with FilterBar, DataTable, 7 view filters, KPI cards |
+| `/dashboard/compliance/[serviceType]/[cycleId]` | ⚠️ **CREATED - TS ERRORS** | Compliance Detail with 8 tabs: Overview, Workflow, Documents, Doc Requests, Tasks, Communications, Reviews, Activity |
+| `/dashboard/compliance/itr` | ⚠️ **CREATED - TS ERRORS** | ITR Workspace with FY/AY selectors, entity type filtering, 10 view filters |
+| `/dashboard/compliance/gst` | ⚠️ **CREATED - TS ERRORS** | GST Workspace with Monthly/Quarterly/Annual views, QRMP support, 10 view filters |
+| `/dashboard/compliance/tds` | ⚠️ **CREATED - TS ERRORS** | TDS Workspace with 24Q/26Q/27Q/27EQ form filtering, quarter selector, 10 view filters |
+| `/dashboard/compliance/mca-roc` | ⚠️ **CREATED - TS ERRORS** | MCA/ROC Workspace with AOC-4/MGT-7/ADT-1/DPT-3 forms, Company/LLP entity filtering |
+
+### Shared Compliance Architecture (Created)
+
+| Component | Location | Status |
+|---|---|---|
+| **ComplianceRecordHeader** | `src/components/ca-nexus/record-header.tsx` | ✅ **EXISTS** (from Phase 1) |
+| **ComplianceStatusBadge** | `src/components/ca-nexus/status-badge.tsx` | ✅ **EXISTS** (from Phase 1) |
+| **ComplianceCycleLink** | `src/components/ca-nexus/object-link.tsx` | ✅ **EXISTS** (from Phase 1) |
+| **Compliance List Page** | `src/app/(main)/dashboard/compliance/_components/compliance-list.tsx` | ⚠️ **CREATED - TS ERRORS** |
+| **Compliance Detail Page** | `src/app/(main)/dashboard/compliance/[serviceType]/[cycleId]/_components/compliance-detail.tsx` | ⚠️ **CREATED - TS ERRORS** |
+| **ITR Workspace** | `src/app/(main)/dashboard/compliance/itr/_components/itr-workspace.tsx` | ⚠️ **CREATED - TS ERRORS** |
+| **GST Workspace** | `src/app/(main)/dashboard/compliance/gst/_components/gst-workspace.tsx` | ⚠️ **CREATED - TS ERRORS** |
+| **TDS Workspace** | `src/app/(main)/dashboard/compliance/tds/_components/tds-workspace.tsx` | ⚠️ **CREATED - TS ERRORS** |
+| **MCA/ROC Workspace** | `src/app/(main)/dashboard/compliance/mca-roc/_components/mca-workspace.tsx` | ⚠️ **CREATED - TS ERRORS** |
+
+### Mock Data & Getter Updates (Partially Done)
+
+| File | Status | Notes |
+|---|---|---|
+| `src/mock-data/compliance.ts` | ⚠️ **MODIFIED** | Added `getDocumentRequestsByComplianceCycle` getter |
+| `src/mock-data/documents.ts` | ⚠️ **MODIFIED** | Added `getDocumentsByComplianceCycle` getter |
+| `src/mock-data/communications.ts` | ⚠️ **MODIFIED** | Added `getCommunicationsByComplianceCycle` (has TS error - Matter type missing complianceCycleId) |
+| `src/mock-data/matters.ts` | ⚠️ **MODIFIED** | Added `getTasksByComplianceCycle` getter (has TS error - Matter type missing complianceCycleId) |
+| `src/mock-data/index.ts` | ⚠️ **MODIFIED** | Added exports for new getter functions |
+
+### Cross-Module Relationships (Partially Implemented)
+
+| Relationship | Status |
+|---|---|
+| ComplianceCycle → Client | ✅ Via `clientId` getter |
+| ComplianceCycle → Matter | ⚠️ Via `matterId` field (but Matter type missing `complianceCycleId`) |
+| ComplianceCycle → Tasks | ⚠️ Getter exists but Matter type issue |
+| ComplianceCycle → Documents | ⚠️ Getter exists |
+| ComplianceCycle → Communications | ⚠️ Getter exists but has TS error |
+| ComplianceCycle → DocumentRequests | ✅ Getter added |
 
 ---
 
-## SHARED ARCHITECTURE — COMPLETE & WORKING
-
-| Component | Location | Purpose | Reused By |
-|---|---|---|---|
-| **DataTable** | `src/components/ca-nexus/data-table.tsx` | TanStack Table v9 wrapper with sorting, filtering, pagination, row selection | Client List, Matter List, Task List, all detail tabs |
-| **FilterBar** | `src/components/ca-nexus/filter-bar.tsx` | Multi-select, date range, search, saved views, filter chips | All list pages and detail tabs with tables |
-| **RecordHeader** | `src/components/ca-nexus/record-header.tsx` | Entity headers for Client, Matter, Task, Compliance, Document, Invoice, Communication | All detail pages |
-| **StatusBadge/PriorityBadge** | `src/components/ca-nexus/status-badge.tsx` | All status/priority types with proper styling | All lists and detail pages |
-| **ObjectLink** | `src/components/ca-nexus/object-link.tsx` | Navigable entity links (Client, Matter, Task, Compliance, Document, Communication, Invoice, Payment, User, Team) + Breadcrumbs | Cross-entity navigation everywhere |
-| **ActivityTimeline/CommentThread** | `src/components/ca-nexus/activity-timeline.tsx` | Grouped/ungrouped activity feeds, replies, internal notes | Client Activity, Matter Activity, Task Activity tabs |
-| **EmptyState/Loading/Error** | `src/components/ca-nexus/empty-state.tsx` | Multiple variants, SkeletonTable, SkeletonCard, SkeletonList | All modules |
-| **PageBlocks** | `src/components/ca-nexus/page-blocks.tsx` | PageHeader, SectionCard, DetailSection, KeyValue, StatTile | All pages |
-| **Mock Repositories** | `src/mock-data/*.ts` | 14 files with getter functions (`getClientById`, `getMattersByClient`, `getTasksByMatter`, etc.) | All pages |
-| **API Adapters** | `src/lib/api/*.ts` | 17 modules, consistent patterns, identical signatures to mock getters | Ready for backend integration |
-
----
-
-## VALIDATION RESULTS
+## VALIDATION RESULTS (CURRENT STATE)
 
 | Check | Result | Details |
 |---|---|---|
-| **TypeScript (`npx tsc --noEmit`)** | ✅ **PASS** | Exit code 0, no errors |
-| **Build (`npm run build`)** | ✅ **PASS** | Compiled successfully, 38 pages |
-| **Lint (`npm run lint`)** | ⚠️ **STYLE ONLY** | 101 errors (all `nursery/useSortedClasses` CSS class sorting — experimental rule), 289 warnings, 260 infos. No functional errors. |
+| **TypeScript (`npx tsc --noEmit`)** | ❌ **FAIL** | 50+ TypeScript errors across compliance components and mock data |
+| **Build (`npm run build`)** | ❌ **FAIL** | Same TypeScript errors block compilation |
+| **Lint (`npm run lint`)** | Not run yet | N/A |
+
+### Key TypeScript Errors Blocking Build
+
+1. **Missing imports**: `Badge`, `CheckSquare` not imported in workspace components
+2. **Undefined variables**: `overdueTasks` referenced but not defined in compliance-detail.tsx
+3. **Type errors**: `workflowStages` implicit `any` type, `ActivityItem` type mismatch for `document_request`
+4. **DataTable prop error**: `onSortChange` does not exist on DataTableProps
+5. **Mock data type errors**: `Matter` type missing `complianceCycleId` property (used in getters)
+6. **Missing export**: `mockDocumentRequests` not exported from compliance mock data
+7. **Sort comparison**: `aVal`/`bVal` of type `unknown` in sort functions
 
 ---
 
-## CROSS-ENTITY NAVIGATION — VERIFIED WORKING
+## WHAT IS NOT YET IMPLEMENTED IN PHASE 2
 
-| From → To | Implementation |
+| Feature | Status |
 |---|---|
-| **Client → Matter** | `MatterLink` / `ObjectLink` in Client Matters tab & Overview |
-| **Client → Task** | `TaskLink` / `ObjectLink` in Client Tasks tab & Overview |
-| **Matter → Client** | `ClientLink` in Matter Overview tab |
-| **Matter → Task** | `TaskLink` in Matter Tasks tab & Overview |
-| **Task → Client** | `ClientLink` in Task Overview tab |
-| **Task → Matter** | `MatterLink` in Task Overview tab |
-
-All links use correct dynamic routes (`/dashboard/clients/[id]`, `/dashboard/matters/[id]`, `/dashboard/tasks/[id]`).
-
----
-
-## CONNECTED DATA — VERIFIED
-
-All entities use connected mock data through repository getters:
-
-```
-Client → getMattersByClient() → Matter[]
-Matter → getTasksByMatter() → Task[]
-Task → subtasks, checklistItems, dependencies (embedded)
-Task → getDocumentsByTask(), getCommunicationsByTask(), getTimeEntriesByTask()
-Client → getDocumentsByClient(), getCommunicationsByClient(), getInvoicesByClient()
-Matter → getDocumentsByMatter(), getCommunicationsByMatter(), getTimeEntriesByMatter()
-```
-
-No hardcoded/disconnected data in any CA Nexus route.
-
----
-
-## DOMAIN TYPES & MOCK DATA
-
-| File | Lines | Entities |
-|---|---|---|
-| `src/types/index.ts` | 1,543 | 50+ entities with full relationships |
-| `src/mock-data/ids.ts` | Centralized | 100+ constant IDs for all entities |
-| `src/mock-data/clients.ts` | 1,178 | 10 clients with contacts, services, identifiers, compliance profiles, onboarding |
-| `src/mock-data/matters.ts` | 962 | 18 matters with tasks, subtasks, checklists, stage history |
-| `src/mock-data/compliance.ts` | ~ | 20 compliance cycles |
-| `src/mock-data/documents.ts` | ~ | 10 documents with OCR/classification |
-| `src/mock-data/communications.ts` | ~ | Communications, conversations, campaigns |
-| `src/mock-data/time-billing.ts` | ~ | Time entries, invoices, payments, expenses |
-| `src/mock-data/calendar.ts` | ~ | Calendar events (compliance deadlines, tasks, meetings) |
-| `src/mock-data/registers.ts` | ~ | DSC, UDIN, Licenses, Engagement docs |
-| `src/mock-data/notices.ts` | ~ | Notices with documents/tasks |
-| `src/mock-data/dashboard.ts` | ~ | Dashboard-specific aggregates |
-| `src/mock-data/users.ts` | ~ | 10 users, 4 departments, 6 teams |
-
----
-
-## WHAT IS NOT IN PHASE 1 SCOPE (Correctly Deferred)
-
-The following modules are **NOT** part of Phase 1 and remain correctly unimplemented:
-
-| Module | Status | Notes |
-|---|---|---|
-| Compliance Workspaces (ITR/GST/TDS/MCA) | ⏳ Deferred | Phase 2+ |
-| Communication Hub (3-pane) | ⏳ Deferred | Phase 2+ |
-| Document Management | ⏳ Deferred | Phase 2+ |
-| Review & Approval Workflow | ⏳ Deferred | Phase 2+ |
-| Calendar CA Nexus Integration | ⏳ Deferred | Phase 2+ (current `/dashboard/calendar` uses demo data) |
-| Notices & Audit Workspace | ⏳ Deferred | Phase 2+ |
-| Workload, Time Tracking, Attendance, Leave | ⏳ Deferred | Phase 2+ |
-| Billing (Invoice List/Detail, Payments, Expenses) | ⏳ Deferred | Phase 2+ (Invoice Create uses template data) |
-| Registers (DSC, UDIN, Licenses, Engagement) | ⏳ Deferred | Phase 2+ |
-| Reports & Analytics | ⏳ Deferred | Phase 2+ |
-| Administration (Users, Teams, Roles, Settings) | ⏳ Deferred | Phase 2+ |
-
----
-
-## TEMPLATE / LEGACY ROUTES (Not CA Nexus)
-
-18 template routes exist under `/dashboard/` but are not CA Nexus functionality:
-`academy`, `analytics`, `crm`, `crm-v1`, `ecommerce`, `finance`, `finance-v1`, `file-manager`, `infrastructure`, `kanban`, `logistics`, `mail`, `patient-monitoring`, `productivity`, `profile`, `roles`, `users`, `coming-soon`, `chat`
-
-These are legacy admin template pages and do not affect CA Nexus implementation status.
+| Compliance Overview working page (build passing) | ❌ Not working - TS errors |
+| Compliance Detail page with all 8 tabs functional | ❌ Not working - TS errors |
+| ITR Workspace with FY/AY selectors functional | ❌ Not working - TS errors |
+| GST Workspace with Monthly/Quarterly/Annual views functional | ❌ Not working - TS errors |
+| TDS Workspace with 4 form types functional | ❌ Not working - TS errors |
+| MCA/ROC Workspace with form/entity filtering functional | ❌ Not working - TS errors |
+| Bulk workflow actions architecture | ❌ Not implemented |
+| Outreach/campaign handoff architecture | ❌ Not implemented |
+| Non-filer identification | ❌ Not implemented |
 
 ---
 
 ## RECOMMENDATION
 
-**PHASE 1 COMPLETE — READY FOR PHASE 2**
+**PHASE 2 INCOMPLETE — REQUIRES TYPE FIXES BEFORE PROCEEDING**
 
-All Phase 1 requirements have been implemented and validated:
-- ✅ Client 360 with 14 tabs and onboarding
-- ✅ Matter List with 7 filtered views + Detail with 11-stage lifecycle
-- ✅ Task Inbox with CA Nexus data + Detail with subtasks/checklists/dependencies
-- ✅ Reusable detail-page architecture (RecordHeader + Tabs + connected sections)
-- ✅ Cross-entity navigation (Client ↔ Matter ↔ Task)
-- ✅ Connected mock data architecture throughout
-- ✅ TypeScript clean, build passing
+The routes and components have been created but contain multiple TypeScript errors that prevent the build from passing. The following fixes are needed:
 
-The repository is stable and ready for Phase 2 implementation (Compliance Workspaces, Communication Hub, Document Management, etc.).
+1. **Fix missing imports** (`Badge`, `CheckSquare` from `lucide-react` and `@/components/ui/badge`)
+2. **Define `overdueTasks` variable** in compliance-detail.tsx
+3. **Fix `workflowStages` type annotation** in compliance-detail.tsx
+4. **Fix `ActivityItem` type** to include `document_request` or map to existing type
+5. **Remove `onSortChange` prop** from DataTable usage (not supported)
+6. **Add `complianceCycleId` to Matter type** in `src/types/index.ts`
+7. **Export `mockDocumentRequests`** from compliance mock data (or remove import)
+8. **Fix sort comparison** type issues with explicit typing
+
+Once these TypeScript errors are resolved and build passes, the Phase 2 workspaces will be functionally complete with:
+- Compliance Overview with filtering, search, KPIs
+- Compliance Detail with 8 tabs and workflow visualization
+- 4 specialized workspaces (ITR, GST, TDS, MCA/ROC) with domain-specific filters
+- Cross-entity navigation to Client, Matter, Task, Document, Communication
+- Connected mock data through repository getters
 
 ---
 
-## PREVIOUS AUDIT NOTE
+## PREVIOUS PHASE 1 NOTE
 
-The previous audit (dated September 8, 2026) documented the repository state **before** the Phase 1 implementation was completed. It incorrectly showed Client 360, Matter Management, and Task Management as "NOT STARTED" when the implementation was actually completed afterward. This document has been updated to reflect the actual current state as of September 9, 2026.
+Phase 1 (Core Entity Architecture) is complete and validated:
+- ✅ TypeScript validation passes for Phase 1 code
+- ✅ Build passes for Phase 1 code
+- All Phase 1 routes functional: Client 360, Matter Management, Task Management
