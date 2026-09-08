@@ -1,0 +1,674 @@
+CA NEXUS
+Extreme Detail UI/UX, Screen, Interaction & Frontend Implementation Specification
+Version 1.0 | September 2026
+Purpose: This document converts the CA Nexus Complete Product, Functional, Workflow & Business Blueprint into an implementation-ready product specification for a UI designer and an AI frontend coding agent. It defines application structure, navigation, every major screen, layouts, components, interactions, states, object relationships, workflows and implementation rules.
+Visual/Layout Reference: Use the supplied Next Shadcn Admin Dashboard repository as the base application shell and design system. Preserve its dashboard layout philosophy, sidebar/header behavior, card density, table patterns, dialogs, sheets, charts, filters, responsiveness, theme support and Shadcn component conventions. CA Nexus must be implemented by extending the existing repository rather than replacing its design architecture.
+Source Product Basis: CA Nexus Complete Product, Functional, Workflow & Business Blueprint v3.0.
+1. Product Intent and UX Principle
+CA Nexus is a connected operating system for the post-client lifecycle of a Chartered Accountant or CA firm. The interface must make connected work visible. Users should not experience Clients, Matters, Compliance, Tasks, Documents, Communications and Billing as isolated applications.
+Primary operational journey:
+Client → Service/Matter → Compliance/Workflow → Tasks → Document Collection → Communication → Review → Completion/Filing → Time & Billing → Reporting
+Every major record must show its connected context and linked records.
+Every dashboard number must drill into a useful filtered list.
+Every list must support operational action, not only viewing.
+Every detail page must answer: What is this? What is its current status? What is pending? Who owns it? What is due next? What can I do now?
+Use dense, professional enterprise layouts suitable for high-volume office operations.
+Use badges, progress indicators, timelines and status labels consistently.
+Do not rely on color alone to communicate risk, status or priority.
+Internal collaboration and client communication must be visually distinct.
+Permission-restricted actions may be hidden or disabled depending on the implementation model, but the frontend must support permission-aware rendering.
+2. Users, Personas and UI Priorities
+Role
+Primary UI needs
+Partner/Firm Owner
+Practice health, approvals, risk, workload, revenue, administration and executive drill-down.
+Manager
+Team allocation, deadline monitoring, review queues, capacity and reassignment.
+CA
+Client servicing, matter management, compliance processing, review and communication.
+Staff/Article Assistant
+Assigned tasks, checklists, document collection, preparation, comments and time tracking.
+Accounts/Billing
+Invoices, payments, expenses, reimbursements and financial operational reporting.
+Administrator
+Firm setup, users, RBAC, templates, compliance rules and integrations.
+3. Global Application Architecture
+3.1 Desktop shell
+Area
+Required behavior
+Left sidebar
+Persistent desktop navigation; collapsible; active route; grouped modules; icons; permission-aware items.
+Top header
+Global search/command trigger, quick actions, active timer, notifications and user profile.
+Breadcrumb
+Visible on deep pages and linked object paths.
+Page header
+Page title, optional description, key filters/context, primary action and secondary actions.
+Main content
+Responsive content container using existing template spacing and grid conventions.
+Right-side context sheet
+Used for previews and lightweight actions where leaving the current workflow would be disruptive.
+Dialogs
+Use for focused create/edit/confirmation flows.
+Drawers/sheets
+Use for advanced filters, quick record detail and mobile actions.
+3.2 Mobile/tablet behavior
+Sidebar becomes a drawer.
+Tables must remain usable through horizontal scroll, responsive columns or card transformation where appropriate.
+Filters collapse into a sheet.
+Record headers stack identity, status and actions.
+Critical actions remain accessible without hover-only controls.
+Dashboard grids collapse progressively.
+Calendar may default to agenda/list on narrow screens.
+Complex tables should preserve operational columns rather than removing essential information.
+4. Primary Navigation
+Navigation group
+Routes/modules
+Workspace
+Dashboard
+Practice
+Clients; Matters; Tasks
+Compliance
+Compliance Overview; ITR; GST; TDS; MCA/ROC
+Operations
+Calendar; Notices; Audit Workspace; Documents; Physical Files
+Communication
+Communications; Conversations; Outreach & Campaigns
+Firm Operations
+Workload & Capacity; Attendance & Leave; Time Tracking; Invoices & Payments; Expenses
+Registers
+DSC; UDIN; Licenses & Renewals; Engagement Documents
+Insights
+Reports & Analytics
+Administration
+Firm Settings; Users; Roles & Permissions; Teams; Templates; Compliance Rules; Integrations
+5. Global Components and Reusable Patterns
+Component
+Usage
+Data table
+Primary list pattern: search, filters, sort, pagination, row actions, bulk selection.
+Status badge
+All lifecycle states, payment states, review states, priority and availability.
+Filter bar
+Persistent high-frequency filters; advanced filters in sheet/popover.
+Saved view tabs
+Examples: All, Mine, Overdue, Pending Review, Completed.
+Record header
+Identity, linked parent, status, ownership, due date and primary actions.
+Summary cards
+Counts, amounts, trends and urgent states; every card has drill-down.
+Timeline/activity feed
+Chronological system actions, comments, status changes and linked events.
+Assignee selector
+User/team avatar, availability and workload context where relevant.
+Date/deadline control
+Due date plus overdue/remaining-day presentation.
+Empty state
+Explain why no records exist and provide a direct action.
+Loading/skeleton state
+Match template patterns.
+Error state
+Explain failure and offer retry where applicable.
+Confirmation dialog
+Required for destructive or high-impact actions.
+Command/search palette
+Global search and quick navigation/actions.
+6. Global Quick Actions
+Log Call
+Start/Stop Timer
+Create Invoice
+Add Client
+Send Message
+Create Reminder/Outreach
+Create Matter
+Create Task
+Upload Document
+Quick action dialogs must prefill linked context when launched from a Client, Matter, Task or other record.
+7. Object Model and Cross-Linking Rules
+Object
+Required relationships visible in UI
+Client
+Services, Matters, Compliance Cycles, Tasks, Documents, Communications, Conversations, Invoices, Payments, Registrations.
+Matter
+Client, Service, Period/Cycle, Tasks, Documents, Communications, Time, Review, Billing.
+Compliance Cycle
+Client, Service/Type, Period, Due Date, Matter/Tasks, Document Requests, Outreach and Completion.
+Task
+Client and/or Matter, Source Communication, Documents, Time Entries, Review.
+Document
+Client, optional Matter, source Communication, Review and Evidence usage.
+Communication
+Client, optional Matter, optional created Task, attachments/documents and follow-up.
+Invoice
+Client, optional Matter, Time/Task basis and Payments.
+Review
+Any supported source object plus review history.
+Critical rule: a document or communication may be linked to both a Client and a specific Matter. The UI must never force GST, ITR, Audit and other client work into one undifferentiated document bucket.
+8. Dashboard — Daily Command Centre
+8.1 Header
+Current date and operating context.
+Personal/team/firm view selector where permitted.
+Optional date range for analytical widgets.
+Primary quick action menu.
+8.2 KPI cards
+Card
+Main content
+Drill-down
+Critical Deadlines
+Due today, next 7 days, overdue
+Filtered deadline workspace
+My Tasks
+Open, due today, overdue
+Task inbox
+Pending Compliance
+Total with ITR/GST/TDS/MCA breakdown
+Compliance overview
+Missing Information
+Documents/information awaiting clients
+Missing information queue
+Pending Reviews
+Awaiting my/team action
+Review inbox
+Payments Due
+Outstanding/overdue invoice summary
+Invoices filtered by payment state
+8.3 Dashboard content blocks
+Urgent Work: ranked list combining overdue tasks, compliance deadlines, notices and review items.
+Unified Task Inbox: compact table with title, client/matter, priority, assignee, due date and status.
+Compliance Status: service-based segmented cards/bars.
+Upcoming Deadlines: timeline/list with object type and remaining time.
+Missing Documents: client, matter, requested item, waiting duration and reminder action.
+Pending Reviews: object, submitter, stage, age and review action.
+Communication Follow-ups: awaiting response/unread/follow-up due.
+Recent Clients and Matters.
+Team Workload and Availability for authorized users.
+Invoice and Payment indicators.
+Optional trend charts for workload, completion, revenue and campaign outcomes.
+9. Clients
+9.1 Client list screen
+Header: Clients + Add Client.
+Search: name, identifier, contact and supported registration identifiers.
+Filters: category, status, active service, responsible CA/team, pending compliance, upcoming deadline, onboarding state.
+Saved views: All Clients, My Clients, Active, Attention Required, Onboarding Pending.
+Columns: Client Name; Type/Category; Primary Contact; Active Services; Responsible User/Team; Pending Work; Next Deadline; Status.
+Row actions: Open, Edit, Create Matter, Send Message, Upload Document, Create Task, Create Invoice and permitted archive/status action.
+Bulk actions for permitted outreach, assignment or categorization.
+9.2 Client 360 detail
+Header must contain client identity, type/status, key identifiers, responsible CA/team, active service count, pending work, next deadline and financial attention indicators where permitted.
+Primary actions: Create Matter, Send Message, Upload Document, Create Task, Create Invoice.
+Tabs: Overview; Matters; Compliance; Tasks; Documents; Communications; Conversations; Invoices & Payments; Profile & Contacts; Registrations/Licenses; Activity.
+9.3 Overview tab
+Active services.
+Open/recent matters.
+Upcoming deadlines.
+Missing information/documents.
+Recent communications.
+Activity timeline.
+Financial summary where permitted.
+10. Client Onboarding
+Use a checklist-driven workflow instead of one giant form.
+Create client profile.
+Add contacts and identifiers.
+Select services.
+Collect KYC/profile documents.
+Configure initial compliance requirements.
+Assign responsible team.
+Create initial matters.
+Invite client portal user where applicable.
+Mark onboarding complete.
+UI must show overall progress, checklist groups, incomplete counts, missing evidence and deep links to each required action.
+11. Matters & Service Management
+11.1 Matter list
+Search and filters: service, status, client, owner, period, priority, due date, overdue.
+Columns: Matter/ID, Client, Service, Period, Status, Owner, Due Date, Progress.
+Views: All, My Matters, Pending Information, In Progress, Ready for Review, Overdue, Completed.
+11.2 Matter detail
+Header: matter name/ID, linked client, service, period/cycle, status, priority, owner, due date, progress and lifecycle action.
+Tabs: Overview; Tasks & Checklist; Documents; Communications; Time; Review & Approval; Collaboration; Billing; Activity.
+Lifecycle visual: Created → Information/Documents Pending → In Progress → Ready for Review → Rework → Approved → Filed/Completed → Billing Follow-up → Closed. Show current stage prominently and retain stage history.
+12. Tasks, Checklists & Workflow
+Dedicated task inbox with dense table and optional board view.
+Filters: assignee, status, priority, due date, client, matter/service, overdue.
+Task detail can open as page or quick context sheet.
+Fields: title, description, assignee, team, priority, due date, dependencies, status, checklist/subtasks.
+Internal comments and attachments.
+Linked documents and source communication.
+Start/stop timer and manual time entry.
+Submit for review when workflow requires it.
+Overdue escalation state and ownership.
+13. Compliance Overview and Automation
+Compliance Overview is an operational workspace, not only an analytics page.
+Area
+UI requirement
+Filters
+Type/service, period, frequency, client segment, status, owner, due date.
+Summary
+Due soon, overdue, pending documents, ready for review, completed.
+Register
+Client, service/type, cycle, due date, status, missing items, owner, last activity.
+Bulk actions
+Assign, send outreach, request documents, permitted status actions.
+Automation settings
+Frequency, applicability criteria, due-date rules, generated matter/tasks, checklist, assignment, document request template, reminders, escalation, review and closure rules.
+Configuration rules and generated client compliance cycles must be represented as different entities in the UI.
+14. ITR Workspace
+Financial Year and Assessment Year selectors.
+Pending/non-filed filters.
+Information/document completeness indicator.
+Firm-maintained work/filing status clearly labelled.
+Bulk client selection.
+Reminder/outreach action for Email, WhatsApp and SMS.
+Row drill-down to client compliance cycle or linked matter.
+Workflow status and review state.
+Flow: Filter Pending ITR Clients → Select Clients → Personalized Reminder → Client Reply/Documents → Associate to ITR Matter → Process Checklist → Review → Update Completion/Filing Status.
+15. GST Workspace
+Monthly/quarterly/annual segmentation.
+Return period and due-date filters.
+Invoice/document collection completeness.
+Preparation and completion state.
+Bulk personalized reminder.
+Matter-linked documents and communication.
+Dashboard/report drill-down.
+Flow: Identify GST Clients → Segment Frequency → Identify Missing Invoices/Documents → Select Clients → Send Reminder → Receive Documents → Associate to GST Matter → Process → Review → Complete.
+16. TDS Workspace
+Monthly payment/challan tracking.
+Quarterly return workflows.
+Configurable Form 24Q, 26Q, 27Q and 27EQ categories.
+Data/document collection state.
+Challan pending state.
+Preparation/filing/completion state.
+Due-date alerts and reminders.
+Dashboard/reporting drill-down.
+17. MCA/ROC Workspace
+Company/LLP context.
+Annual versus event-based workflow.
+Configurable filing requirements and due dates.
+Document collection.
+Task/checklist assignment.
+Review/approval.
+Status, reminder and escalation.
+Matter-linked documents/communications.
+Reporting.
+18. Audit Workspace & Workpapers
+Audit engagement landing page with overall engagement status and progress.
+Tabs: Planning; Risk Assessment; Materiality; Audit Programs/Procedures; Workpapers; Evidence/Documents; Audit Queries; Review Notes; Sign-off & History.
+Workpaper list supports grouped/tree hierarchy.
+Each workpaper shows reference, objective, procedure, preparer, reviewer and status.
+Evidence/document links are first-class UI elements.
+Audit queries have owner, due date, status and response.
+Manager and partner review queues are separate where workflow requires.
+Sign-off history records actor, action, time and comments.
+19. Notice Management
+Notice register columns: Reference Number, Authority/Source, Client, Date Received, Response Due Date, Assigned Staff, Priority, Status.
+Notice header: client, authority, reference, critical deadline countdown, status and assignee.
+Tabs: Overview; Documents & Evidence; Tasks; Response Draft; Review; Submission Record; Internal Notes; History.
+Urgent/overdue notices surface on Dashboard and Calendar.
+20. Calendar, Deadlines, Meetings & Hearings
+Month, week, day and agenda/list views.
+Categories: compliance deadline, task, notice, client meeting, internal meeting, hearing, follow-up, review meeting.
+Filters by category, user/team and client.
+Event preview shows linked object and quick actions.
+Create/edit event supports object linking and reminders.
+21. Communication Hub
+Use a unified inbox experience. Desktop layout: channel/filter navigation + conversation/message pane + optional right-side context panel.
+21.1 Channels
+Email: threaded conversation, compose, reply, history and attachments.
+WhatsApp: conversation threads, send/receive, document handling and history.
+SMS: direct and campaign records with delivery state where provider supports it.
+Calls & Notes: call outcome, follow-up creation, internal notes and client/matter association.
+21.2 Context actions
+Link/unlink Client.
+Link existing Matter or create/select a Matter.
+Convert message/request to Task.
+Capture attachment into Documents.
+Create follow-up.
+Add internal note separate from client-visible content.
+Right-side context panel should expose linked Client, Matter, open tasks, upcoming deadlines and recent documents without requiring navigation away from the conversation.
+22. Communication-to-Task Conversion
+Select supported message/request.
+Choose Convert to Task.
+Prefill task title/description and source reference.
+Resolve/select Client if needed.
+Select existing Matter or create new Matter.
+Assign user, priority and due date.
+Create Task.
+Show linked task and completion state back on the original message.
+Reverse navigation between task and source communication is mandatory in the frontend design.
+23. Outreach & Campaign Management
+23.1 Campaign list
+Campaign name, channel(s), audience count, status, schedule, delivery/response summary.
+Filters by status, channel, service, period and date.
+Actions: Create, Duplicate, Pause/Cancel where supported, View Results.
+23.2 Campaign builder
+Campaign name and objective.
+Build/select audience using filters.
+Review audience and exclusions.
+Choose Email, WhatsApp and/or SMS.
+Choose/create template.
+Map personalization variables.
+Preview message with sample client data.
+Schedule or send.
+Review confirmation summary.
+Monitor delivery, responses and operational outcomes.
+Supported variables include Client Name, Financial Year, Assessment Year, Tax Period, Service, Due Date, Firm/CA, Assigned CA and supported custom fields.
+Results should connect communication performance with replies, documents received, tasks created and compliance progress where available.
+24. Document Management & Automatic Capture
+24.1 Repository
+Search and filters: client, matter, document type/category, source, date, permission.
+Default dense table with optional alternate presentation where useful.
+Columns: File Name, Client, Matter, Category, Source, Received/Uploaded Date, Uploaded By, Status.
+Bulk actions only where permitted: classify, link, request review, move/archive and download/export.
+24.2 Document detail
+Preview.
+Metadata.
+Client/Matter links.
+Source communication link.
+Comments/review notes.
+Activity/history.
+Permission-aware actions.
+24.3 Automatic capture flow
+Client sends attachment → supported channel receives → client identified → matter identified/selected → document captured → metadata retained → future OCR/processing state → search and workflow use.
+24.4 Document request tracking
+Show requested item, client, matter, sent date, reminder count, pending/received state and received-document mapping.
+25. Physical File Movement
+Field
+UI behavior
+Physical File
+Identifier, title, client and optional matter.
+Receipt
+Date and receiving user.
+Current Custody
+Current custodian prominently visible.
+Transfer
+From/to, timestamp and optional acknowledgement.
+Return
+Return-to-client status/date.
+History
+Chronological movement timeline.
+26. Review & Approval Engine
+Provide a reusable Review Inbox plus object-level review panels.
+Review Inbox filters: object type, stage, requester, due date, status.
+Review panel: submitted item summary, supporting documents, previous comments and current stage.
+Actions: Approve, Reject, Request Rework, Comment.
+Multi-level review stepper/timeline.
+History: actor, action, timestamp and notes.
+Escalated/aged reviews visibly flagged.
+27. Internal Collaboration
+Matter discussions.
+Task comments.
+Document comments.
+Review notes.
+Mentions/notifications where supported.
+Clear distinction between internal and client communication.
+Deep links to relevant objects.
+28. Workload & Capacity
+Personal/team/firm views based on permission.
+Workload by user and team.
+Open tasks and matters.
+Estimated versus actual hours.
+Capacity by day/week/month.
+Upcoming deadline load.
+Overload and under-utilization indicators.
+Allocation/reassignment controls.
+User drill-down to assigned work.
+29. Attendance, Leave & Availability
+Attendance overview/calendar.
+Leave request list and create flow.
+Manager approval queue.
+Leave balance where configured.
+Holiday calendar.
+Team availability visible during assignment.
+Unavailable users visually indicated.
+30. Time Tracking
+Global active timer in top bar.
+Start/stop with linked matter/task.
+Manual time entry.
+List: date, user, matter/task, description, duration and billable state where configured.
+Weekly/personal timesheet view.
+Estimated versus actual and productivity reporting.
+31. Billing, Payments & Expenses
+31.1 Invoices
+Invoice list: client, amount, issue date, due date, status and payment state.
+Create invoice with client/matter linkage and optional time/task billing basis.
+Invoice detail: summary, line items, linked work/time, status history, payments, documents and communication actions.
+States should include draft, issued/sent, partially paid, paid, overdue, cancelled/void where supported.
+31.2 Payments
+Payment list with invoice/client, amount, date, method/reference where configured.
+Record payment dialog.
+Invoice balance and payment timeline.
+Overdue payment filters.
+31.3 Expenses
+Expense list: employee/client-related classification, matter, amount, date, approval and reimbursement status.
+Receipt attachment.
+Approval flow.
+Reimbursement state and reporting.
+32. DSC, UDIN, Credentials, Licenses & Renewals
+DSC register: holder, type, issue date, expiry, renewal status, custodian.
+UDIN/reference register linked to client/document/matter.
+Authorized access/auditability fields represented without exposing sensitive credential values unnecessarily.
+Expiry and renewal reminders.
+License/registration: issue, expiry, renewal, documents and status.
+33. Engagement Documents & Digital Signature
+Template selection.
+Generate/store engagement document.
+Link client and matter.
+Send for electronic signature through supported integration.
+Multiple signer status where provider supports.
+Reminder action.
+Signed document stored against client/matter.
+Audit/status references and signature timeline.
+34. Reports & Analytics
+Reports landing page should be grouped by operational domain and use cards as entry points.
+Report group
+Required reports
+Compliance
+Pending by type/period, overdue, upcoming deadlines, missing information.
+Notices & Reviews
+Notice status, review backlog and aged approvals.
+Communication
+Campaign outcomes and client responsiveness.
+Work
+Workload/capacity, estimated vs actual time, productivity.
+Finance
+Invoice/payment status, revenue and expense visibility.
+Practice Health
+Bottlenecks, risk indicators and future profitability intelligence.
+Every report should have: date range, relevant filters, visual summary, detailed table and drill-down into source records.
+35. Firm, Users, Teams & RBAC
+Firm settings with organization-level configuration.
+User list with status, role, team and access summary.
+User detail/edit screen.
+Role list and role detail.
+Module/action permission matrix.
+Team management and team visibility.
+Sensitive client/document access controls represented in configuration UI.
+Reviewer/approver role assignment.
+Audit history for important administrative actions.
+36. Templates, Compliance Rules and Integrations
+36.1 Templates
+Communication templates.
+Document request templates.
+Checklist templates.
+Engagement templates.
+Variable management and preview.
+36.2 Compliance rules
+Compliance type/service.
+Frequency.
+Applicability criteria.
+Due-date rules.
+Generated matter/task behavior.
+Checklist.
+Default assignment.
+Document request template.
+Reminder/escalation.
+Review stages.
+Completion/closure rules.
+36.3 Integrations
+Accounting connectivity placeholders such as Tally, Zoho Books and supported systems.
+Communication providers.
+Payment providers.
+E-signature providers.
+Future authorized government/accounting integrations.
+Clear UI distinction between internal firm-maintained status and externally synchronized/authorized status.
+37. Notifications
+Categories: assignment, deadline, overdue, review, mention, communication follow-up, document received, campaign event, payment and approval.
+Notification list supports unread/read state.
+Click notification deep-links to exact record.
+Critical alerts remain visible in relevant dashboard/module queues.
+38. Search and Command Palette
+Global search across Clients, Matters, Tasks, Documents, Notices, Communications and Invoices.
+Results grouped by object type.
+Each result displays enough context to distinguish similar records.
+Quick commands for global actions.
+Keyboard-friendly behavior if supported by the base template.
+39. Standard Create/Edit Forms
+All forms must follow consistent grouping, validation and action behavior.
+Required fields clearly marked.
+Logical field groups with headings.
+Inline validation and error messages.
+Cancel and Save behavior consistent across modules.
+Unsaved-change protection for complex forms where implemented.
+Autocomplete/select fields for Clients, Matters, Users and Services.
+Create-and-continue or Save-and-create-another patterns where useful for operational data entry.
+40. Status System
+Domain
+Representative states
+Matter
+Created; Information/Documents Pending; In Progress; Ready for Review; Rework; Approved; Filed/Completed; Billing Follow-up; Closed
+Task
+To Do; In Progress; Blocked; Ready for Review; Rework; Completed; Cancelled
+Compliance
+Pending; Information Pending; In Progress; Ready for Review; Completed; Overdue/Escalated
+Review
+Not Submitted; Pending Review; Approved; Rejected; Rework Requested
+Document Request
+Not Sent; Sent; Reminder Sent; Partially Received; Received; Closed
+Campaign
+Draft; Scheduled; Sending; Sent; Completed; Paused; Cancelled
+Invoice
+Draft; Issued/Sent; Partially Paid; Paid; Overdue; Cancelled/Void
+Expense
+Draft; Submitted; Approved; Rejected; Reimbursed
+Notice
+Received; Information/Evidence Pending; In Progress; Ready for Review; Submitted; Closed
+41. Critical End-to-End UI Workflows
+41.1 Pending ITR
+Compliance identifies pending cycle → filtered ITR register → user selects clients → bulk personalized outreach → client reply/documents appear in Communication Hub → attachments captured/linked → ITR Matter → task/checklist processing → review → completion/filing status → time/billing → reports.
+41.2 Monthly GST
+Cycle generated → documents pending → monthly client segment → reminder → documents received → GST matter → checklist → review → completion.
+41.3 Regulatory Notice
+Notice registered → deadline appears in Calendar/Dashboard → staff assigned → evidence collection → response drafting → review → submission record → closure/history.
+41.4 Client Communication Request
+Email/WhatsApp request → client identified → convert to task → existing/new matter selected → assignee/priority/due date → work completed → completion linked back to original communication.
+41.5 Document Capture
+Incoming attachment → communication record → identify client → select/identify matter → capture document → classify/metadata → available in client and matter document tabs → optionally request review/use as evidence.
+42. Screen Inventory for Frontend Implementation
+Priority
+Screen/Page
+Foundation
+App shell; Login/auth screens if required by repository; Dashboard; Global Search/Command
+Foundation
+Clients List; Add/Edit Client; Client 360
+Foundation
+Matters List; Create/Edit Matter; Matter Detail
+Foundation
+Tasks List; Task Detail/Create/Edit
+Foundation
+Documents Repository; Upload; Document Detail/Preview
+Foundation
+Calendar
+Foundation
+Compliance Overview; ITR; GST
+Foundation
+Basic Outreach; Campaign List/Builder
+Foundation
+Invoices List; Invoice Detail/Create; Payments
+High Priority
+TDS; MCA/ROC; Notices; Notice Detail
+High Priority
+Review Inbox; Review Detail
+High Priority
+Workload & Capacity
+High Priority
+Communication Hub; Conversation Detail
+High Priority
+Internal Collaboration panels
+Professional Ops
+Client Onboarding Workspace; Audit Workspace; Workpaper Detail
+Professional Ops
+Attendance; Leave; Availability
+Professional Ops
+Expenses; Physical Files
+Professional Ops
+DSC; UDIN; Licenses/Renewals
+Professional Ops
+Engagement Documents; E-signature Status
+Insights
+Reports Landing and Report Detail screens
+Administration
+Firm; Users; Teams; Roles/Permissions; Templates; Compliance Rules; Integrations
+43. Frontend Implementation Rules for Nemotron
+Use the already supplied admin dashboard repository as the base. Do not replace its layout system.
+Reuse existing Shadcn components and project utilities before creating new primitives.
+Build the app as reusable modules, not isolated static pages.
+Create shared components for record headers, data tables, filter bars, status badges, object links, activity timelines, assignee selectors and review panels.
+Use realistic CA Nexus mock data so relationships between modules can be demonstrated.
+All navigation and drill-down links should function in the frontend even before backend integration.
+Create route structure matching the navigation hierarchy.
+Create typed frontend models/interfaces for all major objects.
+Separate mock data/services from visual components so API integration can replace data sources later.
+Implement loading, empty and error states for every major data screen.
+Implement dialogs/sheets for create/edit flows and destructive confirmations.
+Do not build pages as generic dashboards with repeated placeholder charts; operational tables, queues and actionable context are more important.
+Keep client, matter and compliance context visible throughout deep workflows.
+Do not expose future integrations as falsely functional; clearly represent integration-dependent actions/states in the frontend.
+44. Recommended Component Inventory
+AppSidebar; AppHeader; Breadcrumbs; GlobalCommandPalette; QuickActionsMenu; NotificationPanel; ActiveTimer.
+PageHeader; FilterBar; AdvancedFilterSheet; SavedViewTabs; DataTable; BulkActionBar; Pagination.
+RecordHeader; ClientSummary; MatterSummary; ComplianceSummary; DeadlineCountdown; StatusBadge; PriorityBadge; AssigneePicker.
+ActivityTimeline; CommentThread; InternalNoteComposer; ObjectLink; LinkedRecordsPanel.
+DocumentUploader; DocumentPreview; DocumentMetadataPanel; DocumentRequestCard.
+ReviewStepper; ReviewInboxCard; ApprovalActions.
+CommunicationThread; ConversationList; CommunicationContextPanel; ConvertToTaskDialog.
+CampaignBuilder; AudienceSelector; TemplatePreview; VariablePicker.
+CalendarEventPreview; DeadlineList.
+TimeTracker; TimeEntryForm; CapacityChart; AllocationPanel.
+InvoiceEditor; PaymentDialog; ExpenseForm.
+EmptyState; LoadingState; ErrorState; ConfirmDialog.
+45. Scope Boundary
+The following are intentionally outside the current CA Nexus product scope and should not be added as full modules in the frontend unless separately requested:
+Lead/prospect CRM.
+Lead pipeline/scoring.
+Enquiry management.
+Pre-client follow-up.
+Proposal/quotation pipeline.
+Lead-to-client conversion workflows.
+46. Implementation Priority
+Phase
+Frontend focus
+Phase 1 Foundation
+App shell, RBAC-aware navigation, Dashboard, Clients, Matters, Tasks, Documents, Calendar, ITR/GST views, compliance filters, basic outreach, basic invoices.
+Phase 2 High-Priority Operations
+Universal Compliance Engine UI, recurring workflows, TDS, MCA/ROC, Notices, Review/Approval, workload/capacity, communication-to-task, collaboration.
+Phase 3 Communication & Collection
+Connected Email/WhatsApp/SMS UI, communication timeline, campaigns/templates, document requests and automatic capture states.
+Phase 4 Professional Operations
+Advanced onboarding, engagement/e-sign, DSC/UDIN, meetings/hearings, attendance/leave, expenses, physical files and renewals.
+Phase 5 Advanced Expansion
+OCR/search states, advanced analytics, payment integrations, authorized external integrations, data prefill, profitability intelligence, advanced audit specialization and mobile refinement.
+47. Final Acceptance Criteria for UI
+A new user can understand the product hierarchy from navigation alone.
+A user can move from a Client to active Matters, Tasks, Documents and Communications without searching manually.
+Every operational dashboard number drills into a useful list.
+Every list has search/filter/action capability appropriate to the module.
+Every detail page clearly shows status, owner, due date, linked parent and next action.
+ITR/GST/TDS/MCA workflows visually support segmentation, pending information, outreach, processing, review and completion.
+Communication and received documents can be visually connected to the correct Client and Matter.
+Review workflows show stage, reviewer actions and history.
+Managers can identify workload imbalance and reassign work.
+Billing/payment status is visible from both finance screens and relevant client/matter context.
+Permission-aware UI can hide/restrict administrative and sensitive operations.
+Responsive layouts remain usable on laptop, tablet and mobile widths.
+The implementation feels like one connected CA practice operating system, not a collection of unrelated admin pages.
+48. Final Instruction to the AI Frontend Agent
+Build the complete CA Nexus frontend from this specification using the supplied Next Shadcn Admin Dashboard repository as the UI foundation. Reuse its existing architecture, components and visual patterns wherever possible. Implement all routes, screens, navigation, responsive layouts, realistic mock data, linked object journeys, tables, filters, dialogs, sheets, tabs, status states, empty/loading/error states and frontend interactions described here. The goal is a fully navigable, high-fidelity frontend prototype that represents the complete CA Nexus product and is ready for later backend/API integration.
