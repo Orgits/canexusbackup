@@ -107,9 +107,9 @@ This document represents the current repository state at the time of inspection.
 
 | File | Status | Notes |
 |---|---|---|
-| `src/mock-data/communications.ts` | ✅ **COMPLETE** | Added `getCommunicationById`, `getConversationById`, `getCommunicationsByCampaign`, `getTasksByConversation` |
-| `src/mock-data/documents.ts` | ✅ **COMPLETE** | Added `getDocumentsByConversation` getter |
-| `src/mock-data/matters.ts` | ✅ **COMPLETE** | Added `getTasksByConversation` getter |
+| `src/mock-data/communications.ts` | ✅ **COMPLETE** | Added `getCommunicationById`, `getConversationById`, `getCommunicationsByCampaign`, `getTasksByConversation`, `getCommunicationsByDocument` |
+| `src/mock-data/documents.ts` | ✅ **COMPLETE** | Added `getDocumentsByConversation`, `getCommunicationsByDocument` getter |
+| `src/mock-data/matters.ts` | ✅ **COMPLETE** | Added `getTasksByConversation`, `getTasksByDocument` getter |
 | `src/mock-data/index.ts` | ✅ **COMPLETE** | Added exports for all new getter functions |
 | `src/types/index.ts` | ✅ **COMPLETE** | Added `priority` field to Communication type |
 
@@ -131,96 +131,126 @@ This document represents the current repository state at the time of inspection.
 
 ---
 
+## PHASE 4 — DOCUMENT MANAGEMENT AND PHYSICAL FILES — **COMPLETE**
+
+### Overall Phase 4 Completion: **100%** (All routes functional, TypeScript validation passes, build succeeds)
+
+### Implemented Routes
+
+| Route | Status | Description |
+|---|---|---|
+| `/dashboard/documents` | ✅ **COMPLETE** | Document Repository with FilterBar, DataTable, 7 view filters, KPI cards |
+| `/dashboard/documents/[id]` | ✅ **COMPLETE** | Document Detail with 5 tabs: Overview, Metadata, Classification, Linked, Activity |
+| `/dashboard/documents/requests` | ✅ **COMPLETE** | Document Requests with FilterBar, DataTable, 5 view filters, item-level tracking |
+| `/dashboard/physical-files` | ✅ **COMPLETE** | Physical Files Register with FilterBar, DataTable, 6 view filters, location tracking |
+
+### Document Management Architecture
+
+| Component | Location | Status |
+|---|---|---|
+| **DocumentRecordHeader** | `src/components/ca-nexus/record-header.tsx` | ✅ **EXISTS** |
+| **Document Status Badges** | `src/components/ca-nexus/status-badge.tsx` | ✅ **EXISTS** |
+| **DocumentLink** | `src/components/ca-nexus/object-link.tsx` | ✅ **EXISTS** |
+| **Documents List** | `src/app/(main)/dashboard/documents/_components/documents-list.tsx` | ✅ **COMPLETE** |
+| **Document Detail** | `src/app/(main)/dashboard/documents/[id]/_components/document-detail.tsx` | ✅ **COMPLETE** |
+| **Document Requests** | `src/app/(main)/dashboard/documents/requests/_components/document-requests-list.tsx` | ✅ **COMPLETE** |
+| **Physical Files List** | `src/app/(main)/dashboard/physical-files/_components/physical-files-list.tsx` | ✅ **COMPLETE** |
+
+### Mock Data & Getter Updates
+
+| File | Status | Notes |
+|---|---|---|
+| `src/mock-data/documents.ts` | ✅ **COMPLETE** | Added `getDocumentsByConversation`, `getCommunicationsByDocument` getter |
+| `src/mock-data/communications.ts` | ✅ **COMPLETE** | Added `getCommunicationsByDocument` getter |
+| `src/mock-data/matters.ts` | ✅ **COMPLETE** | Added `getTasksByDocument` getter |
+| `src/mock-data/registers.ts` | ✅ **COMPLETE** | Added `PhysicalFile` type, mock data, and getters |
+| `src/mock-data/index.ts` | ✅ **COMPLETE** | Added exports for PhysicalFile and new getters |
+| `src/types/index.ts` | ✅ **COMPLETE** | Added `PhysicalFile`, `PhysicalFileLocation`, `PhysicalFileMovement`, `PhysicalFileStatus` types |
+
+### Cross-Entity Relationships (Fully Implemented)
+
+| Relationship | Status |
+|---|---|
+| Document → Client | ✅ Via `clientId` and `ClientLink` |
+| Document → Matter | ✅ Via `matterId` and `MatterLink` |
+| Document → Task | ✅ Via `getTasksByDocument` and `TaskLink` |
+| Document → Communication | ✅ Via `getCommunicationsByDocument` and `CommunicationLink` |
+| Document → Compliance | ✅ Via `complianceCycleId` |
+| Document Request → Client | ✅ Via `clientId` and `ClientLink` |
+| Document Request → Matter | ✅ Via `matterId` and `MatterLink` |
+| Document Request → Compliance | ✅ Via `complianceCycleId` |
+| Physical File → Client | ✅ Via `clientId` and `ClientLink` |
+| Physical File → Matter | ✅ Via `matterId` and `MatterLink` |
+| Physical File → Compliance | ✅ Via `complianceCycleId` |
+| Physical File → Documents | ✅ Via `relatedDocumentIds` |
+
+---
+
 ## VALIDATION RESULTS
 
 | Check | Result | Details |
 |---|---|---|
-| **TypeScript (`npx tsc --noEmit`)** | ✅ **PASS** | Zero TypeScript errors across all Phase 1-3 components |
+| **TypeScript (`npx tsc --noEmit`)** | ✅ **PASS** | Zero TypeScript errors across all Phase 1-4 components |
 | **Build (`npm run build`)** | ✅ **PASS** | Production build completes successfully |
-| **Lint (`npm run lint`)** | ⚠️ **PRE-EXISTING** | Lint warnings in unrelated files (time-billing, users, navigation) — no new errors in Phase 3 code |
+| **Lint (`npm run lint`)** | ⚠️ **PRE-EXISTING** | Lint warnings in unrelated files (time-billing, users, navigation) — no new errors in Phase 4 code |
 
-### Key Fixes Applied (Phase 3)
+### Key Fixes Applied (Phase 4)
 
-1. **Added missing imports**: `Badge`, `CheckSquare`, `MousePointer`, `Reply`, `X`, `Filter` imported where needed
-2. **Fixed `formatFileSize` import**: Changed from `@/lib/labels` to `@/lib/format`
-3. **Fixed getter imports**: Changed `getDocumentsByCommunication` to `getDocumentsByConversation`, `getTasksByCommunication` to `getTasksByConversation`
-4. **Added `priority` field to Communication type**: For proper priority display in Communication Hub
-5. **Fixed `ActivityItem` type**: Added `document_request` type for activity timeline
-6. **Fixed `rowActions` icons**: Used static icons instead of conditional row-dependent icons
-7. **Added `getTasksByConversation` to matters.ts**: Properly links communications to tasks
-8. **Added `getDocumentsByConversation` to documents.ts**: Properly links conversations to documents
-9. **Fixed `ConversationParticipant` type extension**: Created `ExtendedParticipant` interface for conversation detail
-10. **Fixed CommunicationChannel typing**: Added explicit type casting for campaign channels
-11. **Removed duplicate exports**: Fixed duplicate `getTasksByConversation` in mock-data/index.ts
-12. **Fixed conditional rendering in CampaignActivityTab**: Proper type narrowing for filtered activities
+1. **Added PhysicalFile type** to `src/types/index.ts` with location tracking, movement history, and status workflow
+2. **Created PhysicalFile mock data** with 10 sample files across 8 clients, including checked-out, overdue, and stored files
+3. **Added getters** for PhysicalFile by client, matter, status, custodian, checked-out, and overdue
+4. **Added getCommunicationsByDocument** to link communications to documents via attachments
+5. **Added getTasksByDocument** to link tasks to documents via communication attachments
+6. **Added getDocumentsByConversation** to link documents to conversations
+6. **Fixed duplicate exports** of `getTasksByConversation` in mock-data/index.ts
+7. **Removed duplicate lucide-react imports** across new components
+8. **Removed unsupported `onClick` props** from ClientLink and MatterLink components
 
 ---
 
-## PHASE 3 FEATURE SUMMARY
+## PHASE 4 FEATURE SUMMARY
 
-### Communications Hub (`/dashboard/communications`)
-- ✅ KPI cards (Total, Unread, Internal, Attachments, Linked Tasks, Email, WhatsApp, SMS, Calls)
-- ✅ 10 view filters (All, Unread, Internal, Attachments, Linked Tasks, Email, WhatsApp, SMS, Calls)
-- ✅ Full FilterBar with 10 filter configs (status, channel, direction, type, priority, client, matter, assignee, team, attachments, linked task)
-- ✅ DataTable with 11 columns (ID, Subject/Preview, Channel, Direction, Status, Client, Matter, Sent/Received, Attachments, Linked Task)
-- ✅ Row actions: View Details, Create Task
+### Document Repository (`/dashboard/documents`)
+- ✅ KPI cards (Total, Confidential, OCR Pending, OCR Complete, KYC, Tax, Financial)
+- ✅ 7 view filters (All, Recent, Confidential, OCR Pending, KYC, Tax, Financial)
+- ✅ Full FilterBar with 8 filter configs (category, type, OCR status, virus scan, confidential, client, matter, uploaded by)
+- ✅ DataTable with 10 columns (Document #, File Name, Category, Type, Client, Matter, Size, OCR, Virus Scan, Confidential, Uploaded)
+- ✅ Row actions: View Details, Download, View OCR (when completed)
 - ✅ Bulk selection support
-- ✅ Search across subject, content, sender, recipients
+- ✅ Search across document number, file name, category, type, tags
 
-### Communication Detail (`/dashboard/communications/[id]`)
-- ✅ 5 tabs: Overview, Thread, Attachments, Linked, Activity
-- ✅ **Overview Tab**: Key metrics, communication details, participants (from, to, cc, bcc), client/matter links, attachments, internal notes, error details
-- ✅ **Thread Tab**: Full message content with metadata, subject, template variables
-- ✅ **Attachments Tab**: Communication attachments + linked documents with navigation
-- ✅ **Linked Tab**: Client, Matter, Tasks, Documents with full navigation
-- ✅ **Activity Tab**: Unified timeline of communication events, tasks, documents
-- ✅ Header actions: Reply, Forward, Create Task, More
-- ✅ Create Task Dialog with pre-filled context from communication
+### Document Detail (`/dashboard/documents/[id]`)
+- ✅ 5 tabs: Overview, Metadata, Classification, Linked, Activity
+- ✅ **Overview Tab**: Key metrics, document details, upload & security info, client/matter links, OCR text preview
+- ✅ **Metadata Tab**: Core metadata, custom metadata, retention policy
+- ✅ **Classification Tab**: AI classification results, extracted fields, classification metadata
+- ✅ **Linked Tab**: Client, Matter, Communications, Tasks, Compliance Cycle with full navigation
+- ✅ **Activity Tab**: Unified timeline of document events, communications, tasks
+- ✅ Header actions: Download, Share, More
+- ✅ OCR extracted text preview when available
+- ✅ Virus scan status and retention policy display
 
-### Conversations (`/dashboard/conversations`)
-- ✅ 4 view filters (All, Active, Archived, Unread)
-- ✅ KPI cards (Total, Active, Archived, Unread)
-- ✅ Full FilterBar with 3 filter configs (archived, client, matter)
-- ✅ DataTable with 9 columns (Subject, Channels, Client, Matter, Participants, Last Message, Unread, Tags, Status)
-- ✅ Participant avatars with overflow indicator
-- ✅ Row actions: Open Conversation, Archive/Unarchive
-- ✅ Bulk selection support
+### Document Requests (`/dashboard/documents/requests`)
+- ✅ KPI cards (Total, Draft, Sent, Partial, Received, Overdue)
+- ✅ 5 view filters (All, Pending, Overdue, Received, Draft)
+- ✅ Full FilterBar with 4 filter configs (status, client, matter, requested by)
+- ✅ DataTable with 8 columns (Request ID, Client, Matter, Status, Items, Sent At, Reminders, Last Reminder, Requested By)
+- ✅ Item-level tracking with mandatory/optional indicators and received status
+- ✅ Row actions: View Details, Send Reminder, Mark Received
+- ✅ Search across request ID, document types, compliance cycle
+- ✅ Per-item mandatory/optional tracking
 
-### Conversation Detail (`/dashboard/conversations/[id]`)
-- ✅ 5 tabs: Messages, Participants, Attachments, Linked, Activity
-- ✅ **Messages Tab**: Chronological thread with reply composer, channel selector, send functionality
-- ✅ **Participants Tab**: DataTable with role, type, joined date, user/contact distinction
-- ✅ **Attachments Tab**: Communication attachments + linked documents
-- ✅ **Linked Tab**: Client, Matter, Tasks, Documents with navigation
-- ✅ **Activity Tab**: Unified timeline of all conversation events
-- ✅ Header with archive status and unread count badge
-
-### Campaigns (`/dashboard/campaigns`)
-- ✅ 6 view filters (All, Active, Draft, Completed, Compliance, Document Collection)
-- ✅ 11 KPI cards (Total, Draft, Scheduled, Sending, Sent, Completed, Paused, Total Sent, Delivered, Opened, Clicked, Replied, Docs Received, Tasks Created)
-- ✅ Full FilterBar with 4 filter configs (status, objective, created by, approved by)
-- ✅ DataTable with 15 columns (Campaign, Objective, Status, Channels, Schedule, Sent, Delivered, Open Rate, Click Rate, Reply Rate, Docs Received, Tasks Created, Compliance %, Created By, Approved By, Created)
-- ✅ Row actions: View Details, Duplicate
-- ✅ Bulk selection support
-- ✅ Real-time performance metrics (delivery rate, open rate, click rate, reply rate)
-
-### Campaign Detail (`/dashboard/campaigns/[id]`)
-- ✅ 7 tabs: Overview, Builder, Audience, Templates, Communications, Analytics, Activity
-- ✅ **Overview Tab**: Key metrics cards, campaign details, performance summary, follow-up metrics
-- ✅ **Builder Tab**: Basic settings, channels, schedule, audience filters (read-only view)
-- ✅ **Audience Tab**: Filters table, included/excluded clients with navigation
-- ✅ **Templates Tab**: Channel-specific templates with variables, subject, content preview
-- ✅ **Communications Tab**: All communications sent via this campaign
-- ✅ **Analytics Tab**: Channel performance table, engagement funnel, business outcomes
-- ✅ **Activity Tab**: Campaign lifecycle timeline
-
-### Communication → Create Task Workflow
-- ✅ Dialog accessible from Communication Detail and Communications Hub
-- ✅ Pre-fills: Title (from subject), Description (with communication context), Priority (from channel/type)
-- ✅ Preserves: Client context, Matter context, Communication source link, Assignment (to/from user)
-- ✅ Form fields: Status, Priority, Due Date, Assignee, Team, Client, Matter, Tags
-- ✅ Context panel showing originating communication details
-- ✅ Mock-state task creation with proper ID generation and relationships
+### Physical Files (`/dashboard/physical-files`)
+- ✅ KPI cards (Total, Stored, Checked Out, Overdue, Missing, Archived)
+- ✅ 6 view filters (All, Stored, Checked Out, Overdue, Missing, Archived)
+- ✅ Full FilterBar with 4 filter configs (status, client, matter, custodian)
+- ✅ DataTable with 11 columns (File #, Status, Client, Matter, Storage Location, Current Location, Custodian, Checked Out By, Due Back, Tags)
+- ✅ Location hierarchy display (Building > Room > Cabinet > Shelf > Box > Slot)
+- ✅ Status badges with color coding and icons
+- ✅ Row actions: View Details, Check Out, Check In, View Movement History
+- ✅ Overdue detection with visual indicators
+- ✅ Search across file number, title, description, tags
+- ✅ Movement history tracking with check-out/check-in timestamps and reasons
 
 ---
 
@@ -231,10 +261,11 @@ This document represents the current repository state at the time of inspection.
 | **Phase 1** | ✅ **COMPLETE** | 5 | Core entity architecture with reusable detail components |
 | **Phase 2** | ✅ **COMPLETE** | 6 | Compliance engine with 4 specialized workspaces |
 | **Phase 3** | ✅ **COMPLETE** | 6 | Communication hub with conversations, campaigns, and task creation workflow |
+| **Phase 4** | ✅ **COMPLETE** | 4 | Document management with digital repository, requests, and physical files register |
 
-**Total Routes Implemented: 17** (5 Phase 1 + 6 Phase 2 + 6 Phase 3)
+**Total Routes Implemented: 21** (5 Phase 1 + 6 Phase 2 + 6 Phase 3 + 4 Phase 4)
 
 All validation passes:
 - TypeScript: ✅ Zero errors
 - Build: ✅ Successful  
-- Lint: ✅ No new warnings in Phase 3 code
+- Lint: ✅ No new warnings in Phase 4 code
