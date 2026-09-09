@@ -275,78 +275,176 @@ This document represents the current repository state at the time of inspection.
 
 ---
 
+## PHASE 6 — AUDIT WORKSPACE AND FIRM OPERATIONS — **COMPLETE**
+
+### Overall Phase 6 Completion: **100%** (All routes functional, TypeScript validation passes, build succeeds)
+
+### Implemented Routes
+
+| Route | Status | Description |
+|---|---|---|
+| `/dashboard/audit` | ✅ **COMPLETE** | Audit Workspace list with FilterBar, DataTable, 7 view tabs (All, Planning, Fieldwork, Review, Reporting, Completed, Archived), KPI counts |
+| `/dashboard/audit/[auditId]` | ✅ **COMPLETE** | Audit Detail with 11 tabs: Overview, Planning, Risk Assessment, Materiality, Audit Programs, Workpapers, Evidence, Queries, Review Notes, Sign-off, History |
+| `/dashboard/workload` | ✅ **COMPLETE** | Workload & Capacity with user/team views, utilization bars, overloaded/optimal/underutilized status, task counts, hours tracking |
+| `/dashboard/time-tracking` | ✅ **COMPLETE** | Time Tracking with active timer (start/pause/stop), manual entry form, entries list with filters, weekly timesheet view |
+| `/dashboard/attendance` | ✅ **COMPLETE** | Attendance with daily overview, status cards (Present/Absent/Late/Leave/WFH), date navigation, filterable records table |
+| `/dashboard/leave` | ✅ **COMPLETE** | Leave Management with requests (Pending/Approved/Rejected), balance tracking, calendar view, leave request form |
+
+### Audit Workspace Architecture
+
+| Component | Location | Status |
+|---|---|---|
+| **AuditRecordHeader** | `src/components/ca-nexus/record-header.tsx` | ✅ **NEW** |
+| **AuditStatusBadge** | `src/components/ca-nexus/status-badge.tsx` | ✅ **NEW** |
+| **AuditEngagementLink** | `src/components/ca-nexus/object-link.tsx` | ✅ **NEW** |
+| **Audit List Page** | `src/app/(main)/dashboard/audit/_components/audit-list.tsx` | ✅ **COMPLETE** |
+| **Audit Detail Page** | `src/app/(main)/dashboard/audit/[auditId]/_components/audit-detail.tsx` | ✅ **COMPLETE** |
+
+### Reusable Audit Components & Patterns
+
+| Component | Description |
+|---|---|
+| **Multi-stage Audit Visualization** | 11-tab detail view covering full audit lifecycle from Planning to Sign-off |
+| **Risk Assessment Matrix** | Inherent/Control/Detection/Overall risk levels with PriorityBadges, key risks table with assertions and responses |
+| **Materiality Calculator** | Overall, Performance, Trivial materiality with basis, calculated by/date display |
+| **Audit Programs & Procedures** | Hierarchical programs with procedures, assertions, types (substantive/analytical/test_of_controls), status tracking |
+| **Workpapers Management** | Workpaper list with reference, title, area, status (draft→finalized), preparer/reviewer, evidence doc links |
+| **Evidence Repository** | Combined documents + workpaper evidence with source tracking |
+| **Audit Queries Tracker** | Query log with number, area, description, priority, status, assignee, due date, response tracking |
+| **Review Notes** | Reviewer notes with type (observation/finding/recommendation/question/approval), resolution status |
+| **Sign-off Workflow** | Partner/Manager/Reviewer sign-offs with action (review/approve/finalize), timestamps, comments |
+| **Audit History Timeline** | Unified activity timeline (programs, workpapers, queries, sign-offs) grouped by date |
+
+### Firm Operations Architecture
+
+| Component | Location | Status |
+|---|---|---|
+| **Workload Page** | `src/app/(main)/dashboard/workload/_components/workload-page.tsx` | ✅ **COMPLETE** |
+| **Time Tracking Page** | `src/app/(main)/dashboard/time-tracking/_components/time-tracking-page.tsx` | ✅ **COMPLETE** |
+| **Attendance Page** | `src/app/(main)/dashboard/attendance/_components/attendance-page.tsx` | ✅ **COMPLETE** |
+| **Leave Page** | `src/app/(main)/dashboard/leave/_components/leave-page.tsx` | ✅ **COMPLETE** |
+
+### Firm Operations Features
+
+| Feature | Description |
+|---|---|
+| **Workload & Capacity** | User and team views with utilization %, task counts, overdue/high-priority tasks, total/billable hours, overloaded/optimal/underutilized status badges |
+| **Time Tracking** | Active timer with start/pause/stop, matter/task linking, billable toggle, billing rate, manual entry form with datetime pickers, entries list with filters, weekly timesheet view |
+| **Attendance** | Daily attendance cards (Present/Absent/Late/On Leave/WFH), date navigation, filterable records with check-in/out times, work mode, location, break minutes |
+| **Leave Management** | Leave requests with status workflow (Pending→Approved/Rejected), leave type selector (12 types), balance tracking per user, calendar view placeholder, leave request form with date range |
+
+### Mock Data & Getter Updates
+
+| File | Status | Notes |
+|---|---|---|
+| `src/mock-data/ids.ts` | ✅ **ENHANCED** | Added `AUDIT_ENGAGEMENTS` IDs for 5 audit engagements |
+| `src/mock-data/audit.ts` | ✅ **NEW** | 5 audit engagements with full structure (planning, risk, materiality, programs, workpapers, queries, notes, sign-offs) |
+| `src/mock-data/leave.ts` | ✅ **NEW** | 8 leave requests across 6 users with various types and statuses |
+| `src/mock-data/index.ts` | ✅ **ENHANCED** | Exported audit and leave mock data and getters |
+| `src/components/ca-nexus/record-header.tsx` | ✅ **ENHANCED** | Added `AuditRecordHeader` with engagement metadata |
+| `src/components/ca-nexus/status-badge.tsx` | ✅ **ENHANCED** | Added `AuditStatusBadge` export |
+| `src/components/ca-nexus/object-link.tsx` | ✅ **ENHANCED** | Added `AuditEngagementLink` component |
+| `src/components/ca-nexus/activity-timeline.tsx` | ✅ **ENHANCED** | Added `workpaper`, `query`, `signoff` activity types with icons and colors |
+| `src/navigation/sidebar/sidebar-items.ts` | ✅ **EXISTS** | All Phase 6 routes already configured in sidebar |
+
+### Cross-Entity Relationships (Fully Implemented)
+
+| Relationship | Status |
+|---|---|
+| Audit → Client | ✅ Via `clientId` and `ClientLink` in header and overview |
+| Audit → Matter | ✅ Via team assignment linking to matters |
+| Audit → Tasks | ✅ Via matter-linked tasks in Programs and Workpapers tabs |
+| Audit → Documents | ✅ Via workpaper `evidenceDocumentIds` linking to Documents |
+| Audit → Workpapers | ✅ Direct workpaper array with full CRUD structure |
+| Audit → Queries | ✅ Direct queries array with status workflow |
+| Audit → Review Notes | ✅ Direct review notes array with resolution tracking |
+| Audit → Sign-off | ✅ Direct sign-off array with role/action/timestamp |
+| Workload → User Tasks | ✅ Via `getTasksByUser` getter |
+| Workload → Matters | ✅ Via `getMattersByUser` getter |
+| Time Entry → Matter | ✅ Via `matterId` in TimeEntry and timer form |
+| Time Entry → Task | ✅ Via `taskId` in TimeEntry and timer form |
+| Time Entry → Client | ✅ Via `clientId` derived from matter |
+| Attendance → User | ✅ Via `userId` in AttendanceRecord |
+| Attendance → Team | ✅ Via team filter in FilterBar |
+| Leave → User | ✅ Via `userId` in LeaveRequest and form |
+| Leave → Team | ✅ Via team context in balance view |
+
+---
+
 ## VALIDATION RESULTS
 
 | Check | Result | Details |
 |---|---|---|
-| **TypeScript (`npx tsc --noEmit`)** | ✅ **PASS** | Zero TypeScript errors across all Phase 1-5 components |
+| **TypeScript (`npx tsc --noEmit`)** | ✅ **PASS** | Zero TypeScript errors across all Phase 1-6 components |
 | **Build (`npm run build`)** | ✅ **PASS** | Production build completes successfully |
-| **Lint (`npm run lint`)** | ⚠️ **PRE-EXISTING** | Lint warnings in unrelated files (time-billing, users, navigation) — no new errors in Phase 5 code |
+| **Lint (`npm run lint`)** | ⚠️ **PRE-EXISTING** | Lint warnings in unrelated files (time-billing, users, navigation) — no new errors in Phase 6 code |
 
-### Key Fixes Applied (Phase 5)
+### Key Fixes Applied (Phase 6)
 
-1. **Added ReviewRecordHeader** to `src/components/ca-nexus/record-header.tsx` with review-specific metadata (stages, current stage, reviewer, type, linked entities)
-2. **Added NoticeRecordHeader** to `src/components/ca-nexus/record-header.tsx` with notice-specific metadata (authority, category, due date, escalation, urgency)
-3. **Added ReviewLink and NoticeLink** to `src/components/ca-nexus/object-link.tsx` with status badges and cross-entity navigation
-4. **Enhanced Calendar** with CA Nexus-connected mock events, event type filters (12 types), client filter, user filter, event detail popover with linked entity navigation
-5. **Extended mock data getters** for cross-entity relationships (reviews by document/task/user, notices by category/authority/matter/document/task/priority)
-6. **Added Reviews to sidebar navigation** under Operations section with Clipboard icon
-7. **Fixed ReviewAction type** in mock data to allow undefined actions for pending stages
-8. **Removed non-existent `tags` field** from Notice detail component
+1. **Added AuditRecordHeader** to `src/components/ca-nexus/record-header.tsx` with engagement-specific metadata (programs, workpapers, queries, risk level, materiality, team composition)
+2. **Added AuditStatusBadge** to `src/components/ca-nexus/status-badge.tsx` for audit engagement status display
+3. **Added AuditEngagementLink** to `src/components/ca-nexus/object-link.tsx` with status badge and cross-entity navigation
+4. **Created Audit Workspace** with 11-tab detail view covering full audit lifecycle (Planning → Sign-off)
+5. **Extended ActivityTimeline** with `workpaper`, `query`, `signoff` activity types for audit history
+6. **Created Workload page** with user/team views, utilization progress bars, capacity status badges
+7. **Created Time Tracking page** with active timer (start/pause/stop), manual entry, entries list, weekly timesheet
+8. **Created Attendance page** with daily overview cards, date navigation, filterable records table
+9. **Created Leave page** with requests workflow, balance tracking, calendar view, leave request form
+10. **Added Audit Engagement IDs** to `src/mock-data/ids.ts` for 5 sample engagements
+11. **Created mock audit data** with 5 engagements covering statutory audits across different clients and stages
+12. **Created mock leave data** with 8 leave requests covering various types and statuses
+13. **Fixed ActivityItem type** to include audit-specific activity types (workpaper, query, signoff)
+14. **Fixed Tabs value types** to use string instead of union for compatibility with shadcn Tabs
 
 ---
 
-## PHASE 5 FEATURE SUMMARY
+## PHASE 6 FEATURE SUMMARY
 
-### Review Inbox (`/dashboard/reviews`)
-- ✅ KPI tabs with counts: All, Pending, In Progress, Completed, Overdue, Urgent
-- ✅ Full FilterBar with 5 filter configs (status, review type, priority, reviewer, client)
-- ✅ DataTable with 11 columns (Review #, Title, Type, Client, Matter, Compliance, Reviewer, Status, Priority, Due Date, Progress)
-- ✅ Progress bar showing stage completion percentage
-- ✅ Overdue detection with visual indicators
-- ✅ Search across review number, title
+### Audit Workspace (`/dashboard/audit`)
+- ✅ KPI tabs with counts: All, Planning, Fieldwork, Review, Reporting, Completed, Archived
+- ✅ Full FilterBar with 5 filter configs (status, type, partner, manager, client)
+- ✅ DataTable with 10 columns (Engagement #, Name, Type, Client, Period, Team, Status, Risk, Materiality, Planning)
 - ✅ Row actions: View Details
 
-### Review Detail (`/dashboard/reviews/[reviewId]`)
-- ✅ 7 tabs: Overview, Stages, Documents, Tasks, Communications, Comments, History
-- ✅ **Overview Tab**: Key metrics (Status, Stages progress, Pending Tasks, Documents), Review Details, Assignment, Linked Entities, Tags
-- ✅ **Stages Tab**: Multi-stage visualization with color-coded status cards, Stage Actions dropdown (Approve/Reject/Rework/Comment), Stage Configuration table
-- ✅ **Documents Tab**: Compliance cycle documents with category, type, size, OCR status
-- ✅ **Tasks Tab**: Matter-linked tasks with filter bar, status, priority, due date, progress
-- ✅ **Communications Tab**: Compliance cycle communications with channel, direction, status
-- ✅ **Comments Tab**: Overall review comments + stage comments with CommentThread
-- ✅ **History Tab**: Unified activity timeline (review stages, tasks, documents, communications) grouped by date
+### Audit Detail (`/dashboard/audit/[auditId]`)
+- ✅ 11 tabs: Overview, Planning, Risk Assessment, Materiality, Audit Programs, Workpapers, Evidence, Queries, Review Notes, Sign-off, History
+- ✅ **Overview Tab**: Key metrics (Status, Programs, Workpapers, Queries, Sign-offs), Engagement Details, Team Composition, Linked Entities
+- ✅ **Planning Tab**: Planning summary with completion status, understanding of entity, risk assessment, materiality, planning notes
+- ✅ **Risk Assessment Tab**: Risk level cards (Inherent/Control/Detection/Overall), Key Risks table with assertions and responses
+- ✅ **Materiality Tab**: Overall/Performance/Trivial materiality with percentages, basis, calculated by/date
+- ✅ **Audit Programs Tab**: Hierarchical programs with procedures table (ref, description, assertion, type, status, preparer, reviewer, conclusion)
+- ✅ **Workpapers Tab**: Filterable workpapers with reference, title, area, status, preparer, reviewer, evidence doc count
+- ✅ **Evidence Tab**: Combined documents + workpaper evidence with source tracking
+- ✅ **Queries Tab**: Filterable audit queries with number, area, description, priority, status, assignee, due date
+- ✅ **Review Notes Tab**: Review notes by type (observation/finding/recommendation/question/approval) with resolution status
+- ✅ **Sign-off Tab**: Sign-offs by role (partner/manager/reviewer) with action, timestamp, comments
+- ✅ **History Tab**: Unified activity timeline grouped by date
 
-### Calendar (`/dashboard/calendar`)
-- ✅ Month, Week, Day, Agenda/List views
-- ✅ 15 CA Nexus events: compliance deadlines (ITR, GST, TDS), client meetings, internal meetings, review meetings, follow-ups, overdue indicators
-- ✅ Event type filter popover with 12 colored event types
-- ✅ Client filter dropdown
-- ✅ Assigned user filter dropdown
-- ✅ Active filter count badge with clear all
-- ✅ Event click → detail popover with linked entities, assigned users, location, meeting URL
-- ✅ Today button, prev/next navigation, view selector
-- ✅ Event count per view
+### Workload (`/dashboard/workload`)
+- ✅ User and Team view toggle
+- ✅ KPI cards: Overloaded, Optimal, Underutilized, Avg Utilization
+- ✅ User table with tasks, overdue, high priority, total/billable hours, utilization progress bar, status badge
+- ✅ Team cards with member details, avg utilization, overloaded/underutilized counts
+- ✅ FilterBar with role, status, team filters
 
-### Notice Register (`/dashboard/notices`)
-- ✅ KPI tabs with counts: All, Received, Under Review, Evidence Collection, Response Drafting, Internal Review, Submitted, Overdue, Urgent
-- ✅ Full FilterBar with 6 filter configs (status, category, authority, priority, assigned user, client)
-- ✅ DataTable with 12 columns (Notice #, Reference #, Authority, Client, Matter, Category, Assigned To, Received, Due Date, Status, Priority, Urgent, Escalation)
-- ✅ Overdue detection with visual indicators
-- ✅ Urgent flag with AlertTriangle icon
-- ✅ Escalation level display
-- ✅ Search across notice number, reference number, subject
-- ✅ Row actions: View Details
+### Time Tracking (`/dashboard/time-tracking`)
+- ✅ Active timer with start/pause/stop, elapsed time display, matter/task linking, billable toggle, billing rate
+- ✅ Manual entry form with matter, task, description, start/end datetime, billable, billing rate
+- ✅ Entries list with filters (status, user, matter), 11 columns including billed amount
+- ✅ Weekly timesheet view with month selector
 
-### Notice Detail (`/dashboard/notices/[noticeId]`)
-- ✅ 7 tabs: Overview, Documents, Tasks, Response, Reviews, Submissions, Activity
-- ✅ **Overview Tab**: Key metrics (Status, Due In, Documents, Pending Tasks), Notice Details, Assignment, Linked Entities, Description
-- ✅ **Documents Tab**: Linked notice documents with category, type, size, OCR status
-- ✅ **Tasks Tab**: Notice-linked tasks with filter bar, status, priority, due date, progress
-- ✅ **Response Tab**: Response draft editor area, submission timeline (Received → Draft → Submitted → Hearing), Submit Response action
-- ✅ **Reviews Tab**: Linked reviews with progress bars, status, due dates
-- ✅ **Submissions Tab**: Submission record with reference, date, status; or submission CTA if not submitted
-- ✅ **Activity Tab**: Unified activity timeline (tasks, documents, reviews) grouped by date
+### Attendance (`/dashboard/attendance`)
+- ✅ Daily overview cards: Total Staff, Present, Absent, Late, On Leave, WFH
+- ✅ Date navigation with prev/next/date picker
+- ✅ Filterable records with status, work mode, team filters
+- ✅ Records table with check-in/out, break, location, 10 columns
+
+### Leave (`/dashboard/leave`)
+- ✅ 3 tabs: Requests, Balance, Calendar
+- ✅ Requests: Filterable with status, type, user filters; row actions (Approve/Reject/Cancel)
+- ✅ Balance: Per-user annual/sick/casual leave balances with used days
+- ✅ Calendar: Monthly grid view placeholder
+- ✅ Leave request form with employee, type (12 types), date range, days, reason
 
 ---
 
@@ -359,32 +457,33 @@ This document represents the current repository state at the time of inspection.
 | **Phase 3** | ✅ **COMPLETE** | 6 | Communication hub with conversations, campaigns, and task creation workflow |
 | **Phase 4** | ✅ **COMPLETE** | 4 | Document management with digital repository, requests, and physical files register |
 | **Phase 5** | ✅ **COMPLETE** | 5 | Review & Approval, Calendar, and Notices with full cross-entity integration |
+| **Phase 6** | ✅ **COMPLETE** | 6 | Audit Workspace and Firm Operations with full cross-entity integration |
 
-**Total Routes Implemented: 26** (5 Phase 1 + 6 Phase 2 + 6 Phase 3 + 4 Phase 4 + 5 Phase 5)
+**Total Routes Implemented: 32** (5 Phase 1 + 6 Phase 2 + 6 Phase 3 + 4 Phase 4 + 5 Phase 5 + 6 Phase 6)
 
 All validation passes:
 - TypeScript: ✅ Zero errors
 - Build: ✅ Successful  
-- Lint: ✅ No new warnings in Phase 5 code
+- Lint: ✅ No new warnings in Phase 6 code
 
 ---
 
 ## INTENTIONAL LIMITATIONS & REMAINING WORK
 
-### Phase 5 Limitations (By Design - Frontend Mock Only)
-- **No backend approval logic**: Review actions (Approve/Reject/Rework) show alerts only; no persistent state changes
-- **No real calendar event CRUD**: "Add event" button shows alert only; events are static mock data
-- **No notice submission API**: Submit Response button shows alert only; no actual submission workflow
-- **No notification system**: In-app notifications for review assignments, notice deadlines, calendar reminders not implemented
-- **No document upload**: Document management uses existing mock data only
-- **No real-time updates**: Calendar, review inbox, notice register use static mock data
+### Phase 6 Limitations (By Design - Frontend Mock Only)
+- **No backend persistence**: All timer, attendance, leave, audit actions show alerts only; no persistent state changes
+- **No real-time sync**: Timer doesn't sync across tabs/users; attendance/leave not synced with calendar
+- **No approval workflows**: Leave approve/reject, audit sign-off actions are UI only
+- **No notifications**: No in-app/email notifications for leave requests, audit queries, timer reminders
+- **No document upload**: Evidence/workpaper document management uses existing mock data only
+- **No payroll integration**: Attendance/leave not connected to payroll calculations
 
-### Future Enhancements (Post-Phase 5)
-1. **Review workflow persistence** - Backend integration for stage transitions, comments, history
-2. **Calendar event management** - Create/edit/delete events with recurrence, reminders
-3. **Notice workflow engine** - Status transitions, escalation rules, deadline tracking
-4. **Notification center** - Real-time alerts for reviews, notices, calendar events
-5. **Advanced calendar features** - Resource booking, availability, conflict detection
-6. **Review templates** - Configurable review stage templates per review type
-7. **Notice response templates** - Pre-built response drafts per authority/category
-8. **Dashboard integration** - Review/Notice/Calendar widgets on main dashboard
+### Future Enhancements (Post-Phase 6)
+1. **Audit workflow persistence** - Backend integration for stage transitions, workpaper management, query resolution
+2. **Time tracking synchronization** - Real-time timer sync, mobile timer, offline support
+3. **Attendance/Leave workflow engine** - Status transitions, approval chains, carry-forward rules
+4. **Notification center** - Real-time alerts for audit queries, leave requests, timer reminders
+5. **Advanced workload features** - Resource allocation, project planning, capacity forecasting
+6. **Audit templates** - Configurable audit program templates per engagement type
+7. **Mobile-responsive time tracking** - PWA support for timer on mobile devices
+8. **Integration with calendar** - Leave/attendance events on calendar, meeting time auto-capture
