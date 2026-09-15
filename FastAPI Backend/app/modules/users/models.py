@@ -44,7 +44,7 @@ class User(Base, TenantBaseModelMixin):
     )
 
     tenant: Mapped["Firm"] = relationship("Firm", back_populates="users", lazy="selectin")
-    team: Mapped[Optional["Team"]] = relationship("Team", back_populates="members", lazy="selectin")
+    team: Mapped[Optional["Team"]] = relationship("Team", foreign_keys="User.team_id", back_populates="members", lazy="selectin")
 
     def get_all_permissions(self) -> List[str]:
         from app.core.permissions.registry import get_permission_registry, Role
@@ -87,6 +87,6 @@ class Team(Base, TenantBaseModelMixin):
         index=True,
     )
 
-    tenant: Mapped["Firm"] = relationship("Firm", back_populates="branches", lazy="selectin")
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     lead: Mapped[Optional["User"]] = relationship("User", foreign_keys=[lead_id], lazy="selectin")
-    members: Mapped[List["User"]] = relationship("User", back_populates="team", lazy="dynamic")
+    members: Mapped[List["User"]] = relationship("User", foreign_keys="User.team_id", back_populates="team", lazy="dynamic")

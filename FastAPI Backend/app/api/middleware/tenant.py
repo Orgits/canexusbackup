@@ -1,6 +1,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+from sqlalchemy import select
 
 from app.core.tenancy.context import TenantContext, set_tenant_context, clear_tenant_context
 from app.core.security.dependencies import get_optional_user

@@ -799,51 +799,104 @@ app/modules/notifications/     (6 files)
 
 ---
 
-## Next Recommended Step: Phase 3
+## Command 3 — PostgreSQL RLS & Multi-Tenant Isolation ✅ COMPLETED 2026-09-15
 
-### Phase 3 Focus Areas:
-1. **Run PostgreSQL and Execute Migrations**
-   - Start PostgreSQL container
-   - Run `alembic upgrade head`
-   - Verify all tables created correctly
+### Overview
+Implemented defense-in-depth PostgreSQL Row Level Security (RLS) as the database-level security boundary for multi-tenant isolation. Application-level tenant filtering remains in place.
 
-2. **Write Comprehensive Tests**
-   - Unit tests for services
-   - Integration tests for APIs
-   - Authentication/authorization tests
-   - Tenant isolation tests
-   - Workflow transition tests
-   - Review action tests
+### Tables Protected (46 tenant-owned tables)
+All tables inheriting `TenantBaseModelMixin` now have RLS enabled with 4 policies each (SELECT, INSERT, UPDATE, DELETE):
 
-3. **Implement Background Workers**
-   - Celery configuration
-   - Document processing workers
-   - Compliance cycle generation workers
-   - Notification delivery workers
-   - Deadline reminder workers
-   - Workload snapshot generation workers
+| Module | Tables |
+|--------|--------|
+| **Core** | users, teams |
+| **Clients** | clients, client_contacts, client_services |
+| **Matters/Tasks** | matters, tasks |
+| **Compliance** | compliance_types, compliance_cycles, compliance_applicability |
+| **Documents** | documents |
+| **Billing** | invoices, invoice_items, payments, expenses |
+| **Calendar** | calendar_events |
+| **Communications** | communications |
+| **Workflow** | workflow_definitions, workflow_transition_definitions, workflow_instances, workflow_transition_history |
+| **Reviews** | review_requests, review_comments, review_history |
+| **TDS** | tds_compliance_cycles, tds_challans, tds_deductees |
+| **MCA/ROC** | mca_filing_cycles, mca_filing_configs |
+| **Notices** | notices, notice_escalations |
+| **Workload** | user_availability, team_capacity, workload_snapshots, workload_summaries |
+| **Assignments** | assignments, assignment_history, escalations |
+| **Collaboration** | comments, comment_attachments, comment_reactions |
+| **Notifications** | notification_templates, notifications, notification_deliveries, notification_preferences |
+| **Audit** | audit_logs |
 
-4. **Document Processing Pipeline**
-   - Malware scanning integration
-   - OCR integration
-   - Classification/extraction
+**Total policies created: 46 × 4 = 184 policies**
 
-5. **Communication Providers**
-   - Email (SMTP/SendGrid)
-   - WhatsApp Business API
-   - SMS (Twilio/TRAI DND)
+### Policies Created
+Each tenant table has 4 policies using `current_setting('app.current_tenant', true)`:
+- **SELECT**: `USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)`
+- **INSERT**: `WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)`
+- **UPDATE**: `USING (...) WITH CHECK (...)`
+- **DELETE**: `USING (...)`
 
-6. **Search Integration**
-   - OpenSearch setup
-   - Document indexing
-   - Global search API
+The `NULLIF(..., '')` handles empty string from unset GUC, ensuring **fail-closed** behavior (no data visible without tenant context).
 
-7. **Advanced Reporting & Analytics**
-   - Dashboard projections (Redis)
-   - Report generation workers
-   - Export functionality (PDF, Excel)
+### Transaction-Scoped Tenant Context
+- **New dependency**: `get_tenant_db()` in `app/core/database/session.py`
+- Executes `SET LOCAL app.current_tenant = '<tenant-uuid>'` at transaction start
+- `SET LOCAL` is transaction-scoped, automatically reset on commit/rollback
+- **No connection pool leakage** - verified by cross-request connection reuse test
+- Context set via `TenantMiddleware` → `ContextVar` → `get_tenant_db()` reads ContextVar
 
-8. **Real-time Features**
-   - WebSocket support for notifications
-   - Live collaboration
-   - Real-time dashboard updates
+### Database Role Verification
+- Application role `ca_nexus` verified: `rolbypassrls = false`, `rolsuper = false`
+- Role cannot bypass RLS policies
+- Migration/admin privileges separate from application role
+
+### Tests Verified (All Passing)
+1. **RLS with SET LOCAL** - Tenant A sees only its data
+2. **RLS without context (fail closed)** - Zero data visible without tenant context
+3. **Cross-tenant isolation** - Tenant A cannot SELECT/UPDATE/DELETE Tenant B's data
+4. **Reverse isolation** - Tenant B cannot access Tenant A's data
+5. **Connection pool isolation** - No tenant context leakage through pooled connections
+6. **Application-layer filtering** - Defense in depth with explicit tenant_id filters
+7. **get_tenant_db dependency** - Works correctly with and without context
+
+### Files Created/Modified
+- **Created**: `migrations/versions/002_enable_rls_policies.py` - RLS migration with 184 policies
+- **Created**: `app/core/database/dependencies.py` - `get_tenant_db_session` dependency
+- **Created**: `TENANT_TABLE_INVENTORY.md` - Complete tenant table inventory
+- **Created**: `test_rls_isolation.py` - Comprehensive cross-tenant isolation tests
+- **Modified**: `app/core/database/session.py` - Added `get_tenant_db()`, `_set_tenant_context_on_session()`
+- **Modified**: `app/modules/firms/models.py` - Added all back_populates for Firm relationships
+- **Modified**: `app/modules/users/models.py` - Fixed ambiguous foreign keys (team_id, lead_id)
+- **Fixed**: Initial migration (4cfcf1cf520e) now runs successfully with proper table creation order
+
+### Acceptance Criteria Met
+✅ Every tenant-owned table protected by RLS  
+✅ SELECT policy verified  
+✅ INSERT policy verified  
+✅ UPDATE policy verified  
+✅ DELETE policy verified  
+✅ Transaction-local tenant context works  
+✅ Missing tenant context cannot expose data (fail closed)  
+✅ Application role cannot bypass RLS  
+✅ Tenant A cannot access Tenant B (SELECT/UPDATE/DELETE)  
+✅ Tenant B cannot access Tenant A (SELECT/UPDATE/DELETE)  
+✅ Pooled connection isolation test passes  
+✅ Application tenant filtering retained (defense in depth)
+
+---
+
+## Future Worker Contract (Documented for Phase 3+)
+
+When Celery workers are implemented, they MUST follow this contract:
+```
+worker receives tenant_id
+→ opens transaction
+→ SET LOCAL app.current_tenant = '<tenant-uuid>'
+→ performs DB operations
+→ transaction ends (auto-reset)
+```
+
+**Critical**: Workers must NEVER inherit tenant context from HTTP requests. Each worker task must explicitly set its own tenant context.
+
+---

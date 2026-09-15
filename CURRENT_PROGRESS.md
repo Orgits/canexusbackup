@@ -713,6 +713,86 @@ This document represents the current repository state at the time of inspection.
 
 ## FINAL VALIDATION RESULTS
 
+---
+
+# CA NEXUS BACKEND — COMMAND 2 EXECUTION BASELINE
+
+## Project Status (Backend)
+- **Last Updated:** September 15, 2026
+- **Current Phase:** Command 2 — Database Schema Deployment & Alembic Repair — **COMPLETED**
+- **Overall Backend Completion:** ~95% code complete, 100% database deployed
+- **Overall Database Completion:** 100% (47/47 tables deployed)
+- **Overall Production Readiness:** 48% (Backend) / 100% (Database Schema)
+
+## Phase History
+
+### Command 1 — Security & Repository Hygiene — COMPLETED 2026-09-15
+- `.gitignore` created at root and FastAPI Backend
+- `.env` secured (real password rotated, strong SECRET_KEY generated)
+- Environment templates created (`.env.staging`, `.env.production`)
+- FastAPI startup verified, health endpoints working
+- SQLAlchemy connectivity verified
+
+### Command 2 — Database Schema Deployment & Alembic Repair — COMPLETED 2026-09-15
+
+#### Tasks Completed:
+1. **Inventory SQLAlchemy Metadata** — 47 tables, 46 enum types, 100+ indexes, 50+ FKs identified
+2. **Inspect Alembic** — Found broken initial migration (alphabetical table creation vs FK dependencies)
+3. **Repair Initial Migration** — Deleted broken migration, created new dependency-ordered migration
+4. **Enums** — All 46 enum types deployed correctly
+5. **Table Creation** — All 47 tables created in dependency order (firms → users/teams → clients → matters/tasks → dependent tables)
+6. **Clean Database Migration Test** — Verified on clean test database (ca_nexus_test)
+7. **Development Database Deployment** — Applied to ca_nexus database
+8. **Schema Drift Check** — Zero drift between SQLAlchemy models and deployed schema
+7. **CRUD Smoke Tests** — All core entities (firm, user, team, client, matter, task, compliance, invoice, document) verified
+
+#### Migration Details:
+- **Migration File:** `migrations/versions/4cfcf1cf520e_initial_schema.py`
+- **Tables Created:** 47 application tables + alembic_version
+- **Enum Types:** 46 PostgreSQL enum types
+- **Indexes:** 100+ indexes (including composite tenant-scoped indexes)
+- **Foreign Keys:** 50+ FK constraints with proper CASCADE/SET NULL
+- **Unique Constraints:** 15+ tenant-scoped unique constraints
+- **Check Constraints:** None (relying on enum constraints)
+
+#### Database Verification:
+- **Tables:** 47 application tables + alembic_version = 48 total
+- **Alembic Version:** `4cfcf1cf520e` (head)
+- **CRUD Tests:** All core entities verified (CREATE, READ, UPDATE, DELETE)
+- **FK Constraints:** Verified working (orphan prevention tested)
+- **Enum Values:** 46 enum types with correct values (uppercase as per SQLAlchemy native enum)
+- **Indexes:** All composite tenant-scoped indexes present
+
+#### Known Limitations:
+- **Application-level defaults:** Some NOT NULL columns lack database defaults (tags, other_ids, specialization, etc.) — defaults applied at application level in SQLAlchemy models
+- **Enum case:** Enum values stored uppercase (SQLAlchemy native enum behavior) — application must use uppercase values
+- **Circular FKs:** users ↔ teams circular dependency handled by creating tables in order (firms → users → teams → add users.team_id FK)
+
+## Current Blockers
+
+| Blocker | Severity | Status | Action Required |
+|---------|----------|--------|-----------------|
+| Application-level defaults | MEDIUM | KNOWN | Document in developer guide; ensure application provides defaults |
+| Enum case sensitivity | LOW | KNOWN | Document enum value format (uppercase) in API docs |
+| No RLS | HIGH | NOT STARTED | Implement PostgreSQL RLS after Command 3 |
+| No token revocation | HIGH | NOT STARTED | Implement Redis token blacklist after Command 3 |
+| No background workers | HIGH | NOT STARTED | Implement Celery workers after Command 3 |
+| No tests | HIGH | NOT STARTED | Create test suite after Command 3 |
+
+## Next Phase
+
+**Command 3 — Application Integration & Testing**
+1. Implement PostgreSQL RLS policies on all tenant tables
+2. Add token revocation/blacklist with Redis
+3. Implement Celery workers for background jobs
+4. Create comprehensive test suite (unit, integration, API)
+5. Implement document storage integration (Azure Blob)
+5. Add automatic audit hooks in service layer
+
+---
+
+## FINAL VALIDATION RESULTS
+
 All validation passes:
 - **TypeScript:** ✅ Zero errors
 - **Build:** ✅ Successful (compiles in ~1.3s)
