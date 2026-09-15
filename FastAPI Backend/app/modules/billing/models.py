@@ -138,7 +138,6 @@ class InvoiceItem(Base, TenantBaseModelMixin):
 
     time_entry_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("time_entries.id", ondelete="SET NULL"),
         nullable=True,
     )
 

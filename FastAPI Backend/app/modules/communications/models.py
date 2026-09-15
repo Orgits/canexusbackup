@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from app.modules.tasks.models import Task
     from app.modules.documents.models import Document
     from app.modules.users.models import User
-    from app.modules.campaigns.models import Campaign
 
 
 class CommunicationChannel(str, PyEnum):
@@ -89,7 +88,6 @@ class Communication(Base, TenantBaseModelMixin):
 
     campaign_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("campaigns.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -144,6 +142,5 @@ class Communication(Base, TenantBaseModelMixin):
     client: Mapped["Client"] = relationship("Client", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     task: Mapped[Optional["Task"]] = relationship("Task", lazy="selectin")
-    campaign: Mapped[Optional["Campaign"]] = relationship("Campaign", lazy="selectin")
     parent_communication: Mapped[Optional["Communication"]] = relationship("Communication", remote_side="Communication.id", back_populates="replies", lazy="selectin")
     replies: Mapped[List["Communication"]] = relationship("Communication", back_populates="parent_communication", lazy="dynamic")
