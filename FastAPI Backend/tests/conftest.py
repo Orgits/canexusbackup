@@ -60,21 +60,31 @@ async def test_engine():
         echo=False,
     )
     
-    # Create all tables
+    # Drop all tables and enum types first
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    yield engine
-    
-    # Cleanup - drop all tables and enum types
-    async with engine.begin() as conn:
-        # Drop all tables
         await conn.run_sync(Base.metadata.drop_all)
         # Drop enum types that were created by migrations
         await conn.execute(text("DROP TYPE IF EXISTS outboxeventtype CASCADE"))
         await conn.execute(text("DROP TYPE IF EXISTS outboxstatus CASCADE"))
         await conn.execute(text("DROP TYPE IF EXISTS outboxeventtype CASCADE"))
         await conn.execute(text("DROP TYPE IF EXISTS outboxstatus CASCADE"))
+    
+    # Run alembic migrations to set up the database schema
+    from alembic.config import Config
+    from alembic import command
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+    command.upgrade(alembic_cfg, "head")
+    
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        poolclass=NullPool,
+        echo=False,
+    )
+    
+    yield engine
+    
+    # Cleanup
     await engine.dispose()
 
 
