@@ -45,17 +45,17 @@ async def create_test_data():
         user_a_id = uuid.uuid4()
         await _set_tenant(session, tenant_a_id)
         await session.execute(text("""
-            INSERT INTO users (id, email, hashed_password, full_name, is_active, is_superuser, roles, direct_permissions, tenant_id, created_at, updated_at)
-            VALUES (:id, 'usera@tenant-a.com', :pwd, 'User A', true, false, '{}', '{}', :tenant_id, now(), now())
-        """), {"id": user_a_id, "pwd": hash_password("password123"), "tenant_id": tenant_a_id})
+            INSERT INTO users (id, _email_encrypted, hashed_password, full_name, is_active, is_superuser, roles, direct_permissions, tenant_id, created_at, updated_at)
+            VALUES (:id, :email, :pwd, 'User A', true, false, '{}', '{}', :tenant_id, now(), now())
+        """), {"id": user_a_id, "email": b"encrypted", "pwd": hash_password("password123"), "tenant_id": tenant_a_id})
         
         # Create users for Tenant B
         user_b_id = uuid.uuid4()
         await _set_tenant(session, tenant_b_id)
         await session.execute(text("""
-            INSERT INTO users (id, email, hashed_password, full_name, is_active, is_superuser, roles, direct_permissions, tenant_id, created_at, updated_at)
-            VALUES (:id, 'userb@tenant-b.com', :pwd, 'User B', true, false, '{}', '{}', :tenant_id, now(), now())
-        """), {"id": user_b_id, "pwd": hash_password("password123"), "tenant_id": tenant_b_id})
+            INSERT INTO users (id, _email_encrypted, hashed_password, full_name, is_active, is_superuser, roles, direct_permissions, tenant_id, created_at, updated_at)
+            VALUES (:id, :email, :pwd, 'User B', true, false, '{}', '{}', :tenant_id, now(), now())
+        """), {"id": user_b_id, "email": b"encrypted", "pwd": hash_password("password123"), "tenant_id": tenant_b_id})
         
         await session.commit()
         

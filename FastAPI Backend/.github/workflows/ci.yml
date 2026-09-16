@@ -1,0 +1,445 @@
+name: CA Nexus Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  POSTGRES_USER: ca_nexus
+  POSTGRES_PASSWORD: ca_nexus_dev_password
+  POSTGRES_DB: ca_nexus_test
+  TEST_DATABASE_URL: postgresql+asyncpg://ca_nexus:ca_nexus_dev_password@localhost:5432/ca_nexus_test
+  REDIS_URL: redis://localhost:6379/3
+  CELERY_BROKER_URL: redis://localhost:6379/4
+  CELERY_RESULT_BACKEND: redis://localhost:6379/5
+  SECRET_KEY: test-secret-key-for-testing-only-minimum-32-chars-long
+  ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==
+  ENVIRONMENT: testing
+  DEBUG: "true"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install ruff mypy
+
+      - name: Run Ruff linting
+        run: |
+          ruff check app/ tests/
+          ruff format --check app/ tests/
+
+      - name: Run MyPy type checking
+        run: |
+          mypy app/ --ignore-missing-imports --exclude migrations
+
+  test-migration:
+    name: Migration from Scratch
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+          pip install alembic psycopg2-binary
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U ${{ env.POSTGRES_USER }} && break
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres -c "CREATE DATABASE ${{ env.POSTGRES_DB }};"
+
+      - name: Run Alembic migrations
+        run: |
+          TEST_DATABASE_URL="${{ env.TEST_DATABASE_URL }}" alembic upgrade head
+
+      - name: Verify schema
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c "\dt"
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c "SELECT COUNT(*) FROM pg_policies WHERE schemaname = 'public';"
+
+      - name: Verify RLS enabled
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d ${{ env.POSTGRES_DB }} -c "
+            SELECT tablename, rowsecurity, forcerowsecurity 
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace 
+            WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname IN (
+              SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != 'alembic_version'
+            )
+            ORDER BY tablename;
+          "
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U ${{ env.POSTGRES_USER }} && break
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres -c "CREATE DATABASE ${{ env.POSTGRES_DB }};"
+
+      - name: Run migrations
+        run: |
+          TEST_DATABASE_URL="${{ env.TEST_DATABASE_URL }}" alembic upgrade head
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --tb=short -m "unit" --cov=app --cov-report=xml --cov-report=term-missing
+
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U ${{ env.POSTGRES_USER }} && break
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres -c "CREATE DATABASE ${{ env.POSTGRES_DB }};"
+
+      - name: Run migrations
+        run: |
+          TEST_DATABASE_URL="${{ env.TEST_DATABASE_URL }}" alembic upgrade head
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short -m "integration" --cov=app --cov-append --cov-report=xml --cov-report=term-missing
+
+  test-api:
+    name: API Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U ${{ env.POSTGRES_USER }} && break
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres -c "CREATE DATABASE ${{ env.POSTGRES_DB }};"
+
+      - name: Run migrations
+        run: |
+          TEST_DATABASE_URL="${{ env.TEST_DATABASE_URL }}" alembic upgrade head
+
+      - name: Run API tests
+        run: |
+          pytest tests/api/ -v --tb=short -m "api" --cov=app --cov-append --cov-report=xml --cov-report=term-missing
+
+  test-coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, test-api]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install coverage tools
+        run: |
+          pip install coverage coverage-badge codecov
+
+      - name: Combine coverage data
+        run: |
+          coverage combine
+
+      - name: Generate coverage report
+        run: |
+          coverage report --show-missing --skip-covered
+          coverage html -d htmlcov
+          coverage-badge -o coverage.svg -f
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            htmlcov/
+            coverage.svg
+            coverage.xml
+
+      - name: Check coverage thresholds
+        run: |
+          echo "Checking coverage thresholds..."
+          coverage report --fail-under=50  # Minimum threshold, will raise to 80% over time
+
+      - name: Upload to Codecov
+        if: env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: unittests
+          name: ca-nexus-backend
+
+  test-comprehensive:
+    name: Comprehensive Test Suite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[test]"
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -p 5432 -U ${{ env.POSTGRES_USER }} && break
+            sleep 2
+          done
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ env.POSTGRES_PASSWORD }} psql -h localhost -U ${{ env.POSTGRES_USER }} -d postgres -c "CREATE DATABASE ${{ env.POSTGRES_DB }};"
+
+      - name: Run migrations
+        run: |
+          TEST_DATABASE_URL="${{ env.TEST_DATABASE_URL }}" alembic upgrade head
+
+      - name: Run all tests
+        run: |
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-missing
+
+      - name: Run RLS isolation tests
+        run: |
+          python3 test_rls_isolation.py
+
+  # Summary job
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-migration, test-unit, test-integration, test-api, test-coverage]
+    if: always()
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "Lint & Typecheck: ${{ needs.lint-and-typecheck.result }}"
+          echo "Migration Test: ${{ needs.test-migration.result }}"
+          echo "Unit Tests: ${{ needs.test-unit.result }}"
+          echo "Integration Tests: ${{ needs.test-integration.result }}"
+          echo "API Tests: ${{ needs.test-api.result }}"
+          echo "Coverage: ${{ needs.test-coverage.result }}"
+
+      - name: Fail if any required job failed
+        if: |
+          needs.lint-and-typecheck.result != 'success' ||
+          needs.test-migration.result != 'success' ||
+          needs.test-unit.result != 'success' ||
+          needs.test-integration.result != 'success' ||
+          needs.test-api.result != 'success'
+        run: |
+          echo "One or more required jobs failed"
+          exit 1

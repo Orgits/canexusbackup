@@ -4,11 +4,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
 from app.core.security.dependencies import get_current_active_user
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.calendar.schemas import (
     CalendarEventCreate,
     CalendarEventListResponse,
@@ -24,13 +24,13 @@ router = APIRouter()
 @router.post("", response_model=CalendarEventResponse, status_code=status.HTTP_201_CREATED)
 async def create_calendar_event(
     data: CalendarEventCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_CREATE)),
 ):
     service = CalendarService(db)
-    event = await service.create(data, current_tenant.id, current_user.id)
+    event = await service.create(data, tenant_context.tenant_id, current_user.id)
     return CalendarEventResponse.model_validate(event)
 
 
@@ -47,14 +47,14 @@ async def list_calendar_events(
     start_to: datetime = None,
     sort_by: str = None,
     sort_order: str = "asc",
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_READ)),
 ):
     service = CalendarService(db)
     items, total = await service.get_all(
-        current_tenant.id, page, page_size, search, client_id, matter_id,
+        tenant_context.tenant_id, page, page_size, search, client_id, matter_id,
         user_id, event_type, start_from, start_to, sort_by, sort_order
     )
     return CalendarEventListResponse(
@@ -71,26 +71,26 @@ async def get_events_in_range(
     start_from: datetime,
     start_to: datetime,
     user_id: UUID = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_READ)),
 ):
     service = CalendarService(db)
-    items = await service.get_events_in_range(current_tenant.id, start_from, start_to, user_id)
+    items = await service.get_events_in_range(tenant_context.tenant_id, start_from, start_to, user_id)
     return [CalendarEventResponse.model_validate(item) for item in items]
 
 
 @router.get("/{event_id}", response_model=CalendarEventResponse)
 async def get_calendar_event(
     event_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_READ)),
 ):
     service = CalendarService(db)
-    event = await service.get_by_id(event_id, current_tenant.id)
+    event = await service.get_by_id(event_id, tenant_context.tenant_id)
     return CalendarEventResponse.model_validate(event)
 
 
@@ -98,23 +98,23 @@ async def get_calendar_event(
 async def update_calendar_event(
     event_id: UUID,
     data: CalendarEventUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_UPDATE)),
 ):
     service = CalendarService(db)
-    event = await service.update(event_id, current_tenant.id, data, current_user.id)
+    event = await service.update(event_id, tenant_context.tenant_id, data, current_user.id)
     return CalendarEventResponse.model_validate(event)
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_calendar_event(
     event_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission(Permission.CALENDAR_DELETE)),
 ):
     service = CalendarService(db)
-    await service.delete(event_id, current_tenant.id)
+    await service.delete(event_id, tenant_context.tenant_id)

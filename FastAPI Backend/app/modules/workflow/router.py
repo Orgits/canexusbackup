@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.security.dependencies import get_current_user, get_token_payload
 from app.core.tenancy import get_tenant_context
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/workflow", tags=["Workflow Engine"])
 
 
 # Dependency
-def get_workflow_service(db: AsyncSession = Depends(get_db)) -> WorkflowService:
+def get_workflow_service(db: AsyncSession = Depends(get_tenant_db_session)) -> WorkflowService:
     return WorkflowService(db)
 
 

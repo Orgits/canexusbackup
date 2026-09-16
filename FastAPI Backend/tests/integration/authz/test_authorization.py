@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.firms.models import Firm
 from app.modules.users.models import User
 from app.modules.clients.models import Client
-from app.modules.calendar.models import CalendarEvent, CalendarEventType
+from app.modules.calendar.models import CalendarEvent, EventType
 from app.modules.communications.models import Communication, CommunicationChannel, CommunicationDirection, CommunicationStatus
 from app.modules.workflow.models import WorkflowDefinition, WorkflowInstance, WorkflowEntityType
 from app.core.security import hash_password

@@ -6,9 +6,12 @@ from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.billing.router import router as billing_router
 from app.modules.calendar.router import router as calendar_router
+from app.modules.channels.router import router as channels_router
 from app.modules.clients.router import router as clients_router
 from app.modules.collaboration.router import router as collaboration_router
 from app.modules.compliance.router import router as compliance_router
+from app.modules.communications.router import router as communications_router
+from app.modules.consent.router import router as consent_router
 from app.modules.documents.router import router as documents_router
 from app.modules.firms.router import router as firms_router
 from app.modules.matters.router import router as matters_router
@@ -21,6 +24,20 @@ from app.modules.tds.router import router as tds_router
 from app.modules.users.router import router as users_router
 from app.modules.workflow.router import router as workflow_router
 from app.modules.workload.router import router as workload_router
+
+# Phase 3 modules
+from app.modules.campaigns.router import router as campaigns_router
+from app.modules.conversations.router import router as conversations_router
+from app.modules.templates.router import router as templates_router
+from app.modules.consent.router import router as consent_router
+from app.modules.suppression.router import router as suppression_router
+from app.modules.document_requests.router import router as document_requests_router
+from app.modules.webhooks.router import router as webhooks_router
+from app.modules.channels.router import router as channels_router
+from app.modules.ocr.router import router as ocr_router
+from app.modules.ai_processing.router import router as ai_processing_router
+from app.modules.suppression.router import router as suppression_router
+from app.modules.document_requests.router import router as document_requests_router
 
 settings = get_settings()
 
@@ -46,3 +63,17 @@ api_router.include_router(workload_router, prefix="/workload", tags=["Workload &
 api_router.include_router(assignments_router, prefix="/assignments", tags=["Assignment & Escalation"])
 api_router.include_router(collaboration_router, prefix="/collaboration", tags=["Collaboration & Comments"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
+
+# Phase 3 routers
+api_router.include_router(campaigns_router, prefix="/campaigns", tags=["Campaigns"])
+api_router.include_router(conversations_router, prefix="/conversations", tags=["Conversations"])
+api_router.include_router(templates_router, prefix="/templates", tags=["Templates"])
+api_router.include_router(consent_router, prefix="/consent", tags=["Consent"])
+api_router.include_router(suppression_router, prefix="/suppression", tags=["Suppression"])
+api_router.include_router(document_requests_router, prefix="/document-requests", tags=["Document Requests"])
+api_router.include_router(webhooks_router, prefix="/webhooks", tags=["Webhooks"])
+api_router.include_router(channels_router, prefix="/channels", tags=["Channel Integrations"])
+api_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
+api_router.include_router(ai_processing_router, prefix="/ai", tags=["AI Processing"])
+api_router.include_router(suppression_router, prefix="/suppression", tags=["Suppression"])
+api_router.include_router(document_requests_router, prefix="/document-requests", tags=["Document Requests"])

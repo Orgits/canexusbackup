@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.compliance.schemas import (
     ComplianceApplicabilityCreate,
     ComplianceApplicabilityResponse,
@@ -32,12 +32,12 @@ type_router = APIRouter(prefix="/types", tags=["Compliance Types"])
 @type_router.post("", response_model=ComplianceTypeResponse, status_code=status.HTTP_201_CREATED)
 async def create_compliance_type(
     data: ComplianceTypeCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_CREATE)),
 ):
     service = ComplianceService(db)
-    compliance_type = await service.create_type(data, current_tenant.id, current_user.id)
+    compliance_type = await service.create_type(data, tenant_context.tenant_id, current_user.id)
     return ComplianceTypeResponse.model_validate(compliance_type)
 
 
@@ -48,24 +48,24 @@ async def list_compliance_types(
     search: str = None,
     category: str = None,
     is_active: bool = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
-    items, total = await service.get_all_types(current_tenant.id, page, page_size, search, category, is_active)
+    items, total = await service.get_all_types(tenant_context.tenant_id, page, page_size, search, category, is_active)
     return [ComplianceTypeResponse.model_validate(item) for item in items]
 
 
 @type_router.get("/{type_id}", response_model=ComplianceTypeResponse)
 async def get_compliance_type(
     type_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
-    compliance_type = await service.get_type_by_id(type_id, current_tenant.id)
+    compliance_type = await service.get_type_by_id(type_id, tenant_context.tenant_id)
     return ComplianceTypeResponse.model_validate(compliance_type)
 
 
@@ -73,34 +73,34 @@ async def get_compliance_type(
 async def update_compliance_type(
     type_id: UUID,
     data: ComplianceTypeUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_UPDATE)),
 ):
     service = ComplianceService(db)
-    compliance_type = await service.update_type(type_id, current_tenant.id, data, current_user.id)
+    compliance_type = await service.update_type(type_id, tenant_context.tenant_id, data, current_user.id)
     return ComplianceTypeResponse.model_validate(compliance_type)
 
 
 @type_router.delete("/{type_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_compliance_type(
     type_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_DELETE)),
 ):
     service = ComplianceService(db)
-    await service.delete_type(type_id, current_tenant.id)
+    await service.delete_type(type_id, tenant_context.tenant_id)
 
 
 @type_router.post("/initialize", response_model=list[ComplianceTypeResponse])
 async def initialize_system_types(
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.ADMIN_FIRM_MANAGE)),
 ):
     service = ComplianceService(db)
-    types = await service.initialize_system_types(current_tenant.id)
+    types = await service.initialize_system_types(tenant_context.tenant_id)
     return [ComplianceTypeResponse.model_validate(t) for t in types]
 
 
@@ -110,12 +110,12 @@ cycle_router = APIRouter(prefix="/cycles", tags=["Compliance Cycles"])
 @cycle_router.post("", response_model=ComplianceCycleResponse, status_code=status.HTTP_201_CREATED)
 async def create_compliance_cycle(
     data: ComplianceCycleCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_CREATE)),
 ):
     service = ComplianceService(db)
-    cycle = await service.create_cycle(data, current_tenant.id, current_user.id)
+    cycle = await service.create_cycle(data, tenant_context.tenant_id, current_user.id)
     return ComplianceCycleResponse.model_validate(cycle)
 
 
@@ -135,13 +135,13 @@ async def list_compliance_cycles(
     assigned_user_id: UUID = None,
     sort_by: str = None,
     sort_order: str = "asc",
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
     items, total = await service.get_all_cycles(
-        current_tenant.id, page, page_size, search, client_id, compliance_type_id,
+        tenant_context.tenant_id, page, page_size, search, client_id, compliance_type_id,
         status, matter_id, due_date_from, due_date_to, period_start, period_end,
         assigned_user_id, sort_by, sort_order
     )
@@ -157,12 +157,12 @@ async def list_compliance_cycles(
 @cycle_router.get("/{cycle_id}", response_model=ComplianceCycleResponse)
 async def get_compliance_cycle(
     cycle_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
-    cycle = await service.get_cycle_by_id(cycle_id, current_tenant.id)
+    cycle = await service.get_cycle_by_id(cycle_id, tenant_context.tenant_id)
     return ComplianceCycleResponse.model_validate(cycle)
 
 
@@ -170,24 +170,24 @@ async def get_compliance_cycle(
 async def update_compliance_cycle(
     cycle_id: UUID,
     data: ComplianceCycleUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_UPDATE)),
 ):
     service = ComplianceService(db)
-    cycle = await service.update_cycle(cycle_id, current_tenant.id, data, current_user.id)
+    cycle = await service.update_cycle(cycle_id, tenant_context.tenant_id, data, current_user.id)
     return ComplianceCycleResponse.model_validate(cycle)
 
 
 @cycle_router.delete("/{cycle_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_compliance_cycle(
     cycle_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_DELETE)),
 ):
     service = ComplianceService(db)
-    await service.delete_cycle(cycle_id, current_tenant.id)
+    await service.delete_cycle(cycle_id, tenant_context.tenant_id)
 
 
 applicability_router = APIRouter(prefix="/applicability", tags=["Compliance Applicability"])
@@ -196,12 +196,12 @@ applicability_router = APIRouter(prefix="/applicability", tags=["Compliance Appl
 @applicability_router.post("", response_model=ComplianceApplicabilityResponse, status_code=status.HTTP_201_CREATED)
 async def create_applicability(
     data: ComplianceApplicabilityCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_CREATE)),
 ):
     service = ComplianceService(db)
-    applicability = await service.create_applicability(data, current_tenant.id, current_user.id)
+    applicability = await service.create_applicability(data, tenant_context.tenant_id, current_user.id)
     return ComplianceApplicabilityResponse.model_validate(applicability)
 
 
@@ -209,12 +209,12 @@ async def create_applicability(
 async def list_applicability(
     client_id: UUID = None,
     compliance_type_id: UUID = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
-    items = await service.get_all_applicability(current_tenant.id, client_id, compliance_type_id)
+    items = await service.get_all_applicability(tenant_context.tenant_id, client_id, compliance_type_id)
     return [ComplianceApplicabilityResponse.model_validate(item) for item in items]
 
 
@@ -222,12 +222,12 @@ async def list_applicability(
 async def get_applicability(
     client_id: UUID,
     compliance_type_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_READ)),
 ):
     service = ComplianceService(db)
-    applicability = await service.get_applicability(client_id, compliance_type_id, current_tenant.id)
+    applicability = await service.get_applicability(client_id, compliance_type_id, tenant_context.tenant_id)
     return ComplianceApplicabilityResponse.model_validate(applicability)
 
 
@@ -236,12 +236,12 @@ async def update_applicability(
     client_id: UUID,
     compliance_type_id: UUID,
     data: ComplianceApplicabilityUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_UPDATE)),
 ):
     service = ComplianceService(db)
-    applicability = await service.update_applicability(client_id, compliance_type_id, current_tenant.id, data, current_user.id)
+    applicability = await service.update_applicability(client_id, compliance_type_id, tenant_context.tenant_id, data, current_user.id)
     return ComplianceApplicabilityResponse.model_validate(applicability)
 
 
@@ -249,12 +249,12 @@ async def update_applicability(
 async def delete_applicability(
     client_id: UUID,
     compliance_type_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.COMPLIANCE_DELETE)),
 ):
     service = ComplianceService(db)
-    await service.delete_applicability(client_id, compliance_type_id, current_tenant.id)
+    await service.delete_applicability(client_id, compliance_type_id, tenant_context.tenant_id)
 
 
 router.include_router(type_router)

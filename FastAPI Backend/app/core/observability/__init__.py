@@ -1,3 +1,39 @@
 from .metrics import get_metrics, setup_metrics
+from .tracing import (
+    add_span_attributes,
+    extract_trace_context,
+    get_current_span,
+    get_tracer,
+    get_trace_id,
+    get_span_id,
+    inject_trace_context,
+    instrument_app,
+    record_exception,
+    setup_metrics,
+    setup_tracing,
+    setup_tracing_for_worker,
+    trace_db_operation,
+    trace_http_request,
+    trace_operation,
+    trace_redis_operation,
+)
 
-__all__ = ["get_metrics", "setup_metrics"]
+__all__ = [
+    "get_metrics",
+    "setup_metrics",
+    "setup_tracing",
+    "instrument_app",
+    "get_tracer",
+    "get_current_span",
+    "get_trace_id",
+    "get_span_id",
+    "trace_operation",
+    "trace_db_operation",
+    "trace_redis_operation",
+    "trace_http_request",
+    "add_span_attributes",
+    "record_exception",
+    "inject_trace_context",
+    "extract_trace_context",
+    "setup_tracing_for_worker",
+]

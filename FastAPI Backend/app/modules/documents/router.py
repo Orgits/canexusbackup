@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.documents.schemas import (
     DocumentCreate,
     DocumentListResponse,
@@ -28,32 +28,32 @@ router = APIRouter()
 @router.post("/upload/init", response_model=DocumentUploadInitResponse, status_code=status.HTTP_201_CREATED)
 async def init_document_upload(
     data: DocumentUploadInitRequest,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    return await service.init_upload(data, current_tenant.id, current_user.id)
+    return await service.init_upload(data, tenant_context.tenant_id, current_user.id)
 
 
 @router.post("/upload/complete/{document_id}", response_model=DocumentResponse)
 async def complete_document_upload(
     document_id: UUID,
     request: DocumentUploadCompleteRequest,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    document = await service.complete_upload(document_id, current_tenant.id, request.checksum, current_user.id)
+    document = await service.complete_upload(document_id, tenant_context.tenant_id, request.checksum, current_user.id)
     return DocumentResponse.model_validate(document)
 
 
 @router.post("", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document(
     data: DocumentCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
@@ -69,12 +69,12 @@ async def create_document(
             description=data.description,
             tags=data.tags,
         ),
-        current_tenant.id,
+        tenant_context.tenant_id,
         current_user.id,
     )
     # Note: In real usage, client would upload to SAS URL then call complete_upload
     # This is a convenience endpoint for direct creation
-    document = await service.complete_upload(init_response.document_id, current_tenant.id, "", current_user.id)
+    document = await service.complete_upload(init_response.document_id, tenant_context.tenant_id, "", current_user.id)
     return DocumentResponse.model_validate(document)
 
 
@@ -95,14 +95,14 @@ async def list_documents(
     tags: str = None,
     sort_by: str = None,
     sort_order: str = "asc",
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
     service = DocumentService(db)
     tag_list = tags.split(",") if tags else None
     items, total = await service.get_all(
-        current_tenant.id, page, page_size, search, client_id, matter_id, task_id,
+        tenant_context.tenant_id, page, page_size, search, client_id, matter_id, task_id,
         compliance_cycle_id, status, category, uploaded_by, date_from, date_to,
         tag_list, sort_by, sort_order
     )
@@ -118,12 +118,12 @@ async def list_documents(
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
     document_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
     service = DocumentService(db)
-    document = await service.get_by_id(document_id, current_tenant.id)
+    document = await service.get_by_id(document_id, tenant_context.tenant_id)
     return DocumentResponse.model_validate(document)
 
 
@@ -131,12 +131,12 @@ async def get_document(
 async def update_document(
     document_id: UUID,
     data: DocumentUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    document = await service.update(document_id, current_tenant.id, data, current_user.id)
+    document = await service.update(document_id, tenant_context.tenant_id, data, current_user.id)
     return DocumentResponse.model_validate(document)
 
 
@@ -144,35 +144,35 @@ async def update_document(
 async def create_document_version(
     document_id: UUID,
     data: DocumentUploadInitRequest,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    return await service.create_new_version(document_id, current_tenant.id, data, current_user.id)
+    return await service.create_new_version(document_id, tenant_context.tenant_id, data, current_user.id)
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_DELETE)),
 ):
     service = DocumentService(db)
-    await service.delete(document_id, current_tenant.id)
+    await service.delete(document_id, tenant_context.tenant_id)
 
 
 @router.get("/{document_id}/download", response_model=DocumentDownloadResponse)
 async def get_document_download_url(
     document_id: UUID,
     expiry_hours: int = 1,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
     service = DocumentService(db)
-    download_url = await service.generate_download_url(document_id, current_tenant.id, expiry_hours)
+    download_url = await service.generate_download_url(document_id, tenant_context.tenant_id, expiry_hours)
     expires_at = datetime.now() + timedelta(hours=expiry_hours)
     return DocumentDownloadResponse(download_url=download_url, expires_at=expires_at)
 
@@ -180,12 +180,12 @@ async def get_document_download_url(
 @router.get("/{document_id}/metadata", response_model=DocumentMetadataResponse)
 async def get_document_metadata(
     document_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
     service = DocumentService(db)
-    metadata = await service.get_document_metadata(document_id, current_tenant.id)
+    metadata = await service.get_document_metadata(document_id, tenant_context.tenant_id)
     if not metadata:
         from app.core.exceptions import NotFoundException
         raise NotFoundException(detail="Document metadata not found")

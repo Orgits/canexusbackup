@@ -6,13 +6,19 @@ from sqlalchemy import text
 
 # Import all models FIRST to ensure they are registered with SQLAlchemy
 import app.models
-from app.api.middleware import LoggingMiddleware, MetricsMiddleware, TenantMiddleware
+from app.api.middleware import (
+    LoggingMiddleware,
+    MetricsMiddleware,
+    RateLimitMiddleware,
+    TenantMiddleware,
+    init_rate_limiter,
+)
 from app.api.routers import api_router
 from app.core.config import get_settings
 from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
-from app.core.observability import get_metrics, setup_metrics
+from app.core.observability import get_metrics, setup_metrics, setup_tracing, instrument_app
 from app.core.redis.client import close_redis, get_redis, init_redis
 
 settings = get_settings()
@@ -23,6 +29,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     configure_logging()
     setup_metrics()
+    setup_tracing()
     await init_redis()
     logger.info("Application starting up", environment=settings.ENVIRONMENT)
     yield
@@ -50,6 +57,9 @@ def create_app() -> FastAPI:
         allow_headers=settings.CORS_ALLOW_HEADERS,
     )
 
+    # Rate limiting middleware (added first to catch all requests)
+    app.add_middleware(RateLimitMiddleware)
+
     app.add_middleware(LoggingMiddleware)
     if settings.ENABLE_METRICS:
         app.add_middleware(MetricsMiddleware)
@@ -59,25 +69,42 @@ def create_app() -> FastAPI:
 
     app.include_router(api_router, prefix=settings.API_PREFIX)
 
+    # Initialize rate limiter
+    init_rate_limiter(app)
+
+    # Instrument with OpenTelemetry after all routes are added
+    if settings.ENABLE_TRACING:
+        instrument_app(app)
+
     @app.get("/health", tags=["Health"])
     async def health_check():
         return {"status": "healthy", "service": settings.APP_NAME}
 
     @app.get("/ready", tags=["Health"])
     async def readiness_check():
+        checks = {"service": settings.APP_NAME, "checks": {}}
+
+        # Database check
         try:
             async with engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
-        except Exception:
-            return {"status": "not ready", "service": settings.APP_NAME, "database": "disconnected"}
+            checks["checks"]["database"] = "connected"
+        except Exception as e:
+            checks["checks"]["database"] = f"disconnected: {str(e)}"
 
+        # Redis check
         try:
             redis_client = await get_redis()
             await redis_client.ping()
-        except Exception:
-            return {"status": "not ready", "service": settings.APP_NAME, "redis": "disconnected"}
+            checks["checks"]["redis"] = "connected"
+        except Exception as e:
+            checks["checks"]["redis"] = f"disconnected: {str(e)}"
 
-        return {"status": "ready", "service": settings.APP_NAME}
+        # Determine overall status
+        all_healthy = all(v == "connected" for v in checks["checks"].values())
+        checks["status"] = "ready" if all_healthy else "not ready"
+
+        return checks
 
     if settings.ENABLE_METRICS:
         @app.get("/metrics", tags=["Metrics"])

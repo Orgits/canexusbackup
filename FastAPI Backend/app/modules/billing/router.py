@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.billing.models import PaymentStatus
 from app.modules.billing.schemas import (
     ExpenseCreate,
@@ -31,12 +31,12 @@ invoice_router = APIRouter(prefix="/invoices", tags=["Invoices"])
 @invoice_router.post("", response_model=InvoiceResponse, status_code=status.HTTP_201_CREATED)
 async def create_invoice(
     data: InvoiceCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    invoice = await service.create_invoice(data, current_tenant.id, current_user.id)
+    invoice = await service.create_invoice(data, tenant_context.tenant_id, current_user.id)
     return InvoiceResponse.model_validate(invoice)
 
 
@@ -52,13 +52,13 @@ async def list_invoices(
     due_date_to: datetime = None,
     sort_by: str = None,
     sort_order: str = "asc",
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
     items, total = await service.get_all_invoices(
-        current_tenant.id, page, page_size, search, client_id, matter_id, status,
+        tenant_context.tenant_id, page, page_size, search, client_id, matter_id, status,
         due_date_from, due_date_to, sort_by, sort_order
     )
     return InvoiceListResponse(
@@ -73,12 +73,12 @@ async def list_invoices(
 @invoice_router.get("/{invoice_id}", response_model=InvoiceResponse)
 async def get_invoice(
     invoice_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
-    invoice = await service.get_invoice_by_id(invoice_id, current_tenant.id)
+    invoice = await service.get_invoice_by_id(invoice_id, tenant_context.tenant_id)
     return InvoiceResponse.model_validate(invoice)
 
 
@@ -86,36 +86,36 @@ async def get_invoice(
 async def update_invoice(
     invoice_id: UUID,
     data: InvoiceUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    invoice = await service.update_invoice(invoice_id, current_tenant.id, data, current_user.id)
+    invoice = await service.update_invoice(invoice_id, tenant_context.tenant_id, data, current_user.id)
     return InvoiceResponse.model_validate(invoice)
 
 
 @invoice_router.post("/{invoice_id}/send", response_model=InvoiceResponse)
 async def send_invoice(
     invoice_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    invoice = await service.send_invoice(invoice_id, current_tenant.id, current_user.id)
+    invoice = await service.send_invoice(invoice_id, tenant_context.tenant_id, current_user.id)
     return InvoiceResponse.model_validate(invoice)
 
 
 @invoice_router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_invoice(
     invoice_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    await service.delete_invoice(invoice_id, current_tenant.id)
+    await service.delete_invoice(invoice_id, tenant_context.tenant_id)
 
 
 payment_router = APIRouter(prefix="/payments", tags=["Payments"])
@@ -124,12 +124,12 @@ payment_router = APIRouter(prefix="/payments", tags=["Payments"])
 @payment_router.post("", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def create_payment(
     data: PaymentCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    payment = await service.create_payment(data, current_tenant.id, current_user.id)
+    payment = await service.create_payment(data, tenant_context.tenant_id, current_user.id)
     return PaymentResponse.model_validate(payment)
 
 
@@ -142,13 +142,13 @@ async def list_payments(
     status: str = None,
     date_from: datetime = None,
     date_to: datetime = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
     items, total = await service.get_all_payments(
-        current_tenant.id, page, page_size, client_id, invoice_id, status, date_from, date_to
+        tenant_context.tenant_id, page, page_size, client_id, invoice_id, status, date_from, date_to
     )
     return [PaymentResponse.model_validate(item) for item in items]
 
@@ -156,12 +156,12 @@ async def list_payments(
 @payment_router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(
     payment_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
-    payment = await service.get_payment_by_id(payment_id, current_tenant.id)
+    payment = await service.get_payment_by_id(payment_id, tenant_context.tenant_id)
     return PaymentResponse.model_validate(payment)
 
 
@@ -169,24 +169,24 @@ async def get_payment(
 async def update_payment_status(
     payment_id: UUID,
     status: PaymentStatus,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    payment = await service.update_payment(payment_id, current_tenant.id, status, current_user.id)
+    payment = await service.update_payment(payment_id, tenant_context.tenant_id, status, current_user.id)
     return PaymentResponse.model_validate(payment)
 
 
 @payment_router.delete("/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_payment(
     payment_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    await service.delete_payment(payment_id, current_tenant.id)
+    await service.delete_payment(payment_id, tenant_context.tenant_id)
 
 
 expense_router = APIRouter(prefix="/expenses", tags=["Expenses"])
@@ -195,12 +195,12 @@ expense_router = APIRouter(prefix="/expenses", tags=["Expenses"])
 @expense_router.post("", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
 async def create_expense(
     data: ExpenseCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    expense = await service.create_expense(data, current_tenant.id, current_user.id)
+    expense = await service.create_expense(data, tenant_context.tenant_id, current_user.id)
     return ExpenseResponse.model_validate(expense)
 
 
@@ -214,13 +214,13 @@ async def list_expenses(
     status: str = None,
     date_from: datetime = None,
     date_to: datetime = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
     items, total = await service.get_all_expenses(
-        current_tenant.id, page, page_size, client_id, matter_id, user_id, status, date_from, date_to
+        tenant_context.tenant_id, page, page_size, client_id, matter_id, user_id, status, date_from, date_to
     )
     return [ExpenseResponse.model_validate(item) for item in items]
 
@@ -228,12 +228,12 @@ async def list_expenses(
 @expense_router.get("/{expense_id}", response_model=ExpenseResponse)
 async def get_expense(
     expense_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_READ)),
 ):
     service = BillingService(db)
-    expense = await service.get_expense_by_id(expense_id, current_tenant.id)
+    expense = await service.get_expense_by_id(expense_id, tenant_context.tenant_id)
     return ExpenseResponse.model_validate(expense)
 
 
@@ -241,48 +241,48 @@ async def get_expense(
 async def update_expense(
     expense_id: UUID,
     data: ExpenseCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    expense = await service.update_expense(expense_id, current_tenant.id, data, current_user.id)
+    expense = await service.update_expense(expense_id, tenant_context.tenant_id, data, current_user.id)
     return ExpenseResponse.model_validate(expense)
 
 
 @expense_router.post("/{expense_id}/approve", response_model=ExpenseResponse)
 async def approve_expense(
     expense_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    expense = await service.approve_expense(expense_id, current_tenant.id, current_user.id)
+    expense = await service.approve_expense(expense_id, tenant_context.tenant_id, current_user.id)
     return ExpenseResponse.model_validate(expense)
 
 
 @expense_router.post("/{expense_id}/reimburse", response_model=ExpenseResponse)
 async def reimburse_expense(
     expense_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    expense = await service.reimburse_expense(expense_id, current_tenant.id, current_user.id)
+    expense = await service.reimburse_expense(expense_id, tenant_context.tenant_id, current_user.id)
     return ExpenseResponse.model_validate(expense)
 
 
 @expense_router.delete("/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_expense(
     expense_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.BILLING_MANAGE)),
 ):
     service = BillingService(db)
-    await service.delete_expense(expense_id, current_tenant.id)
+    await service.delete_expense(expense_id, tenant_context.tenant_id)
 
 
 router.include_router(invoice_router)

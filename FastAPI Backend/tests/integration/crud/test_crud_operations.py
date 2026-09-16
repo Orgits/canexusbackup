@@ -17,7 +17,7 @@ from app.modules.tasks.models import Task, TaskStatus, TaskPriority
 from app.modules.compliance.models import ComplianceType, ComplianceCycle, ComplianceStatus, ComplianceFrequency
 from app.modules.documents.models import Document, DocumentStatus, DocumentCategory
 from app.modules.billing.models import Invoice, InvoiceItem, Payment, Expense
-from app.modules.calendar.models import CalendarEvent, CalendarEventType
+from app.modules.calendar.models import CalendarEvent, EventType
 from app.modules.communications.models import Communication, CommunicationChannel, CommunicationDirection, CommunicationStatus
 from app.modules.workflow.models import WorkflowDefinition, WorkflowInstance, WorkflowEntityType, WorkflowTransitionHistory
 from app.modules.notifications.models import Notification, NotificationTemplate, NotificationTrigger, NotificationChannel, NotificationStatus, NotificationPriority
@@ -667,7 +667,7 @@ class TestCalendarCRUD:
     async def test_create_calendar_event(self, db_session: AsyncSession, test_firm: Firm, test_user: User):
         event = CalendarEvent(
             title="Client Meeting",
-            event_type=CalendarEventType.CLIENT_MEETING,
+            event_type=EventType.CLIENT_MEETING,
             start_at=datetime(2026, 1, 15, 10, 0),
             end_at=datetime(2026, 1, 15, 11, 0),
             tenant_id=test_firm.id,
@@ -678,7 +678,7 @@ class TestCalendarCRUD:
 
         assert event.id is not None
         assert event.title == "Client Meeting"
-        assert event.event_type == CalendarEventType.CLIENT_MEETING
+        assert event.event_type == EventType.CLIENT_MEETING
 
 
 class TestCommunicationCRUD:

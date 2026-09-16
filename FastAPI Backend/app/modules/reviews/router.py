@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.security.dependencies import get_current_user
 from app.core.tenancy import get_tenant_context
@@ -27,7 +27,7 @@ from app.modules.users.models import User
 router = APIRouter(prefix="/reviews", tags=["Review & Approval Engine"])
 
 
-def get_review_service(db: AsyncSession = Depends(get_db)) -> ReviewService:
+def get_review_service(db: AsyncSession = Depends(get_tenant_db_session)) -> ReviewService:
     return ReviewService(db)
 
 

@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.matters.schemas import (
     MatterCreate,
     MatterListResponse,
@@ -24,12 +24,12 @@ router = APIRouter()
 @router.post("", response_model=MatterResponse, status_code=status.HTTP_201_CREATED)
 async def create_matter(
     data: MatterCreate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_CREATE)),
 ):
     service = MatterService(db)
-    matter = await service.create(data, current_tenant.id, current_user.id)
+    matter = await service.create(data, tenant_context.tenant_id, current_user.id)
     return MatterResponse.model_validate(matter)
 
 
@@ -49,14 +49,14 @@ async def list_matters(
     tags: str = None,
     sort_by: str = None,
     sort_order: str = "asc",
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_READ)),
 ):
     service = MatterService(db)
     tag_list = tags.split(",") if tags else None
     items, total = await service.get_all(
-        current_tenant.id, page, page_size, search, client_id, matter_type,
+        tenant_context.tenant_id, page, page_size, search, client_id, matter_type,
         status, priority, responsible_user_id, responsible_team_id,
         due_date_from, due_date_to, tag_list, sort_by, sort_order
     )
@@ -72,12 +72,12 @@ async def list_matters(
 @router.get("/{matter_id}", response_model=MatterResponse)
 async def get_matter(
     matter_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_READ)),
 ):
     service = MatterService(db)
-    matter = await service.get_by_id(matter_id, current_tenant.id)
+    matter = await service.get_by_id(matter_id, tenant_context.tenant_id)
     return MatterResponse.model_validate(matter)
 
 
@@ -85,12 +85,12 @@ async def get_matter(
 async def update_matter(
     matter_id: UUID,
     data: MatterUpdate,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_UPDATE)),
 ):
     service = MatterService(db)
-    matter = await service.update(matter_id, current_tenant.id, data, current_user.id)
+    matter = await service.update(matter_id, tenant_context.tenant_id, data, current_user.id)
     return MatterResponse.model_validate(matter)
 
 
@@ -98,21 +98,21 @@ async def update_matter(
 async def transition_matter_status(
     matter_id: UUID,
     data: MatterStatusTransition,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_UPDATE)),
 ):
     service = MatterService(db)
-    matter = await service.transition_status(matter_id, current_tenant.id, data, current_user.id)
+    matter = await service.transition_status(matter_id, tenant_context.tenant_id, data, current_user.id)
     return MatterResponse.model_validate(matter)
 
 
 @router.delete("/{matter_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_matter(
     matter_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.MATTERS_DELETE)),
 ):
     service = MatterService(db)
-    await service.delete(matter_id, current_tenant.id)
+    await service.delete(matter_id, tenant_context.tenant_id)

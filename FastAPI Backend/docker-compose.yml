@@ -1,0 +1,297 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: ca-nexus-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ca_nexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ca_nexus_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ca_nexus}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ca_nexus} -d ${POSTGRES_DB:-ca_nexus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  redis:
+    image: redis:7-alpine
+    container_name: ca-nexus-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-api
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=console
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    volumes:
+      - ./app:/app/app:ro
+      - ./alembic:/app/alembic:ro
+
+  worker-compliance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-worker-compliance
+    command: celery -A app.core.celery.app worker -Q compliance -c 2 --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  worker-notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-worker-notifications
+    command: celery -A app.core.celery.app worker -Q notifications -c 2 --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  worker-workload:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-worker-workload
+    command: celery -A app.core.celery.app worker -Q workload -c 2 --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  worker-outbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-worker-outbox
+    command: celery -A app.core.celery.app worker -Q outbox -c 2 --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-nexus-celery-beat
+    command: celery -A app.core.celery.app beat --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-ca_nexus}:${POSTGRES_PASSWORD:-ca_nexus_dev_password}@postgres:5432/${POSTGRES_DB:-ca_nexus}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-for-local-development-only-min-32-chars}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dGVzdC1lbmNyeXB0aW9uLWtleS10aGlydHktdHdvLWJ5dGVzLQ==}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: ca-nexus-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: ca-nexus-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - ca-nexus-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ca-nexus-network:
+    driver: bridge

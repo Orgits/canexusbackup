@@ -1,3 +1,4 @@
+README.md
 pyproject.toml
 app/main.py
 app/api/dependencies/__init__.py
@@ -7,6 +8,7 @@ app/api/dependencies/sorting.py
 app/api/middleware/__init__.py
 app/api/middleware/logging.py
 app/api/middleware/metrics.py
+app/api/middleware/rate_limit.py
 app/api/middleware/tenant.py
 app/api/routers/__init__.py
 app/core/celery/__init__.py
@@ -24,6 +26,7 @@ app/core/exceptions/handlers.py
 app/core/logging/__init__.py
 app/core/observability/__init__.py
 app/core/observability/metrics.py
+app/core/observability/tracing.py
 app/core/permissions/__init__.py
 app/core/permissions/dependencies.py
 app/core/permissions/registry.py

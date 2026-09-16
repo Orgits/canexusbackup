@@ -4,10 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_async_db
+from app.core.database.dependencies import get_tenant_db_session
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.core.tenancy.dependencies import get_current_tenant
+from app.core.tenancy import get_tenant_context
 from app.modules.audit.schemas import AuditLogListResponse, AuditLogResponse
 from app.modules.audit.service import AuditService
 from app.modules.users.models import User
@@ -25,13 +25,13 @@ async def list_audit_logs(
     resource_id: UUID = None,
     start_from: datetime = None,
     start_to: datetime = None,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.AUDIT_READ)),
 ):
     service = AuditService(db)
     items, total = await service.get_all(
-        current_tenant.id, page, page_size, user_id, action,
+        tenant_context.tenant_id, page, page_size, user_id, action,
         resource_type, resource_id, start_from, start_to
     )
     return AuditLogListResponse(
@@ -46,10 +46,10 @@ async def list_audit_logs(
 @router.get("/{log_id}", response_model=AuditLogResponse)
 async def get_audit_log(
     log_id: UUID,
-    db: AsyncSession = Depends(get_async_db),
-    current_tenant=Depends(get_current_tenant),
+    db: AsyncSession = Depends(get_tenant_db_session),
+    tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.AUDIT_READ)),
 ):
     service = AuditService(db)
-    audit_log = await service.get_by_id(log_id, current_tenant.id)
+    audit_log = await service.get_by_id(log_id, tenant_context.tenant_id)
     return AuditLogResponse.model_validate(audit_log)

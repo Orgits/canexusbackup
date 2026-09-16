@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     ENABLE_METRICS: bool = True
     METRICS_PORT: int = 9090
 
+    ENABLE_TRACING: bool = True
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = None
+    OTEL_SAMPLING_RATE: float = 1.0
+
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     SMTP_USER: str | None = None

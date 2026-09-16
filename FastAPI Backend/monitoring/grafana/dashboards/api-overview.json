@@ -1,0 +1,188 @@
+{
+  "dashboard": {
+    "title": "CA Nexus API Overview",
+    "tags": ["ca-nexus", "api"],
+    "timezone": "utc",
+    "panels": [
+      {
+        "title": "HTTP Requests per Second",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "HTTP Request Duration (p95)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "HTTP Requests by Status Code",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (status) (rate(http_requests_total[5m]))",
+            "legendFormat": "{{status}}"
+          }
+        ]
+      },
+      {
+        "title": "Active Requests",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(http_requests_active) by (method, endpoint)",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "Database Pool Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "db_pool_size",
+            "legendFormat": "Pool Size"
+          },
+          {
+            "expr": "db_pool_checked_out",
+            "legendFormat": "Checked Out"
+          },
+          {
+            "expr": "db_pool_overflow",
+            "legendFormat": "Overflow"
+          }
+        ]
+      },
+      {
+        "title": "Database Query Duration (p95)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{operation}} {{table}}"
+          }
+        ]
+      },
+      {
+        "title": "Database Query Errors",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(db_query_errors_total[5m])",
+            "legendFormat": "{{operation}} {{table}} {{error_type}}"
+          }
+        ]
+      },
+      {
+        "title": "Celery Tasks per Second",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(celery_tasks_total[5m])",
+            "legendFormat": "{{task_name}} {{status}}"
+          }
+        ]
+      },
+      {
+        "title": "Celery Task Duration (p95)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(celery_task_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{task_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Active Celery Tasks",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "celery_tasks_active",
+            "legendFormat": "{{task_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Celery Queue Depth",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 40, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "celery_queue_depth",
+            "legendFormat": "{{queue_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Celery Worker Failures",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 40, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(celery_worker_failures_total[5m])",
+            "legendFormat": "{{worker_name}} {{task_name}}"
+          }
+        ]
+      },
+      {
+        "title": "External Provider Requests",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 48, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(external_provider_requests_total[5m])",
+            "legendFormat": "{{provider}} {{operation}} {{status}}"
+          }
+        ]
+      },
+      {
+        "title": "External Provider Latency (p95)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 48, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(external_provider_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{provider}} {{operation}}"
+          }
+        ]
+      },
+      {
+        "title": "External Provider Errors",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 56, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(external_provider_errors_total[5m])",
+            "legendFormat": "{{provider}} {{operation}} {{error_type}}"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  },
+  "overwrite": true
+}
