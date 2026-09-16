@@ -1,10 +1,11 @@
-from typing import Optional, List, Tuple
+from datetime import UTC
 from uuid import UUID
-from sqlalchemy import select, func, or_, and_
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.clients.models import Client, ClientContact, ClientService, ClientCategory, ClientStatus
+from app.modules.clients.models import Client, ClientCategory, ClientContact, ClientService, ClientStatus
 
 
 class ClientRepository:
@@ -17,7 +18,7 @@ class ClientRepository:
         await self.db.refresh(client)
         return client
 
-    async def get_by_id(self, client_id: UUID, tenant_id: UUID) -> Optional[Client]:
+    async def get_by_id(self, client_id: UUID, tenant_id: UUID) -> Client | None:
         result = await self.db.execute(
             select(Client)
             .options(
@@ -30,13 +31,13 @@ class ClientRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_pan(self, pan: str, tenant_id: UUID) -> Optional[Client]:
+    async def get_by_pan(self, pan: str, tenant_id: UUID) -> Client | None:
         result = await self.db.execute(
             select(Client).where(Client.pan == pan, Client.tenant_id == tenant_id)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_gstin(self, gstin: str, tenant_id: UUID) -> Optional[Client]:
+    async def get_by_gstin(self, gstin: str, tenant_id: UUID) -> Client | None:
         result = await self.db.execute(
             select(Client).where(Client.gstin == gstin, Client.tenant_id == tenant_id)
         )
@@ -47,16 +48,16 @@ class ClientRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        category: Optional[ClientCategory] = None,
-        status: Optional[ClientStatus] = None,
-        responsible_user_id: Optional[UUID] = None,
-        responsible_team_id: Optional[UUID] = None,
+        search: str | None = None,
+        category: ClientCategory | None = None,
+        status: ClientStatus | None = None,
+        responsible_user_id: UUID | None = None,
+        responsible_team_id: UUID | None = None,
         is_archived: bool = False,
-        tags: Optional[List[str]] = None,
-        sort_by: Optional[str] = None,
+        tags: list[str] | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Client], int]:
+    ) -> tuple[list[Client], int]:
         query = (
             select(Client)
             .options(
@@ -127,9 +128,9 @@ class ClientRepository:
         await self.db.flush()
 
     async def archive(self, client: Client, archived_by: UUID) -> Client:
-        from datetime import datetime, timezone
+        from datetime import datetime
         client.is_archived = True
-        client.archived_at = datetime.now(timezone.utc)
+        client.archived_at = datetime.now(UTC)
         client.archived_by = archived_by
         client.status = ClientStatus.ARCHIVED
         return await self.update(client)
@@ -152,13 +153,13 @@ class ClientContactRepository:
         await self.db.refresh(contact)
         return contact
 
-    async def get_by_id(self, contact_id: UUID, tenant_id: UUID) -> Optional[ClientContact]:
+    async def get_by_id(self, contact_id: UUID, tenant_id: UUID) -> ClientContact | None:
         result = await self.db.execute(
             select(ClientContact).where(ClientContact.id == contact_id, ClientContact.tenant_id == tenant_id)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> List[ClientContact]:
+    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> list[ClientContact]:
         result = await self.db.execute(
             select(ClientContact)
             .where(ClientContact.client_id == client_id, ClientContact.tenant_id == tenant_id)
@@ -186,13 +187,13 @@ class ClientServiceRepository:
         await self.db.refresh(service)
         return service
 
-    async def get_by_id(self, service_id: UUID, tenant_id: UUID) -> Optional[ClientService]:
+    async def get_by_id(self, service_id: UUID, tenant_id: UUID) -> ClientService | None:
         result = await self.db.execute(
             select(ClientService).where(ClientService.id == service_id, ClientService.tenant_id == tenant_id)
         )
         return result.scalar_one_or_none()
 
-    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> List[ClientService]:
+    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> list[ClientService]:
         result = await self.db.execute(
             select(ClientService)
             .where(ClientService.client_id == client_id, ClientService.tenant_id == tenant_id)
@@ -200,7 +201,7 @@ class ClientServiceRepository:
         )
         return list(result.scalars().all())
 
-    async def get_by_client_and_type(self, client_id: UUID, service_type: str, tenant_id: UUID) -> Optional[ClientService]:
+    async def get_by_client_and_type(self, client_id: UUID, service_type: str, tenant_id: UUID) -> ClientService | None:
         result = await self.db.execute(
             select(ClientService)
             .where(

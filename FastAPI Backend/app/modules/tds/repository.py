@@ -1,25 +1,17 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.tds.models import (
-    TDSComplianceCycle,
     TDSChallan,
+    TDSComplianceCycle,
     TDSDeductee,
     TDSFormType,
     TDSQuarter,
     TDSStatus,
-)
-from app.modules.tds.schemas import (
-    TDSComplianceCycleCreate,
-    TDSComplianceCycleUpdate,
-    TDSChallanCreate,
-    TDSChallanUpdate,
-    TDSDeducteeCreate,
-    TDSDeducteeUpdate,
 )
 
 
@@ -34,7 +26,7 @@ class TDSRepository:
         await self.db.refresh(cycle)
         return cycle
 
-    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> Optional[TDSComplianceCycle]:
+    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> TDSComplianceCycle | None:
         result = await self.db.execute(
             select(TDSComplianceCycle)
             .where(
@@ -50,7 +42,7 @@ class TDSRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_cycle_with_details(self, cycle_id: UUID, tenant_id: UUID) -> Optional[TDSComplianceCycle]:
+    async def get_cycle_with_details(self, cycle_id: UUID, tenant_id: UUID) -> TDSComplianceCycle | None:
         result = await self.db.execute(
             select(TDSComplianceCycle)
             .where(
@@ -73,19 +65,19 @@ class TDSRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        form_type: Optional[TDSFormType] = None,
-        financial_year: Optional[str] = None,
-        quarter: Optional[TDSQuarter] = None,
-        status: Optional[TDSStatus] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        form_type: TDSFormType | None = None,
+        financial_year: str | None = None,
+        quarter: TDSQuarter | None = None,
+        status: TDSStatus | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[TDSComplianceCycle], int]:
+    ) -> tuple[list[TDSComplianceCycle], int]:
         query = select(TDSComplianceCycle).where(TDSComplianceCycle.tenant_id == tenant_id)
         count_query = select(func.count(TDSComplianceCycle.id)).where(TDSComplianceCycle.tenant_id == tenant_id)
 
@@ -183,7 +175,7 @@ class TDSRepository:
         await self.db.refresh(challan)
         return challan
 
-    async def get_challan_by_id(self, challan_id: UUID, tenant_id: UUID) -> Optional[TDSChallan]:
+    async def get_challan_by_id(self, challan_id: UUID, tenant_id: UUID) -> TDSChallan | None:
         result = await self.db.execute(
             select(TDSChallan).where(
                 TDSChallan.id == challan_id,
@@ -192,7 +184,7 @@ class TDSRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_challans_for_cycle(self, cycle_id: UUID, tenant_id: UUID) -> List[TDSChallan]:
+    async def get_challans_for_cycle(self, cycle_id: UUID, tenant_id: UUID) -> list[TDSChallan]:
         result = await self.db.execute(
             select(TDSChallan)
             .where(
@@ -219,7 +211,7 @@ class TDSRepository:
         await self.db.refresh(deductee)
         return deductee
 
-    async def get_deductee_by_id(self, deductee_id: UUID, tenant_id: UUID) -> Optional[TDSDeductee]:
+    async def get_deductee_by_id(self, deductee_id: UUID, tenant_id: UUID) -> TDSDeductee | None:
         result = await self.db.execute(
             select(TDSDeductee).where(
                 TDSDeductee.id == deductee_id,
@@ -230,7 +222,7 @@ class TDSRepository:
 
     async def get_deductees_for_cycle(
         self, cycle_id: UUID, tenant_id: UUID, page: int = 1, page_size: int = 100
-    ) -> Tuple[List[TDSDeductee], int]:
+    ) -> tuple[list[TDSDeductee], int]:
         query = select(TDSDeductee).where(
             TDSDeductee.tds_cycle_id == cycle_id,
             TDSDeductee.tenant_id == tenant_id,
@@ -251,7 +243,7 @@ class TDSRepository:
 
         return list(deductees), total
 
-    async def bulk_create_deductees(self, deductees: List[TDSDeductee]) -> List[TDSDeductee]:
+    async def bulk_create_deductees(self, deductees: list[TDSDeductee]) -> list[TDSDeductee]:
         self.db.add_all(deductees)
         await self.db.flush()
         for d in deductees:
@@ -267,7 +259,7 @@ class TDSRepository:
         await self.db.delete(deductee)
         await self.db.flush()
 
-    async def get_summary(self, tenant_id: UUID, financial_year: Optional[str] = None) -> dict:
+    async def get_summary(self, tenant_id: UUID, financial_year: str | None = None) -> dict:
         query = select(TDSComplianceCycle).where(TDSComplianceCycle.tenant_id == tenant_id)
         if financial_year:
             query = query.where(TDSComplianceCycle.financial_year == financial_year)
@@ -287,7 +279,7 @@ class TDSRepository:
 
         # Upcoming deadlines (next 30 days)
         from datetime import timedelta
-        upcoming_date = datetime.now(timezone.utc) + timedelta(days=30)
+        upcoming_date = datetime.now(UTC) + timedelta(days=30)
         upcoming = [
             c for c in cycles
             if c.status not in [TDSStatus.FILED, TDSStatus.PROCESSED, TDSStatus.CANCELLED]
@@ -308,4 +300,3 @@ class TDSRepository:
         }
 
 
-from datetime import timezone

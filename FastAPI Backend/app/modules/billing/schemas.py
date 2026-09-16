@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class InvoiceStatus(str, Enum):
@@ -38,11 +39,11 @@ class InvoiceItemBase(BaseModel):
     unit_price: float = Field(default=0, ge=0)
     tax_rate: float = Field(default=0, ge=0, le=100)
     discount: float = Field(default=0, ge=0)
-    service_type: Optional[str] = Field(None, max_length=100)
-    period_start: Optional[datetime] = None
-    period_end: Optional[datetime] = None
-    time_entry_id: Optional[UUID] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    service_type: str | None = Field(None, max_length=100)
+    period_start: datetime | None = None
+    period_end: datetime | None = None
+    time_entry_id: UUID | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class InvoiceItemCreate(InvoiceItemBase):
@@ -63,14 +64,14 @@ class InvoiceItemResponse(InvoiceItemBase):
 
 class InvoiceBase(BaseModel):
     client_id: UUID
-    matter_id: Optional[UUID] = None
+    matter_id: UUID | None = None
     invoice_number: str = Field(..., min_length=1, max_length=100)
     invoice_date: datetime
     due_date: datetime
     currency: str = "INR"
-    notes: Optional[str] = None
-    terms: Optional[str] = None
-    items: List[InvoiceItemCreate] = Field(default_factory=list)
+    notes: str | None = None
+    terms: str | None = None
+    items: list[InvoiceItemCreate] = Field(default_factory=list)
 
 
 class InvoiceCreate(InvoiceBase):
@@ -78,12 +79,12 @@ class InvoiceCreate(InvoiceBase):
 
 
 class InvoiceUpdate(BaseModel):
-    matter_id: Optional[UUID] = None
-    due_date: Optional[datetime] = None
-    status: Optional[InvoiceStatus] = None
-    notes: Optional[str] = None
-    terms: Optional[str] = None
-    items: Optional[List[InvoiceItemCreate]] = None
+    matter_id: UUID | None = None
+    due_date: datetime | None = None
+    status: InvoiceStatus | None = None
+    notes: str | None = None
+    terms: str | None = None
+    items: list[InvoiceItemCreate] | None = None
 
 
 class InvoiceResponse(InvoiceBase):
@@ -95,8 +96,8 @@ class InvoiceResponse(InvoiceBase):
     total_amount: float
     paid_amount: float
     balance_amount: float
-    sent_at: Optional[datetime] = None
-    paid_at: Optional[datetime] = None
+    sent_at: datetime | None = None
+    paid_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
@@ -106,7 +107,7 @@ class InvoiceResponse(InvoiceBase):
 
 
 class InvoiceListResponse(BaseModel):
-    items: List[InvoiceResponse]
+    items: list[InvoiceResponse]
     total: int
     page: int
     page_size: int
@@ -115,13 +116,13 @@ class InvoiceListResponse(BaseModel):
 
 class PaymentBase(BaseModel):
     client_id: UUID
-    invoice_id: Optional[UUID] = None
+    invoice_id: UUID | None = None
     payment_number: str = Field(..., min_length=1, max_length=100)
     payment_date: datetime
     amount: float = Field(..., gt=0)
-    method: Optional[str] = Field(None, max_length=50)
-    reference: Optional[str] = Field(None, max_length=100)
-    notes: Optional[str] = None
+    method: str | None = Field(None, max_length=50)
+    reference: str | None = Field(None, max_length=100)
+    notes: str | None = None
 
 
 class PaymentCreate(PaymentBase):
@@ -140,16 +141,16 @@ class PaymentResponse(PaymentBase):
 
 
 class ExpenseBase(BaseModel):
-    client_id: Optional[UUID] = None
-    matter_id: Optional[UUID] = None
+    client_id: UUID | None = None
+    matter_id: UUID | None = None
     expense_number: str = Field(..., min_length=1, max_length=100)
     expense_date: datetime
     amount: float = Field(..., gt=0)
     currency: str = "INR"
     category: str = Field(..., min_length=1, max_length=100)
     description: str
-    vendor: Optional[str] = Field(None, max_length=255)
-    receipt_url: Optional[str] = Field(None, max_length=500)
+    vendor: str | None = Field(None, max_length=255)
+    receipt_url: str | None = Field(None, max_length=500)
     is_billable: bool = False
     is_reimbursable: bool = True
 
@@ -164,9 +165,9 @@ class ExpenseResponse(ExpenseBase):
     status: ExpenseStatus
     is_billable: bool
     is_reimbursable: bool
-    approved_by: Optional[UUID] = None
-    approved_at: Optional[datetime] = None
-    reimbursed_at: Optional[datetime] = None
+    approved_by: UUID | None = None
+    approved_at: datetime | None = None
+    reimbursed_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime

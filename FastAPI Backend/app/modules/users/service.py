@@ -1,12 +1,12 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException, ConflictException
+from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import hash_password
-from app.modules.users.models import User, Team
+from app.modules.users.models import Team, User
+from app.modules.users.repository import TeamRepository, UserRepository
 from app.modules.users.schemas import UserCreate, UserUpdate
-from app.modules.users.repository import UserRepository, TeamRepository
 
 
 class UserService:
@@ -36,11 +36,11 @@ class UserService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        role: Optional[str] = None,
-        team_id: Optional[UUID] = None,
-    ) -> Tuple[List[User], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+        role: str | None = None,
+        team_id: UUID | None = None,
+    ) -> tuple[list[User], int]:
         return await self.repository.get_all(tenant_id, page, page_size, search, is_active, role, team_id)
 
     async def update(self, user_id: UUID, tenant_id: UUID, data: UserUpdate) -> User:
@@ -65,7 +65,7 @@ class TeamService:
         self.db = db
         self.repository = TeamRepository(db)
 
-    async def create(self, tenant_id: UUID, name: str, description: Optional[str] = None, **kwargs) -> Team:
+    async def create(self, tenant_id: UUID, name: str, description: str | None = None, **kwargs) -> Team:
         team = Team(
             name=name,
             description=description,
@@ -85,9 +85,9 @@ class TeamService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[Team], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[Team], int]:
         return await self.repository.get_all(tenant_id, page, page_size, search, is_active)
 
     async def update(self, team_id: UUID, tenant_id: UUID, **kwargs) -> Team:

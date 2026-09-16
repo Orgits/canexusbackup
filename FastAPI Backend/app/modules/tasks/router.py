@@ -1,14 +1,14 @@
+from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
-from datetime import datetime
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.modules.tasks.schemas import TaskCreate, TaskUpdate, TaskResponse, TaskListResponse, TaskAction
+from app.core.tenancy.dependencies import get_current_tenant
+from app.modules.tasks.schemas import TaskAction, TaskCreate, TaskListResponse, TaskResponse, TaskUpdate
 from app.modules.tasks.service import TaskService
 from app.modules.users.models import User
 
@@ -111,4 +111,3 @@ async def delete_task(
 ):
     service = TaskService(db)
     await service.delete(task_id, current_tenant.id)
-    return None

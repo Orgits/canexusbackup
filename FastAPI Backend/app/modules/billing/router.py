@@ -1,26 +1,25 @@
+from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
-from datetime import datetime
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
+from app.core.tenancy.dependencies import get_current_tenant
+from app.modules.billing.models import PaymentStatus
 from app.modules.billing.schemas import (
-    InvoiceCreate,
-    InvoiceUpdate,
-    InvoiceResponse,
-    InvoiceListResponse,
-    InvoiceItemCreate,
-    PaymentCreate,
-    PaymentResponse,
     ExpenseCreate,
     ExpenseResponse,
+    InvoiceCreate,
+    InvoiceListResponse,
+    InvoiceResponse,
+    InvoiceUpdate,
+    PaymentCreate,
+    PaymentResponse,
 )
 from app.modules.billing.service import BillingService
-from app.modules.billing.models import InvoiceStatus, PaymentStatus
 from app.modules.users.models import User
 
 router = APIRouter()
@@ -117,7 +116,6 @@ async def delete_invoice(
 ):
     service = BillingService(db)
     await service.delete_invoice(invoice_id, current_tenant.id)
-    return None
 
 
 payment_router = APIRouter(prefix="/payments", tags=["Payments"])
@@ -189,7 +187,6 @@ async def delete_payment(
 ):
     service = BillingService(db)
     await service.delete_payment(payment_id, current_tenant.id)
-    return None
 
 
 expense_router = APIRouter(prefix="/expenses", tags=["Expenses"])
@@ -286,7 +283,6 @@ async def delete_expense(
 ):
     service = BillingService(db)
     await service.delete_expense(expense_id, current_tenant.id)
-    return None
 
 
 router.include_router(invoice_router)

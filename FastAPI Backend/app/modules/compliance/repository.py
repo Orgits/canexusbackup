@@ -1,11 +1,16 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.compliance.models import ComplianceType, ComplianceCycle, ComplianceApplicability, ComplianceStatus, ComplianceFrequency
+from app.modules.compliance.models import (
+    ComplianceApplicability,
+    ComplianceCycle,
+    ComplianceStatus,
+    ComplianceType,
+)
 
 
 class ComplianceRepository:
@@ -18,13 +23,13 @@ class ComplianceRepository:
         await self.db.refresh(compliance_type)
         return compliance_type
 
-    async def get_type_by_id(self, type_id: UUID, tenant_id: UUID) -> Optional[ComplianceType]:
+    async def get_type_by_id(self, type_id: UUID, tenant_id: UUID) -> ComplianceType | None:
         result = await self.db.execute(
             select(ComplianceType).where(ComplianceType.id == type_id, ComplianceType.tenant_id == tenant_id)
         )
         return result.scalar_one_or_none()
 
-    async def get_type_by_code(self, code: str, tenant_id: UUID) -> Optional[ComplianceType]:
+    async def get_type_by_code(self, code: str, tenant_id: UUID) -> ComplianceType | None:
         result = await self.db.execute(
             select(ComplianceType).where(ComplianceType.code == code, ComplianceType.tenant_id == tenant_id)
         )
@@ -35,10 +40,10 @@ class ComplianceRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[ComplianceType], int]:
+        search: str | None = None,
+        category: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[ComplianceType], int]:
         query = select(ComplianceType).where(ComplianceType.tenant_id == tenant_id)
         count_query = select(func.count(ComplianceType.id)).where(ComplianceType.tenant_id == tenant_id)
 
@@ -90,7 +95,7 @@ class ComplianceRepository:
         await self.db.refresh(cycle)
         return cycle
 
-    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> Optional[ComplianceCycle]:
+    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> ComplianceCycle | None:
         result = await self.db.execute(
             select(ComplianceCycle)
             .options(
@@ -109,20 +114,19 @@ class ComplianceRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        compliance_type_id: Optional[UUID] = None,
-        status: Optional[ComplianceStatus] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        period_start: Optional[datetime] = None,
-        period_end: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        compliance_type_id: UUID | None = None,
+        status: ComplianceStatus | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[ComplianceCycle], int]:
-        from datetime import datetime
+    ) -> tuple[list[ComplianceCycle], int]:
         query = (
             select(ComplianceCycle)
             .options(
@@ -218,7 +222,7 @@ class ComplianceRepository:
         await self.db.refresh(applicability)
         return applicability
 
-    async def get_applicability(self, client_id: UUID, compliance_type_id: UUID, tenant_id: UUID) -> Optional[ComplianceApplicability]:
+    async def get_applicability(self, client_id: UUID, compliance_type_id: UUID, tenant_id: UUID) -> ComplianceApplicability | None:
         result = await self.db.execute(
             select(ComplianceApplicability)
             .where(
@@ -229,7 +233,7 @@ class ComplianceRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_applicability_by_id(self, app_id: UUID, tenant_id: UUID) -> Optional[ComplianceApplicability]:
+    async def get_applicability_by_id(self, app_id: UUID, tenant_id: UUID) -> ComplianceApplicability | None:
         result = await self.db.execute(
             select(ComplianceApplicability).where(ComplianceApplicability.id == app_id, ComplianceApplicability.tenant_id == tenant_id)
         )
@@ -238,9 +242,9 @@ class ComplianceRepository:
     async def get_all_applicability(
         self,
         tenant_id: UUID,
-        client_id: Optional[UUID] = None,
-        compliance_type_id: Optional[UUID] = None,
-    ) -> List[ComplianceApplicability]:
+        client_id: UUID | None = None,
+        compliance_type_id: UUID | None = None,
+    ) -> list[ComplianceApplicability]:
         query = select(ComplianceApplicability).where(ComplianceApplicability.tenant_id == tenant_id)
         if client_id:
             query = query.where(ComplianceApplicability.client_id == client_id)

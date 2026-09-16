@@ -1,47 +1,48 @@
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class WorkflowStateBase(BaseModel):
     code: str = Field(..., max_length=100)
     name: str = Field(..., max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     is_initial: bool = False
     is_terminal: bool = False
     order: int = 0
-    color: Optional[str] = None
-    icon: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    color: str | None = None
+    icon: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowTransitionBase(BaseModel):
     code: str = Field(..., max_length=100)
     name: str = Field(..., max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     from_state: str = Field(..., max_length=100)
     to_state: str = Field(..., max_length=100)
-    required_permissions: List[str] = []
-    required_roles: List[str] = []
-    conditions: Dict[str, Any] = {}
+    required_permissions: list[str] = []
+    required_roles: list[str] = []
+    conditions: dict[str, Any] = {}
     auto_transition: bool = False
-    auto_transition_delay: Optional[int] = None
+    auto_transition_delay: int | None = None
     is_active: bool = True
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowDefinitionBase(BaseModel):
     code: str = Field(..., max_length=50)
     name: str = Field(..., max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     entity_type: str = Field(..., max_length=50)
     initial_state: str = Field(..., max_length=100)
-    states: List[WorkflowStateBase] = []
-    transitions: List[WorkflowTransitionBase] = []
+    states: list[WorkflowStateBase] = []
+    transitions: list[WorkflowTransitionBase] = []
     is_active: bool = True
     is_default: bool = False
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowDefinitionCreate(WorkflowDefinitionBase):
@@ -49,13 +50,13 @@ class WorkflowDefinitionCreate(WorkflowDefinitionBase):
 
 
 class WorkflowDefinitionUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str] = None
-    states: Optional[List[WorkflowStateBase]] = None
-    transitions: Optional[List[WorkflowTransitionBase]] = None
-    is_active: Optional[bool] = None
-    is_default: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(None, max_length=255)
+    description: str | None = None
+    states: list[WorkflowStateBase] | None = None
+    transitions: list[WorkflowTransitionBase] | None = None
+    is_active: bool | None = None
+    is_default: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class WorkflowDefinitionResponse(WorkflowDefinitionBase):
@@ -66,23 +67,23 @@ class WorkflowDefinitionResponse(WorkflowDefinitionBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class WorkflowTransitionDefinitionBase(BaseModel):
     code: str = Field(..., max_length=100)
     name: str = Field(..., max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     from_state: str = Field(..., max_length=100)
     to_state: str = Field(..., max_length=100)
-    required_permissions: List[str] = []
-    required_roles: List[str] = []
-    conditions: Dict[str, Any] = {}
+    required_permissions: list[str] = []
+    required_roles: list[str] = []
+    conditions: dict[str, Any] = {}
     auto_transition: bool = False
-    auto_transition_delay: Optional[int] = None
+    auto_transition_delay: int | None = None
     is_active: bool = True
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowTransitionDefinitionCreate(WorkflowTransitionDefinitionBase):
@@ -90,15 +91,15 @@ class WorkflowTransitionDefinitionCreate(WorkflowTransitionDefinitionBase):
 
 
 class WorkflowTransitionDefinitionUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str] = None
-    required_permissions: Optional[List[str]] = None
-    required_roles: Optional[List[str]] = None
-    conditions: Optional[Dict[str, Any]] = None
-    auto_transition: Optional[bool] = None
-    auto_transition_delay: Optional[int] = None
-    is_active: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(None, max_length=255)
+    description: str | None = None
+    required_permissions: list[str] | None = None
+    required_roles: list[str] | None = None
+    conditions: dict[str, Any] | None = None
+    auto_transition: bool | None = None
+    auto_transition_delay: int | None = None
+    is_active: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class WorkflowTransitionDefinitionResponse(WorkflowTransitionDefinitionBase):
@@ -109,33 +110,33 @@ class WorkflowTransitionDefinitionResponse(WorkflowTransitionDefinitionBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class WorkflowInstanceBase(BaseModel):
     entity_type: str = Field(..., max_length=50)
     entity_id: UUID
     current_state: str = Field(..., max_length=100)
-    assigned_user_id: Optional[UUID] = None
-    assigned_team_id: Optional[UUID] = None
-    context_data: Dict[str, Any] = {}
+    assigned_user_id: UUID | None = None
+    assigned_team_id: UUID | None = None
+    context_data: dict[str, Any] = {}
 
 
 class WorkflowInstanceCreate(BaseModel):
     workflow_definition_id: UUID
     entity_type: str = Field(..., max_length=50)
     entity_id: UUID
-    assigned_user_id: Optional[UUID] = None
-    assigned_team_id: Optional[UUID] = None
-    context_data: Dict[str, Any] = {}
+    assigned_user_id: UUID | None = None
+    assigned_team_id: UUID | None = None
+    context_data: dict[str, Any] = {}
 
 
 class WorkflowInstanceUpdate(BaseModel):
-    assigned_user_id: Optional[UUID] = None
-    assigned_team_id: Optional[UUID] = None
-    context_data: Optional[Dict[str, Any]] = None
-    is_active: Optional[bool] = None
+    assigned_user_id: UUID | None = None
+    assigned_team_id: UUID | None = None
+    context_data: dict[str, Any] | None = None
+    is_active: bool | None = None
 
 
 class WorkflowInstanceResponse(WorkflowInstanceBase):
@@ -143,33 +144,33 @@ class WorkflowInstanceResponse(WorkflowInstanceBase):
 
     id: UUID
     workflow_definition_id: UUID
-    previous_state: Optional[str] = None
+    previous_state: str | None = None
     is_active: bool
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
-    definition: Optional[WorkflowDefinitionResponse] = None
+    definition: WorkflowDefinitionResponse | None = None
     assigned_user: Optional["UserResponse"] = None
 
 
 class WorkflowTransitionRequest(BaseModel):
     transition_code: str = Field(..., max_length=100)
-    comment: Optional[str] = None
-    reason: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    comment: str | None = None
+    reason: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowTransitionHistoryBase(BaseModel):
     from_state: str = Field(..., max_length=100)
     to_state: str = Field(..., max_length=100)
-    transition_code: Optional[str] = None
-    comment: Optional[str] = None
-    reason: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    transition_code: str | None = None
+    comment: str | None = None
+    reason: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class WorkflowTransitionHistoryResponse(WorkflowTransitionHistoryBase):
@@ -177,9 +178,9 @@ class WorkflowTransitionHistoryResponse(WorkflowTransitionHistoryBase):
 
     id: UUID
     workflow_instance_id: UUID
-    transition_definition_id: Optional[UUID] = None
+    transition_definition_id: UUID | None = None
     actor_id: UUID
-    actor_team_id: Optional[UUID] = None
+    actor_team_id: UUID | None = None
     tenant_id: UUID
     created_at: datetime
 
@@ -189,26 +190,26 @@ class WorkflowTransitionHistoryResponse(WorkflowTransitionHistoryBase):
 class AvailableTransitionResponse(BaseModel):
     transition: WorkflowTransitionDefinitionResponse
     can_execute: bool
-    missing_permissions: List[str] = []
-    missing_roles: List[str] = []
+    missing_permissions: list[str] = []
+    missing_roles: list[str] = []
 
 
 class WorkflowDefinitionListResponse(BaseModel):
-    items: List[WorkflowDefinitionResponse]
+    items: list[WorkflowDefinitionResponse]
     total: int
     page: int
     page_size: int
 
 
 class WorkflowInstanceListResponse(BaseModel):
-    items: List[WorkflowInstanceResponse]
+    items: list[WorkflowInstanceResponse]
     total: int
     page: int
     page_size: int
 
 
 class WorkflowTransitionHistoryListResponse(BaseModel):
-    items: List[WorkflowTransitionHistoryResponse]
+    items: list[WorkflowTransitionHistoryResponse]
     total: int
     page: int
     page_size: int

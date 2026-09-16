@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_, and_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,7 +18,7 @@ class CalendarRepository:
         await self.db.refresh(event)
         return event
 
-    async def get_by_id(self, event_id: UUID, tenant_id: UUID) -> Optional[CalendarEvent]:
+    async def get_by_id(self, event_id: UUID, tenant_id: UUID) -> CalendarEvent | None:
         result = await self.db.execute(
             select(CalendarEvent)
             .options(
@@ -37,16 +37,16 @@ class CalendarRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        event_type: Optional[EventType] = None,
-        start_from: Optional[datetime] = None,
-        start_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        user_id: UUID | None = None,
+        event_type: EventType | None = None,
+        start_from: datetime | None = None,
+        start_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[CalendarEvent], int]:
+    ) -> tuple[list[CalendarEvent], int]:
         query = (
             select(CalendarEvent)
             .options(
@@ -116,8 +116,8 @@ class CalendarRepository:
         tenant_id: UUID,
         start_from: datetime,
         start_to: datetime,
-        user_id: Optional[UUID] = None,
-    ) -> List[CalendarEvent]:
+        user_id: UUID | None = None,
+    ) -> list[CalendarEvent]:
         query = select(CalendarEvent).where(
             CalendarEvent.tenant_id == tenant_id,
             CalendarEvent.start_time >= start_from,

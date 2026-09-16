@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_async_db
-from app.core.security.jwt import decode_token, TokenPayload, TokenType
+from app.core.redis.client import TokenBlacklist, get_redis
+from app.core.security.jwt import TokenPayload, TokenType, decode_token
 
 if TYPE_CHECKING:
     from app.modules.users.models import User
@@ -19,7 +20,7 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_token_payload(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> TokenPayload:
     if not credentials:
         raise HTTPException(
@@ -40,6 +41,16 @@ async def get_token_payload(
             detail="Invalid token type",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    redis_client = await get_redis()
+    blacklist = TokenBlacklist(redis_client)
+    if await blacklist.is_blacklisted(payload.jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return payload
 
 
@@ -76,7 +87,7 @@ async def get_current_active_user(
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: AsyncSession = Depends(get_async_db),
 ) -> Optional["User"]:
     from app.modules.users.models import User
@@ -85,6 +96,12 @@ async def get_optional_user(
     payload = decode_token(credentials.credentials)
     if not payload or payload.type != TokenType.ACCESS:
         return None
+
+    redis_client = await get_redis()
+    blacklist = TokenBlacklist(redis_client)
+    if await blacklist.is_blacklisted(payload.jti):
+        return None
+
     try:
         user_id = UUID(payload.sub)
     except ValueError:

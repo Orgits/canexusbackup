@@ -1,35 +1,32 @@
-from typing import Optional, List, Dict, Any
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 from uuid import UUID
-from datetime import datetime, date, timezone, timedelta
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
+from app.modules.compliance.models import ComplianceCycle, ComplianceStatus
+from app.modules.matters.models import Matter, MatterStatus
+from app.modules.notices.models import Notice
+from app.modules.notices.models import NoticeStatus as NoticeStatusEnum
+from app.modules.tasks.models import Task, TaskStatus
+from app.modules.users.models import Team, User
 from app.modules.workload.models import (
-    UserAvailability,
     TeamCapacity,
+    UserAvailability,
+    WorkloadPeriod,
     WorkloadSnapshot,
     WorkloadSummary,
-    WorkloadPeriod,
-)
-from app.modules.workload.schemas import (
-    UserAvailabilityCreate,
-    UserAvailabilityUpdate,
-    TeamCapacityCreate,
-    TeamCapacityUpdate,
-    WorkloadSnapshotCreate,
-    WorkloadSummaryCreate,
-    UserWorkloadResponse,
-    TeamWorkloadResponse,
-    WorkloadDashboardResponse,
 )
 from app.modules.workload.repository import WorkloadRepository
-from app.modules.users.models import User, Team
-from app.modules.tasks.models import Task, TaskStatus
-from app.modules.matters.models import Matter, MatterStatus
-from app.modules.compliance.models import ComplianceCycle, ComplianceStatus
-from app.modules.notices.models import Notice, NoticeStatus as NoticeStatusEnum
+from app.modules.workload.schemas import (
+    TeamCapacityCreate,
+    TeamWorkloadResponse,
+    UserAvailabilityCreate,
+    UserWorkloadResponse,
+    WorkloadDashboardResponse,
+)
 
 
 class WorkloadService:
@@ -45,17 +42,17 @@ class WorkloadService:
 
     async def get_user_availability(
         self, user_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[UserAvailability]:
+    ) -> list[UserAvailability]:
         return await self.repository.get_availabilities_for_user(user_id, tenant_id, start_date, end_date)
 
     async def get_team_availability(
         self, team_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[UserAvailability]:
+    ) -> list[UserAvailability]:
         return await self.repository.get_availabilities_for_team(team_id, tenant_id, start_date, end_date)
 
     async def bulk_set_availability(
-        self, user_id: UUID, tenant_id: UUID, availabilities: List[Dict[str, Any]], created_by: UUID
-    ) -> List[UserAvailability]:
+        self, user_id: UUID, tenant_id: UUID, availabilities: list[dict[str, Any]], created_by: UUID
+    ) -> list[UserAvailability]:
         results = []
         for avail in availabilities:
             date_val = avail.get("date")
@@ -114,13 +111,13 @@ class WorkloadService:
         )
 
     async def get_team_capacity(
-        self, team_id: UUID, tenant_id: UUID, period_type: Optional[WorkloadPeriod] = None
-    ) -> List[TeamCapacity]:
+        self, team_id: UUID, tenant_id: UUID, period_type: WorkloadPeriod | None = None
+    ) -> list[TeamCapacity]:
         return await self.repository.get_capacities_for_team(team_id, tenant_id, period_type)
 
     # Workload Calculation methods
     async def calculate_user_workload(
-        self, user_id: UUID, tenant_id: UUID, as_of_date: Optional[date] = None
+        self, user_id: UUID, tenant_id: UUID, as_of_date: date | None = None
     ) -> UserWorkloadResponse:
         if as_of_date is None:
             as_of_date = date.today()
@@ -144,7 +141,7 @@ class WorkloadService:
                 team_name = team.name
 
         # Get open tasks
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         week_start = as_of_date - timedelta(days=as_of_date.weekday())
         week_end = week_start + timedelta(days=6)
         next_week_start = week_end + timedelta(days=1)
@@ -294,7 +291,7 @@ class WorkloadService:
         )
 
     async def calculate_team_workload(
-        self, team_id: UUID, tenant_id: UUID, as_of_date: Optional[date] = None
+        self, team_id: UUID, tenant_id: UUID, as_of_date: date | None = None
     ) -> TeamWorkloadResponse:
         if as_of_date is None:
             as_of_date = date.today()
@@ -388,8 +385,8 @@ class WorkloadService:
         )
 
     async def get_workload_dashboard(
-        self, tenant_id: UUID, user_id: Optional[UUID] = None, team_id: Optional[UUID] = None,
-        as_of_date: Optional[date] = None
+        self, tenant_id: UUID, user_id: UUID | None = None, team_id: UUID | None = None,
+        as_of_date: date | None = None
     ) -> WorkloadDashboardResponse:
         if as_of_date is None:
             as_of_date = date.today()
@@ -493,9 +490,9 @@ class WorkloadService:
 
     # Snapshot methods
     async def generate_snapshots(
-        self, tenant_id: UUID, snapshot_date: Optional[date] = None,
+        self, tenant_id: UUID, snapshot_date: date | None = None,
         period_type: WorkloadPeriod = WorkloadPeriod.DAILY
-    ) -> List[WorkloadSnapshot]:
+    ) -> list[WorkloadSnapshot]:
         if snapshot_date is None:
             snapshot_date = date.today()
 

@@ -1,22 +1,17 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.notices.models import (
     Notice,
-    NoticeEscalation,
     NoticeAuthority,
-    NoticeType,
-    NoticeStatus,
+    NoticeEscalation,
     NoticePriority,
-)
-from app.modules.notices.schemas import (
-    NoticeCreate,
-    NoticeUpdate,
-    NoticeEscalationCreate,
+    NoticeStatus,
+    NoticeType,
 )
 
 
@@ -31,7 +26,7 @@ class NoticeRepository:
         await self.db.refresh(notice)
         return notice
 
-    async def get_notice_by_id(self, notice_id: UUID, tenant_id: UUID) -> Optional[Notice]:
+    async def get_notice_by_id(self, notice_id: UUID, tenant_id: UUID) -> Notice | None:
         result = await self.db.execute(
             select(Notice)
             .where(
@@ -51,7 +46,7 @@ class NoticeRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_notice_by_ref(self, reference_number: str, tenant_id: UUID) -> Optional[Notice]:
+    async def get_notice_by_ref(self, reference_number: str, tenant_id: UUID) -> Notice | None:
         result = await self.db.execute(
             select(Notice).where(
                 Notice.reference_number == reference_number,
@@ -65,21 +60,21 @@ class NoticeRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        authority: Optional[NoticeAuthority] = None,
-        notice_type: Optional[NoticeType] = None,
-        status: Optional[NoticeStatus] = None,
-        priority: Optional[NoticePriority] = None,
-        assignee_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        received_date_from: Optional[datetime] = None,
-        received_date_to: Optional[datetime] = None,
-        deadline_from: Optional[datetime] = None,
-        deadline_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        authority: NoticeAuthority | None = None,
+        notice_type: NoticeType | None = None,
+        status: NoticeStatus | None = None,
+        priority: NoticePriority | None = None,
+        assignee_id: UUID | None = None,
+        team_id: UUID | None = None,
+        received_date_from: datetime | None = None,
+        received_date_to: datetime | None = None,
+        deadline_from: datetime | None = None,
+        deadline_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Notice], int]:
+    ) -> tuple[list[Notice], int]:
         query = select(Notice).where(Notice.tenant_id == tenant_id)
         count_query = select(func.count(Notice.id)).where(Notice.tenant_id == tenant_id)
 
@@ -187,7 +182,7 @@ class NoticeRepository:
         await self.db.refresh(escalation)
         return escalation
 
-    async def get_escalation_by_id(self, escalation_id: UUID, tenant_id: UUID) -> Optional[NoticeEscalation]:
+    async def get_escalation_by_id(self, escalation_id: UUID, tenant_id: UUID) -> NoticeEscalation | None:
         result = await self.db.execute(
             select(NoticeEscalation)
             .where(
@@ -202,7 +197,7 @@ class NoticeRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_escalations_for_notice(self, notice_id: UUID, tenant_id: UUID) -> List[NoticeEscalation]:
+    async def get_escalations_for_notice(self, notice_id: UUID, tenant_id: UUID) -> list[NoticeEscalation]:
         result = await self.db.execute(
             select(NoticeEscalation)
             .where(
@@ -225,7 +220,7 @@ class NoticeRepository:
 
     async def get_summary(self, tenant_id: UUID) -> dict:
         from datetime import timedelta
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         query = select(Notice).where(Notice.tenant_id == tenant_id)
         result = await self.db.execute(query)

@@ -1,31 +1,30 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
     Numeric,
+    String,
+    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
+    from app.modules.billing.models import Invoice
     from app.modules.clients.models import Client
-    from app.modules.users.models import User, Team
-    from app.modules.tasks.models import Task
-    from app.modules.documents.models import Document
     from app.modules.compliance.models import ComplianceCycle
-    from app.modules.billing.models import Invoice, TimeEntry
+    from app.modules.documents.models import Document
+    from app.modules.tasks.models import Task
+    from app.modules.users.models import Team, User
 
 
 class MatterType(str, PyEnum):
@@ -84,43 +83,43 @@ class Matter(Base, TenantBaseModelMixin):
     priority: Mapped[MatterPriority] = mapped_column(Enum(MatterPriority), default=MatterPriority.MEDIUM, nullable=False)
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    matter_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    matter_number: Mapped[str | None] = mapped_column(String(100), nullable=True, unique=True)
 
-    service_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    service_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("client_services.id", ondelete="SET NULL"),
         nullable=True,
     )
-    compliance_cycle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    compliance_cycle_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("compliance_cycles.id", ondelete="SET NULL"),
         nullable=True,
     )
 
-    responsible_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    responsible_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    responsible_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    responsible_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
 
-    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    completed_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    completed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    estimated_hours: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
-    actual_hours: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True, default=0)
+    estimated_hours: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
+    actual_hours: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True, default=0)
 
     progress_percentage: Mapped[int] = mapped_column(default=0, nullable=False)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -129,13 +128,13 @@ class Matter(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     client: Mapped["Client"] = relationship("Client", back_populates="matters", lazy="selectin")
     service: Mapped[Optional["ClientService"]] = relationship("ClientService", lazy="selectin")
-    compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", back_populates="matters", lazy="selectin")
+    compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", foreign_keys=[compliance_cycle_id], back_populates="matters", lazy="selectin")
     responsible_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[responsible_user_id], lazy="selectin")
     responsible_team: Mapped[Optional["Team"]] = relationship("Team", foreign_keys=[responsible_team_id], lazy="selectin")
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="matter", lazy="dynamic")
-    documents: Mapped[List["Document"]] = relationship("Document", back_populates="matter", lazy="dynamic")
-    compliance_cycles: Mapped[List["ComplianceCycle"]] = relationship("ComplianceCycle", back_populates="matter", lazy="dynamic")
-    time_entries: Mapped[List["TimeEntry"]] = relationship("TimeEntry", back_populates="matter", lazy="dynamic")
-    invoices: Mapped[List["Invoice"]] = relationship("Invoice", back_populates="matter", lazy="dynamic")
+    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="matter", lazy="dynamic")
+    documents: Mapped[list["Document"]] = relationship("Document", back_populates="matter", lazy="dynamic")
+    compliance_cycles: Mapped[list["ComplianceCycle"]] = relationship("ComplianceCycle", foreign_keys="ComplianceCycle.matter_id", back_populates="matter", lazy="dynamic")
+    invoices: Mapped[list["Invoice"]] = relationship("Invoice", back_populates="matter", lazy="dynamic")

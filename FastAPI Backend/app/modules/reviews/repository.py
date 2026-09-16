@@ -1,23 +1,17 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.reviews.models import (
-    ReviewRequest,
     ReviewComment,
     ReviewHistory,
-    ReviewType,
+    ReviewRequest,
     ReviewStage,
     ReviewStatus,
-)
-from app.modules.reviews.schemas import (
-    ReviewRequestCreate,
-    ReviewRequestUpdate,
-    ReviewCommentCreate,
-    ReviewCommentUpdate,
+    ReviewType,
 )
 
 
@@ -32,7 +26,7 @@ class ReviewRepository:
         await self.db.refresh(request)
         return request
 
-    async def get_request_by_id(self, request_id: UUID, tenant_id: UUID) -> Optional[ReviewRequest]:
+    async def get_request_by_id(self, request_id: UUID, tenant_id: UUID) -> ReviewRequest | None:
         result = await self.db.execute(
             select(ReviewRequest)
             .where(
@@ -49,8 +43,8 @@ class ReviewRepository:
         return result.scalar_one_or_none()
 
     async def get_request_by_source(
-        self, source_type: ReviewType, source_id: UUID, stage: Optional[str], tenant_id: UUID
-    ) -> Optional[ReviewRequest]:
+        self, source_type: ReviewType, source_id: UUID, stage: str | None, tenant_id: UUID
+    ) -> ReviewRequest | None:
         query = select(ReviewRequest).where(
             ReviewRequest.source_object_type == source_type,
             ReviewRequest.source_object_id == source_id,
@@ -66,19 +60,19 @@ class ReviewRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        source_type: Optional[ReviewType] = None,
-        source_id: Optional[UUID] = None,
-        stage: Optional[ReviewStage] = None,
-        status: Optional[ReviewStatus] = None,
-        reviewer_id: Optional[UUID] = None,
-        reviewer_team_id: Optional[UUID] = None,
-        submitted_by_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        source_type: ReviewType | None = None,
+        source_id: UUID | None = None,
+        stage: ReviewStage | None = None,
+        status: ReviewStatus | None = None,
+        reviewer_id: UUID | None = None,
+        reviewer_team_id: UUID | None = None,
+        submitted_by_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[ReviewRequest], int]:
+    ) -> tuple[list[ReviewRequest], int]:
         query = select(ReviewRequest).where(ReviewRequest.tenant_id == tenant_id)
         count_query = select(func.count(ReviewRequest.id)).where(ReviewRequest.tenant_id == tenant_id)
 
@@ -175,7 +169,7 @@ class ReviewRepository:
         await self.db.refresh(comment)
         return comment
 
-    async def get_comment_by_id(self, comment_id: UUID, tenant_id: UUID) -> Optional[ReviewComment]:
+    async def get_comment_by_id(self, comment_id: UUID, tenant_id: UUID) -> ReviewComment | None:
         result = await self.db.execute(
             select(ReviewComment)
             .where(
@@ -193,7 +187,7 @@ class ReviewRepository:
         page: int = 1,
         page_size: int = 50,
         include_replies: bool = True,
-    ) -> Tuple[List[ReviewComment], int]:
+    ) -> tuple[list[ReviewComment], int]:
         query = select(ReviewComment).where(
             ReviewComment.review_request_id == request_id,
             ReviewComment.tenant_id == tenant_id,
@@ -238,7 +232,7 @@ class ReviewRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[ReviewHistory], int]:
+    ) -> tuple[list[ReviewHistory], int]:
         query = (
             select(ReviewHistory)
             .where(

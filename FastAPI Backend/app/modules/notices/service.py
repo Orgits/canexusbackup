@@ -1,28 +1,28 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
+from app.modules.clients.models import Client
 from app.modules.notices.models import (
     Notice,
-    NoticeEscalation,
     NoticeAuthority,
-    NoticeType,
-    NoticeStatus,
+    NoticeEscalation,
     NoticePriority,
-)
-from app.modules.notices.schemas import (
-    NoticeCreate,
-    NoticeUpdate,
-    NoticeStatusUpdate,
-    NoticeResponseUpdate,
-    NoticeClosureUpdate,
-    NoticeEscalationCreate,
+    NoticeStatus,
+    NoticeType,
 )
 from app.modules.notices.repository import NoticeRepository
-from app.modules.clients.models import Client
+from app.modules.notices.schemas import (
+    NoticeClosureUpdate,
+    NoticeCreate,
+    NoticeEscalationCreate,
+    NoticeResponseUpdate,
+    NoticeStatusUpdate,
+    NoticeUpdate,
+)
 
 
 class NoticeService:
@@ -69,21 +69,21 @@ class NoticeService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        authority: Optional[str] = None,
-        notice_type: Optional[str] = None,
-        status: Optional[str] = None,
-        priority: Optional[str] = None,
-        assignee_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        received_date_from: Optional[datetime] = None,
-        received_date_to: Optional[datetime] = None,
-        deadline_from: Optional[datetime] = None,
-        deadline_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        authority: str | None = None,
+        notice_type: str | None = None,
+        status: str | None = None,
+        priority: str | None = None,
+        assignee_id: UUID | None = None,
+        team_id: UUID | None = None,
+        received_date_from: datetime | None = None,
+        received_date_to: datetime | None = None,
+        deadline_from: datetime | None = None,
+        deadline_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Notice], int]:
+    ) -> tuple[list[Notice], int]:
         authority_enum = None
         if authority:
             try:
@@ -202,7 +202,7 @@ class NoticeService:
         notice.updated_by = actor_id
 
         if new_status == NoticeStatus.CLOSED:
-            notice.closed_at = datetime.now(timezone.utc)
+            notice.closed_at = datetime.now(UTC)
             notice.closed_by = actor_id
 
         return await self.repository.update_notice(notice)
@@ -232,7 +232,7 @@ class NoticeService:
             raise ValidationException(detail="Notice is already closed")
 
         notice.status = NoticeStatus.CLOSED
-        notice.closed_at = datetime.now(timezone.utc)
+        notice.closed_at = datetime.now(UTC)
         notice.closed_by = actor_id
         notice.closure_reason = data.closure_reason
         notice.outcome = data.outcome
@@ -280,7 +280,7 @@ class NoticeService:
         await self.repository.update_notice(notice)
         return await self.repository.create_escalation(escalation)
 
-    async def get_escalation_history(self, notice_id: UUID, tenant_id: UUID) -> List[NoticeEscalation]:
+    async def get_escalation_history(self, notice_id: UUID, tenant_id: UUID) -> list[NoticeEscalation]:
         await self.get_notice_by_id(notice_id, tenant_id)
         return await self.repository.get_escalations_for_notice(notice_id, tenant_id)
 
@@ -292,7 +292,7 @@ class NoticeService:
             raise NotFoundException(detail="Escalation not found")
 
         escalation.is_resolved = True
-        escalation.resolved_at = datetime.now(timezone.utc)
+        escalation.resolved_at = datetime.now(UTC)
         escalation.resolved_by = actor_id
         escalation.updated_by = actor_id
 

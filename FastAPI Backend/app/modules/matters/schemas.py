@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class MatterType(str, Enum):
@@ -43,18 +44,18 @@ class MatterBase(BaseModel):
     client_id: UUID
     matter_type: MatterType
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    matter_number: Optional[str] = Field(None, max_length=100)
-    service_id: Optional[UUID] = None
-    compliance_cycle_id: Optional[UUID] = None
+    description: str | None = None
+    matter_number: str | None = Field(None, max_length=100)
+    service_id: UUID | None = None
+    compliance_cycle_id: UUID | None = None
     priority: MatterPriority = MatterPriority.MEDIUM
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
-    start_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
-    estimated_hours: Optional[float] = None
-    tags: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
+    start_date: datetime | None = None
+    due_date: datetime | None = None
+    estimated_hours: float | None = None
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class MatterCreate(MatterBase):
@@ -62,29 +63,29 @@ class MatterCreate(MatterBase):
 
 
 class MatterUpdate(BaseModel):
-    matter_type: Optional[MatterType] = None
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    matter_number: Optional[str] = Field(None, max_length=100)
-    service_id: Optional[UUID] = None
-    compliance_cycle_id: Optional[UUID] = None
-    status: Optional[MatterStatus] = None
-    priority: Optional[MatterPriority] = None
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
-    start_date: Optional[datetime] = None
-    due_date: Optional[datetime] = None
-    completed_date: Optional[datetime] = None
-    estimated_hours: Optional[float] = None
-    tags: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    matter_type: MatterType | None = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    matter_number: str | None = Field(None, max_length=100)
+    service_id: UUID | None = None
+    compliance_cycle_id: UUID | None = None
+    status: MatterStatus | None = None
+    priority: MatterPriority | None = None
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
+    start_date: datetime | None = None
+    due_date: datetime | None = None
+    completed_date: datetime | None = None
+    estimated_hours: float | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class MatterResponse(MatterBase):
     id: UUID
     status: MatterStatus
-    actual_hours: Optional[float] = None
-    completed_date: Optional[datetime] = None
+    actual_hours: float | None = None
+    completed_date: datetime | None = None
     progress_percentage: int
     tenant_id: UUID
     created_at: datetime
@@ -95,7 +96,7 @@ class MatterResponse(MatterBase):
 
 
 class MatterListResponse(BaseModel):
-    items: List[MatterResponse]
+    items: list[MatterResponse]
     total: int
     page: int
     page_size: int
@@ -104,4 +105,4 @@ class MatterListResponse(BaseModel):
 
 class MatterStatusTransition(BaseModel):
     status: MatterStatus
-    notes: Optional[str] = None
+    notes: str | None = None

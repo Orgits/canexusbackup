@@ -1,9 +1,9 @@
-from .tenant import TenantMiddleware
 from .logging import LoggingMiddleware
 from .metrics import MetricsMiddleware
+from .tenant import TenantMiddleware
 
 __all__ = [
-    "TenantMiddleware",
     "LoggingMiddleware",
     "MetricsMiddleware",
+    "TenantMiddleware",
 ]

@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class ClientCategory(str, Enum):
@@ -30,13 +31,13 @@ class ClientStatus(str, Enum):
 
 class ContactBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    designation: Optional[str] = Field(None, max_length=100)
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    mobile: Optional[str] = Field(None, max_length=20)
+    designation: str | None = Field(None, max_length=100)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=20)
+    mobile: str | None = Field(None, max_length=20)
     is_primary: bool = False
-    department: Optional[str] = Field(None, max_length=100)
-    notes: Optional[str] = None
+    department: str | None = Field(None, max_length=100)
+    notes: str | None = None
 
 
 class ContactCreate(ContactBase):
@@ -44,14 +45,14 @@ class ContactCreate(ContactBase):
 
 
 class ContactUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    designation: Optional[str] = Field(None, max_length=100)
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    mobile: Optional[str] = Field(None, max_length=20)
-    is_primary: Optional[bool] = None
-    department: Optional[str] = Field(None, max_length=100)
-    notes: Optional[str] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    designation: str | None = Field(None, max_length=100)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=20)
+    mobile: str | None = Field(None, max_length=20)
+    is_primary: bool | None = None
+    department: str | None = Field(None, max_length=100)
+    notes: str | None = None
 
 
 class ContactResponse(ContactBase):
@@ -66,16 +67,16 @@ class ContactResponse(ContactBase):
 
 class ServiceBase(BaseModel):
     service_type: str = Field(..., min_length=1, max_length=100)
-    service_name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str] = None
+    service_name: str | None = Field(None, max_length=255)
+    description: str | None = None
     is_active: bool = True
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    billing_frequency: Optional[str] = Field(None, max_length=50)
-    billing_amount: Optional[float] = None
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    billing_frequency: str | None = Field(None, max_length=50)
+    billing_amount: float | None = None
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ServiceCreate(ServiceBase):
@@ -83,16 +84,16 @@ class ServiceCreate(ServiceBase):
 
 
 class ServiceUpdate(BaseModel):
-    service_name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str] = None
-    is_active: Optional[bool] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    billing_frequency: Optional[str] = Field(None, max_length=50)
-    billing_amount: Optional[float] = None
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
-    metadata: Optional[Dict[str, Any]] = None
+    service_name: str | None = Field(None, max_length=255)
+    description: str | None = None
+    is_active: bool | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    billing_frequency: str | None = Field(None, max_length=50)
+    billing_amount: float | None = None
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ServiceResponse(ServiceBase):
@@ -107,35 +108,35 @@ class ServiceResponse(ServiceBase):
 
 class ClientBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    display_name: Optional[str] = Field(None, max_length=255)
+    display_name: str | None = Field(None, max_length=255)
     category: ClientCategory = ClientCategory.INDIVIDUAL
     status: ClientStatus = ClientStatus.ACTIVE
 
-    pan: Optional[str] = Field(None, max_length=10)
-    gstin: Optional[str] = Field(None, max_length=15)
-    tan: Optional[str] = Field(None, max_length=10)
-    cin: Optional[str] = Field(None, max_length=21)
-    din: Optional[str] = Field(None, max_length=8)
-    aadhaar: Optional[str] = Field(None, max_length=12)
-    passport: Optional[str] = Field(None, max_length=20)
-    other_ids: Dict[str, Any] = Field(default_factory=dict)
+    pan: str | None = Field(None, max_length=10)
+    gstin: str | None = Field(None, max_length=15)
+    tan: str | None = Field(None, max_length=10)
+    cin: str | None = Field(None, max_length=21)
+    din: str | None = Field(None, max_length=8)
+    aadhaar: str | None = Field(None, max_length=12)
+    passport: str | None = Field(None, max_length=20)
+    other_ids: dict[str, Any] = Field(default_factory=dict)
 
-    address: Optional[str] = None
-    city: Optional[str] = Field(None, max_length=100)
-    state: Optional[str] = Field(None, max_length=100)
-    pincode: Optional[str] = Field(None, max_length=10)
+    address: str | None = None
+    city: str | None = Field(None, max_length=100)
+    state: str | None = Field(None, max_length=100)
+    pincode: str | None = Field(None, max_length=10)
     country: str = Field(default="India", max_length=100)
 
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    website: Optional[str] = Field(None, max_length=255)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=20)
+    website: str | None = Field(None, max_length=255)
 
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
 
-    notes: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ClientCreate(ClientBase):
@@ -143,42 +144,42 @@ class ClientCreate(ClientBase):
 
 
 class ClientUpdate(BaseModel):
-    display_name: Optional[str] = Field(None, max_length=255)
-    category: Optional[ClientCategory] = None
-    status: Optional[ClientStatus] = None
+    display_name: str | None = Field(None, max_length=255)
+    category: ClientCategory | None = None
+    status: ClientStatus | None = None
 
-    pan: Optional[str] = Field(None, max_length=10)
-    gstin: Optional[str] = Field(None, max_length=15)
-    tan: Optional[str] = Field(None, max_length=10)
-    cin: Optional[str] = Field(None, max_length=21)
-    din: Optional[str] = Field(None, max_length=8)
-    aadhaar: Optional[str] = Field(None, max_length=12)
-    passport: Optional[str] = Field(None, max_length=20)
-    other_ids: Optional[Dict[str, Any]] = None
+    pan: str | None = Field(None, max_length=10)
+    gstin: str | None = Field(None, max_length=15)
+    tan: str | None = Field(None, max_length=10)
+    cin: str | None = Field(None, max_length=21)
+    din: str | None = Field(None, max_length=8)
+    aadhaar: str | None = Field(None, max_length=12)
+    passport: str | None = Field(None, max_length=20)
+    other_ids: dict[str, Any] | None = None
 
-    address: Optional[str] = None
-    city: Optional[str] = Field(None, max_length=100)
-    state: Optional[str] = Field(None, max_length=100)
-    pincode: Optional[str] = Field(None, max_length=10)
-    country: Optional[str] = Field(None, max_length=100)
+    address: str | None = None
+    city: str | None = Field(None, max_length=100)
+    state: str | None = Field(None, max_length=100)
+    pincode: str | None = Field(None, max_length=10)
+    country: str | None = Field(None, max_length=100)
 
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, max_length=20)
-    website: Optional[str] = Field(None, max_length=255)
+    email: EmailStr | None = None
+    phone: str | None = Field(None, max_length=20)
+    website: str | None = Field(None, max_length=255)
 
-    responsible_user_id: Optional[UUID] = None
-    responsible_team_id: Optional[UUID] = None
+    responsible_user_id: UUID | None = None
+    responsible_team_id: UUID | None = None
 
-    notes: Optional[str] = None
-    tags: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    notes: str | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ClientResponse(ClientBase):
     id: UUID
     is_archived: bool
-    archived_at: Optional[datetime] = None
-    archived_by: Optional[UUID] = None
+    archived_at: datetime | None = None
+    archived_by: UUID | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
@@ -188,7 +189,7 @@ class ClientResponse(ClientBase):
 
 
 class ClientListResponse(BaseModel):
-    items: List[ClientResponse]
+    items: list[ClientResponse]
     total: int
     page: int
     page_size: int
@@ -197,8 +198,8 @@ class ClientListResponse(BaseModel):
 
 class ClientOverviewResponse(BaseModel):
     client: ClientResponse
-    contacts: List[ContactResponse]
-    services: List[ServiceResponse]
+    contacts: list[ContactResponse]
+    services: list[ServiceResponse]
     matters_count: int
     active_matters_count: int
     tasks_count: int
@@ -208,4 +209,4 @@ class ClientOverviewResponse(BaseModel):
     pending_compliance_count: int
     invoices_count: int
     pending_invoices_amount: float
-    recent_activity: List[Dict[str, Any]]
+    recent_activity: list[dict[str, Any]]

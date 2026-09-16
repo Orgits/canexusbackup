@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ class TenantContext:
         return f"TenantContext(tenant_id={self.tenant_id}, user_id={self.user_id})"
 
 
-def get_tenant_context() -> Optional[TenantContext]:
+def get_tenant_context() -> TenantContext | None:
     return tenant_context.get()
 
 

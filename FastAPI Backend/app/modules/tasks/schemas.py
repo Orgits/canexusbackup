@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class TaskStatus(str, Enum):
@@ -24,23 +25,23 @@ class TaskPriority(str, Enum):
 
 
 class TaskBase(BaseModel):
-    client_id: Optional[UUID] = None
-    matter_id: Optional[UUID] = None
-    parent_task_id: Optional[UUID] = None
+    client_id: UUID | None = None
+    matter_id: UUID | None = None
+    parent_task_id: UUID | None = None
     title: str = Field(..., min_length=1, max_length=500)
-    description: Optional[str] = None
-    task_number: Optional[str] = Field(None, max_length=100)
+    description: str | None = None
+    task_number: str | None = Field(None, max_length=100)
     priority: TaskPriority = TaskPriority.MEDIUM
-    assignee_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
-    due_date: Optional[datetime] = None
-    start_date: Optional[datetime] = None
-    estimated_hours: Optional[float] = None
-    checklist: List[Dict[str, Any]] = Field(default_factory=list)
-    dependencies: List[UUID] = Field(default_factory=list)
-    tags: List[str] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    source_communication_id: Optional[UUID] = None
+    assignee_id: UUID | None = None
+    team_id: UUID | None = None
+    due_date: datetime | None = None
+    start_date: datetime | None = None
+    estimated_hours: float | None = None
+    checklist: list[dict[str, Any]] = Field(default_factory=list)
+    dependencies: list[UUID] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    source_communication_id: UUID | None = None
 
 
 class TaskCreate(TaskBase):
@@ -48,29 +49,29 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=500)
-    description: Optional[str] = None
-    task_number: Optional[str] = Field(None, max_length=100)
-    priority: Optional[TaskPriority] = None
-    status: Optional[TaskStatus] = None
-    assignee_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
-    due_date: Optional[datetime] = None
-    start_date: Optional[datetime] = None
-    completed_date: Optional[datetime] = None
-    estimated_hours: Optional[float] = None
-    checklist: Optional[List[Dict[str, Any]]] = None
-    dependencies: Optional[List[UUID]] = None
-    tags: Optional[List[str]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    title: str | None = Field(None, min_length=1, max_length=500)
+    description: str | None = None
+    task_number: str | None = Field(None, max_length=100)
+    priority: TaskPriority | None = None
+    status: TaskStatus | None = None
+    assignee_id: UUID | None = None
+    team_id: UUID | None = None
+    due_date: datetime | None = None
+    start_date: datetime | None = None
+    completed_date: datetime | None = None
+    estimated_hours: float | None = None
+    checklist: list[dict[str, Any]] | None = None
+    dependencies: list[UUID] | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class TaskResponse(TaskBase):
     id: UUID
     status: TaskStatus
-    reporter_id: Optional[UUID] = None
-    actual_hours: Optional[float] = None
-    completed_date: Optional[datetime] = None
+    reporter_id: UUID | None = None
+    actual_hours: float | None = None
+    completed_date: datetime | None = None
     progress_percentage: int
     tenant_id: UUID
     created_at: datetime
@@ -81,7 +82,7 @@ class TaskResponse(TaskBase):
 
 
 class TaskListResponse(BaseModel):
-    items: List[TaskResponse]
+    items: list[TaskResponse]
     total: int
     page: int
     page_size: int
@@ -90,6 +91,6 @@ class TaskListResponse(BaseModel):
 
 class TaskAction(BaseModel):
     action: str
-    assignee_id: Optional[UUID] = None
-    status: Optional[TaskStatus] = None
-    notes: Optional[str] = None
+    assignee_id: UUID | None = None
+    status: TaskStatus | None = None
+    notes: str | None = None

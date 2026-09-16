@@ -1,20 +1,23 @@
+from datetime import datetime, timedelta
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
-from datetime import datetime
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
+from app.core.tenancy.dependencies import get_current_tenant
 from app.modules.documents.schemas import (
     DocumentCreate,
-    DocumentUpdate,
-    DocumentResponse,
     DocumentListResponse,
+    DocumentResponse,
+    DocumentUpdate,
+    DocumentUploadCompleteRequest,
     DocumentUploadInitRequest,
     DocumentUploadInitResponse,
+    DocumentDownloadResponse,
+    DocumentMetadataResponse,
 )
 from app.modules.documents.service import DocumentService
 from app.modules.users.models import User
@@ -36,13 +39,13 @@ async def init_document_upload(
 @router.post("/upload/complete/{document_id}", response_model=DocumentResponse)
 async def complete_document_upload(
     document_id: UUID,
-    checksum: str,
+    request: DocumentUploadCompleteRequest,
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    document = await service.complete_upload(document_id, current_tenant.id, checksum)
+    document = await service.complete_upload(document_id, current_tenant.id, request.checksum, current_user.id)
     return DocumentResponse.model_validate(document)
 
 
@@ -54,7 +57,7 @@ async def create_document(
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = DocumentService(db)
-    document = await service.init_upload(
+    init_response = await service.init_upload(
         DocumentUploadInitRequest(
             filename=data.filename,
             file_size=data.file_size,
@@ -69,7 +72,9 @@ async def create_document(
         current_tenant.id,
         current_user.id,
     )
-    document = await service.complete_upload(document.document_id, current_tenant.id, "")
+    # Note: In real usage, client would upload to SAS URL then call complete_upload
+    # This is a convenience endpoint for direct creation
+    document = await service.complete_upload(init_response.document_id, current_tenant.id, "", current_user.id)
     return DocumentResponse.model_validate(document)
 
 
@@ -156,4 +161,32 @@ async def delete_document(
 ):
     service = DocumentService(db)
     await service.delete(document_id, current_tenant.id)
-    return None
+
+
+@router.get("/{document_id}/download", response_model=DocumentDownloadResponse)
+async def get_document_download_url(
+    document_id: UUID,
+    expiry_hours: int = 1,
+    db: AsyncSession = Depends(get_async_db),
+    current_tenant=Depends(get_current_tenant),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
+):
+    service = DocumentService(db)
+    download_url = await service.generate_download_url(document_id, current_tenant.id, expiry_hours)
+    expires_at = datetime.now() + timedelta(hours=expiry_hours)
+    return DocumentDownloadResponse(download_url=download_url, expires_at=expires_at)
+
+
+@router.get("/{document_id}/metadata", response_model=DocumentMetadataResponse)
+async def get_document_metadata(
+    document_id: UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_tenant=Depends(get_current_tenant),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
+):
+    service = DocumentService(db)
+    metadata = await service.get_document_metadata(document_id, current_tenant.id)
+    if not metadata:
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException(detail="Document metadata not found")
+    return DocumentMetadataResponse(**metadata)

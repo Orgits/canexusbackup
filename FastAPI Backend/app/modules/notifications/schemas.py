@@ -1,21 +1,22 @@
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NotificationTemplateBase(BaseModel):
     code: str = Field(..., max_length=100)
     name: str = Field(..., max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     trigger: str = Field(..., max_length=50)
-    channels: List[str] = []
+    channels: list[str] = []
     subject_template: str
     body_template: str
     default_priority: str = Field(default="normal", max_length=20)
     is_active: bool = True
     is_system: bool = False
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class NotificationTemplateCreate(NotificationTemplateBase):
@@ -23,14 +24,14 @@ class NotificationTemplateCreate(NotificationTemplateBase):
 
 
 class NotificationTemplateUpdate(BaseModel):
-    name: Optional[str] = Field(None, max_length=255)
-    description: Optional[str] = None
-    channels: Optional[List[str]] = None
-    subject_template: Optional[str] = None
-    body_template: Optional[str] = None
-    default_priority: Optional[str] = Field(None, max_length=20)
-    is_active: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    name: str | None = Field(None, max_length=255)
+    description: str | None = None
+    channels: list[str] | None = None
+    subject_template: str | None = None
+    body_template: str | None = None
+    default_priority: str | None = Field(None, max_length=20)
+    is_active: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class NotificationTemplateResponse(NotificationTemplateBase):
@@ -40,22 +41,22 @@ class NotificationTemplateResponse(NotificationTemplateBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class NotificationBase(BaseModel):
     recipient_id: UUID
     trigger: str = Field(..., max_length=50)
-    template_id: Optional[UUID] = None
+    template_id: UUID | None = None
     title: str = Field(..., max_length=500)
     message: str
     priority: str = Field(default="normal", max_length=20)
-    entity_type: Optional[str] = Field(None, max_length=50)
-    entity_id: Optional[UUID] = None
-    actor_id: Optional[UUID] = None
-    channels: List[str] = []
-    metadata: Dict[str, Any] = {}
+    entity_type: str | None = Field(None, max_length=50)
+    entity_id: UUID | None = None
+    actor_id: UUID | None = None
+    channels: list[str] = []
+    metadata: dict[str, Any] = {}
 
 
 class NotificationCreate(NotificationBase):
@@ -63,9 +64,9 @@ class NotificationCreate(NotificationBase):
 
 
 class NotificationUpdate(BaseModel):
-    status: Optional[str] = None
-    read_at: Optional[datetime] = None
-    metadata: Optional[Dict[str, Any]] = None
+    status: str | None = None
+    read_at: datetime | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class NotificationResponse(NotificationBase):
@@ -73,21 +74,21 @@ class NotificationResponse(NotificationBase):
 
     id: UUID
     status: str
-    channel_status: Dict[str, str] = {}
-    read_at: Optional[datetime] = None
+    channel_status: dict[str, str] = {}
+    read_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     recipient: Optional["UserResponse"] = None
     template: Optional["NotificationTemplateResponse"] = None
-    deliveries: List["NotificationDeliveryResponse"] = []
+    deliveries: list["NotificationDeliveryResponse"] = []
 
 
 class NotificationListResponse(BaseModel):
-    items: List[NotificationResponse]
+    items: list[NotificationResponse]
     total: int
     page: int
     page_size: int
@@ -95,12 +96,12 @@ class NotificationListResponse(BaseModel):
 
 class NotificationDeliveryBase(BaseModel):
     channel: str = Field(..., max_length=20)
-    recipient_address: Optional[str] = Field(None, max_length=500)
-    subject: Optional[str] = Field(None, max_length=500)
+    recipient_address: str | None = Field(None, max_length=500)
+    subject: str | None = Field(None, max_length=500)
     content: str
     status: str = Field(default="pending", max_length=20)
-    provider_response: Dict[str, Any] = {}
-    metadata: Dict[str, Any] = {}
+    provider_response: dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class NotificationDeliveryCreate(NotificationDeliveryBase):
@@ -108,13 +109,13 @@ class NotificationDeliveryCreate(NotificationDeliveryBase):
 
 
 class NotificationDeliveryUpdate(BaseModel):
-    status: Optional[str] = None
-    sent_at: Optional[datetime] = None
-    delivered_at: Optional[datetime] = None
-    failed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    provider_response: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    status: str | None = None
+    sent_at: datetime | None = None
+    delivered_at: datetime | None = None
+    failed_at: datetime | None = None
+    error_message: str | None = None
+    provider_response: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class NotificationDeliveryResponse(NotificationDeliveryBase):
@@ -122,22 +123,22 @@ class NotificationDeliveryResponse(NotificationDeliveryBase):
 
     id: UUID
     notification_id: UUID
-    sent_at: Optional[datetime] = None
-    delivered_at: Optional[datetime] = None
-    failed_at: Optional[datetime] = None
-    error_message: Optional[str] = None
+    sent_at: datetime | None = None
+    delivered_at: datetime | None = None
+    failed_at: datetime | None = None
+    error_message: str | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class NotificationPreferenceBase(BaseModel):
     trigger: str = Field(..., max_length=50)
     channel: str = Field(..., max_length=20)
     is_enabled: bool = True
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class NotificationPreferenceCreate(NotificationPreferenceBase):
@@ -145,8 +146,8 @@ class NotificationPreferenceCreate(NotificationPreferenceBase):
 
 
 class NotificationPreferenceUpdate(BaseModel):
-    is_enabled: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    is_enabled: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class NotificationPreferenceResponse(NotificationPreferenceBase):
@@ -157,29 +158,29 @@ class NotificationPreferenceResponse(NotificationPreferenceBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class NotificationPreferenceListResponse(BaseModel):
-    items: List[NotificationPreferenceResponse]
+    items: list[NotificationPreferenceResponse]
     total: int
     page: int
     page_size: int
 
 
 class SendNotificationRequest(BaseModel):
-    recipient_ids: List[UUID]
+    recipient_ids: list[UUID]
     trigger: str = Field(..., max_length=50)
     title: str = Field(..., max_length=500)
     message: str
     priority: str = Field(default="normal", max_length=20)
-    entity_type: Optional[str] = Field(None, max_length=50)
-    entity_id: Optional[UUID] = None
-    channels: List[str] = ["in_app"]
-    template_code: Optional[str] = None
-    template_variables: Dict[str, Any] = {}
-    metadata: Dict[str, Any] = {}
+    entity_type: str | None = Field(None, max_length=50)
+    entity_id: UUID | None = None
+    channels: list[str] = ["in_app"]
+    template_code: str | None = None
+    template_variables: dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class NotificationStatsResponse(BaseModel):
@@ -188,8 +189,8 @@ class NotificationStatsResponse(BaseModel):
     read: int
     pending: int
     failed: int
-    by_trigger: Dict[str, int] = {}
-    by_priority: Dict[str, int] = {}
+    by_trigger: dict[str, int] = {}
+    by_priority: dict[str, int] = {}
 
 
 from app.modules.users.schemas import UserResponse

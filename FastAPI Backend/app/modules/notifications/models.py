@@ -1,20 +1,20 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Any, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
+    String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
@@ -75,11 +75,11 @@ class NotificationTemplate(Base, TenantBaseModelMixin):
 
     code: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     trigger: Mapped[NotificationTrigger] = mapped_column(Enum(NotificationTrigger), nullable=False, index=True)
 
-    channels: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    channels: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
 
     subject_template: Mapped[str] = mapped_column(Text, nullable=False)
     body_template: Mapped[str] = mapped_column(Text, nullable=False)
@@ -88,7 +88,7 @@ class NotificationTemplate(Base, TenantBaseModelMixin):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -96,6 +96,8 @@ class NotificationTemplate(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
+
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
 
 
 class Notification(Base, TenantBaseModelMixin):
@@ -116,7 +118,7 @@ class Notification(Base, TenantBaseModelMixin):
     )
 
     trigger: Mapped[NotificationTrigger] = mapped_column(Enum(NotificationTrigger), nullable=False, index=True)
-    template_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    template_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("notification_templates.id", ondelete="SET NULL"),
         nullable=True,
@@ -128,23 +130,23 @@ class Notification(Base, TenantBaseModelMixin):
     priority: Mapped[NotificationPriority] = mapped_column(Enum(NotificationPriority), default=NotificationPriority.NORMAL, nullable=False)
 
     # Related entity
-    entity_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    entity_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     # Actor who triggered the notification
-    actor_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     # Channels and delivery status
-    channels: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    channel_status: Mapped[Dict[str, str]] = mapped_column(JSONB, default=dict, nullable=False)
+    channels: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    channel_status: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict, nullable=False)
 
     status: Mapped[NotificationStatus] = mapped_column(Enum(NotificationStatus), default=NotificationStatus.PENDING, nullable=False, index=True)
 
     # Read tracking
-    read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Metadata
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -153,9 +155,10 @@ class Notification(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     recipient: Mapped["User"] = relationship("User", foreign_keys=[recipient_id], lazy="selectin")
     template: Mapped[Optional["NotificationTemplate"]] = relationship("NotificationTemplate", lazy="selectin")
-    deliveries: Mapped[List["NotificationDelivery"]] = relationship("NotificationDelivery", back_populates="notification", lazy="dynamic")
+    deliveries: Mapped[list["NotificationDelivery"]] = relationship("NotificationDelivery", back_populates="notification", lazy="dynamic")
 
 
 class NotificationDelivery(Base, TenantBaseModelMixin):
@@ -175,20 +178,20 @@ class NotificationDelivery(Base, TenantBaseModelMixin):
 
     channel: Mapped[NotificationChannel] = mapped_column(Enum(NotificationChannel), nullable=False)
 
-    recipient_address: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    subject: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    recipient_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    subject: Mapped[str | None] = mapped_column(String(500), nullable=True)
     content: Mapped[Text] = mapped_column(Text, nullable=False)
 
     status: Mapped[NotificationStatus] = mapped_column(Enum(NotificationStatus), default=NotificationStatus.PENDING, nullable=False)
 
-    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    delivered_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    failed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    provider_response: Mapped[Dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    provider_response: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -197,6 +200,7 @@ class NotificationDelivery(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     notification: Mapped["Notification"] = relationship("Notification", back_populates="deliveries")
 
 
@@ -219,7 +223,7 @@ class NotificationPreference(Base, TenantBaseModelMixin):
 
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -228,4 +232,5 @@ class NotificationPreference(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     user: Mapped["User"] = relationship("User", lazy="selectin")

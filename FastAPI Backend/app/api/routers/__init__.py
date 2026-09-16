@@ -1,26 +1,26 @@
 from fastapi import APIRouter
 
 from app.core.config import get_settings
+from app.modules.assignments.router import router as assignments_router
+from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
-from app.modules.firms.router import router as firms_router
-from app.modules.users.router import router as users_router
-from app.modules.clients.router import router as clients_router
-from app.modules.matters.router import router as matters_router
-from app.modules.tasks.router import router as tasks_router
-from app.modules.compliance.router import router as compliance_router
-from app.modules.documents.router import router as documents_router
 from app.modules.billing.router import router as billing_router
 from app.modules.calendar.router import router as calendar_router
-from app.modules.audit.router import router as audit_router
-from app.modules.workflow.router import router as workflow_router
-from app.modules.reviews.router import router as reviews_router
-from app.modules.tds.router import router as tds_router
+from app.modules.clients.router import router as clients_router
+from app.modules.collaboration.router import router as collaboration_router
+from app.modules.compliance.router import router as compliance_router
+from app.modules.documents.router import router as documents_router
+from app.modules.firms.router import router as firms_router
+from app.modules.matters.router import router as matters_router
 from app.modules.mca_roc.router import router as mca_roc_router
 from app.modules.notices.router import router as notices_router
-from app.modules.workload.router import router as workload_router
-from app.modules.assignments.router import router as assignments_router
-from app.modules.collaboration.router import router as collaboration_router
 from app.modules.notifications.router import router as notifications_router
+from app.modules.reviews.router import router as reviews_router
+from app.modules.tasks.router import router as tasks_router
+from app.modules.tds.router import router as tds_router
+from app.modules.users.router import router as users_router
+from app.modules.workflow.router import router as workflow_router
+from app.modules.workload.router import router as workload_router
 
 settings = get_settings()
 

@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional
+from typing import Any
+
 from fastapi import HTTPException, status
 
 
@@ -8,8 +9,8 @@ class CAException(HTTPException):
         status_code: int,
         detail: str,
         code: str = "ERROR",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(status_code=status_code, detail=detail, headers=headers)
         self.code = code
@@ -21,8 +22,8 @@ class ValidationException(CAException):
         self,
         detail: str = "Validation error",
         code: str = "VALIDATION_ERROR",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -38,8 +39,8 @@ class NotFoundException(CAException):
         self,
         detail: str = "Resource not found",
         code: str = "NOT_FOUND",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -55,8 +56,8 @@ class ConflictException(CAException):
         self,
         detail: str = "Resource conflict",
         code: str = "CONFLICT",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
@@ -72,8 +73,8 @@ class UnauthorizedException(CAException):
         self,
         detail: str = "Unauthorized",
         code: str = "UNAUTHORIZED",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -89,8 +90,8 @@ class ForbiddenException(CAException):
         self,
         detail: str = "Forbidden",
         code: str = "FORBIDDEN",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -106,11 +107,45 @@ class InternalServerException(CAException):
         self,
         detail: str = "Internal server error",
         code: str = "INTERNAL_ERROR",
-        headers: Optional[Dict[str, str]] = None,
-        extra: Optional[Dict[str, Any]] = None,
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
+            code=code,
+            headers=headers,
+            extra=extra,
+        )
+
+
+class StorageException(CAException):
+    def __init__(
+        self,
+        detail: str = "Storage operation failed",
+        code: str = "STORAGE_ERROR",
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
+    ):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
+            code=code,
+            headers=headers,
+            extra=extra,
+        )
+
+
+class MalwareException(CAException):
+    def __init__(
+        self,
+        detail: str = "Malware detected",
+        code: str = "MALWARE_DETECTED",
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
+    ):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=detail,
             code=code,
             headers=headers,

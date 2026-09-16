@@ -1,32 +1,28 @@
-from typing import Optional, List
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.notifications.service import NotificationService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.notifications.schemas import (
-    NotificationTemplateCreate,
-    NotificationTemplateUpdate,
-    NotificationTemplateResponse,
-    NotificationCreate,
-    NotificationUpdate,
-    NotificationResponse,
     NotificationListResponse,
-    SendNotificationRequest,
-    NotificationStatsResponse,
-    NotificationDeliveryCreate,
-    NotificationDeliveryUpdate,
-    NotificationDeliveryResponse,
     NotificationPreferenceCreate,
-    NotificationPreferenceUpdate,
-    NotificationPreferenceResponse,
     NotificationPreferenceListResponse,
+    NotificationPreferenceResponse,
+    NotificationPreferenceUpdate,
+    NotificationResponse,
+    NotificationStatsResponse,
+    NotificationTemplateCreate,
+    NotificationTemplateResponse,
+    NotificationTemplateUpdate,
+    NotificationUpdate,
+    SendNotificationRequest,
 )
+from app.modules.notifications.service import NotificationService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -55,7 +51,7 @@ async def create_notification_template(
 
 @router.post(
     "/templates/initialize",
-    response_model=List[NotificationTemplateResponse],
+    response_model=list[NotificationTemplateResponse],
     summary="Initialize system notification templates",
 )
 async def initialize_notification_templates(
@@ -69,14 +65,14 @@ async def initialize_notification_templates(
 
 @router.get(
     "/templates",
-    response_model=List[NotificationTemplateResponse],
+    response_model=list[NotificationTemplateResponse],
     summary="List notification templates",
 )
 async def list_notification_templates(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    trigger: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    trigger: str | None = None,
+    is_active: bool | None = None,
     notification_service: NotificationService = Depends(get_notification_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -90,7 +86,7 @@ async def list_notification_templates(
 
 @router.get(
     "/templates/trigger/{trigger}",
-    response_model=List[NotificationTemplateResponse],
+    response_model=list[NotificationTemplateResponse],
     summary="Get templates by trigger",
 )
 async def get_templates_by_trigger(
@@ -152,7 +148,7 @@ async def delete_notification_template(
 # Notification endpoints
 @router.post(
     "/send",
-    response_model=List[NotificationResponse],
+    response_model=list[NotificationResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Send notification",
 )
@@ -174,14 +170,14 @@ async def send_notification(
 async def list_notifications(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    recipient_id: Optional[UUID] = None,
-    trigger: Optional[str] = None,
-    status: Optional[str] = None,
-    entity_type: Optional[str] = None,
-    entity_id: Optional[UUID] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    sort_by: Optional[str] = None,
+    recipient_id: UUID | None = None,
+    trigger: str | None = None,
+    status: str | None = None,
+    entity_type: str | None = None,
+    entity_id: UUID | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     notification_service: NotificationService = Depends(get_notification_service),
     tenant_context=Depends(get_tenant_context),
@@ -213,7 +209,7 @@ async def list_notifications(
 async def get_my_notifications(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[str] = None,
+    status: str | None = None,
     notification_service: NotificationService = Depends(get_notification_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),

@@ -1,29 +1,28 @@
-from typing import Optional, List
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.tds.service import TDSService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.tds.schemas import (
-    TDSComplianceCycleCreate,
-    TDSComplianceCycleUpdate,
-    TDSComplianceCycleResponse,
-    TDSComplianceCycleListResponse,
     TDSChallanCreate,
-    TDSChallanUpdate,
     TDSChallanResponse,
-    TDSChallanListResponse,
+    TDSChallanUpdate,
+    TDSComplianceCycleCreate,
+    TDSComplianceCycleListResponse,
+    TDSComplianceCycleResponse,
+    TDSComplianceCycleUpdate,
     TDSDeducteeCreate,
-    TDSDeducteeUpdate,
-    TDSDeducteeResponse,
     TDSDeducteeListResponse,
+    TDSDeducteeResponse,
+    TDSDeducteeUpdate,
     TDSSummaryResponse,
 )
+from app.modules.tds.service import TDSService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/tds", tags=["TDS Compliance"])
@@ -40,7 +39,7 @@ def get_tds_service(db: AsyncSession = Depends(get_db)) -> TDSService:
     summary="Get TDS summary",
 )
 async def get_tds_summary(
-    financial_year: Optional[str] = None,
+    financial_year: str | None = None,
     tds_service: TDSService = Depends(get_tds_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -74,17 +73,17 @@ async def create_tds_cycle(
 async def list_tds_cycles(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = None,
-    client_id: Optional[UUID] = None,
-    form_type: Optional[str] = None,
-    financial_year: Optional[str] = None,
-    quarter: Optional[str] = None,
-    status: Optional[str] = None,
-    matter_id: Optional[UUID] = None,
-    due_date_from: Optional[datetime] = None,
-    due_date_to: Optional[datetime] = None,
-    assigned_user_id: Optional[UUID] = None,
-    sort_by: Optional[str] = None,
+    search: str | None = None,
+    client_id: UUID | None = None,
+    form_type: str | None = None,
+    financial_year: str | None = None,
+    quarter: str | None = None,
+    status: str | None = None,
+    matter_id: UUID | None = None,
+    due_date_from: datetime | None = None,
+    due_date_to: datetime | None = None,
+    assigned_user_id: UUID | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     tds_service: TDSService = Depends(get_tds_service),
     tenant_context=Depends(get_tenant_context),
@@ -211,8 +210,8 @@ async def mark_tds_ready_for_filing(
 async def mark_tds_filed(
     cycle_id: UUID,
     token_number: str = Query(..., description="Token number from portal"),
-    acknowledgment_number: Optional[str] = Query(None, description="Acknowledgment number"),
-    filing_date: Optional[datetime] = Query(None, description="Filing date"),
+    acknowledgment_number: str | None = Query(None, description="Acknowledgment number"),
+    filing_date: datetime | None = Query(None, description="Filing date"),
     tds_service: TDSService = Depends(get_tds_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -235,7 +234,7 @@ async def mark_tds_filed(
 )
 async def mark_tds_processed(
     cycle_id: UUID,
-    processed_date: Optional[datetime] = Query(None, description="Processed date"),
+    processed_date: datetime | None = Query(None, description="Processed date"),
     tds_service: TDSService = Depends(get_tds_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -264,7 +263,7 @@ async def add_tds_challan(
 
 @router.get(
     "/cycles/{cycle_id}/challans",
-    response_model=List[TDSChallanResponse],
+    response_model=list[TDSChallanResponse],
     summary="Get challans for cycle",
 )
 async def get_tds_challans(
@@ -344,13 +343,13 @@ async def add_tds_deductee(
 
 @router.post(
     "/cycles/{cycle_id}/deductees/bulk",
-    response_model=List[TDSDeducteeResponse],
+    response_model=list[TDSDeducteeResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Bulk add deductees",
 )
 async def bulk_add_tds_deductees(
     cycle_id: UUID,
-    data_list: List[TDSDeducteeCreate],
+    data_list: list[TDSDeducteeCreate],
     tds_service: TDSService = Depends(get_tds_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),

@@ -1,16 +1,17 @@
-from typing import Optional, List, Dict, Any
+from datetime import datetime
+from typing import Any, Optional
 from uuid import UUID
-from datetime import datetime, date
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AssignmentBase(BaseModel):
     entity_type: str = Field(..., max_length=50)
     entity_id: UUID
-    user_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
-    notes: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    user_id: UUID | None = None
+    team_id: UUID | None = None
+    notes: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class AssignmentCreate(AssignmentBase):
@@ -18,27 +19,27 @@ class AssignmentCreate(AssignmentBase):
 
 
 class AssignmentUpdate(BaseModel):
-    user_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
-    is_active: Optional[bool] = None
-    notes: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    user_id: UUID | None = None
+    team_id: UUID | None = None
+    is_active: bool | None = None
+    notes: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class AssignmentReassignRequest(BaseModel):
     entity_type: str = Field(..., max_length=50)
     entity_id: UUID
-    new_user_id: Optional[UUID] = None
-    new_team_id: Optional[UUID] = None
+    new_user_id: UUID | None = None
+    new_team_id: UUID | None = None
     reason: str
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class AssignmentUnassignRequest(BaseModel):
     entity_type: str = Field(..., max_length=50)
     entity_id: UUID
     reason: str
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class AssignmentResponse(AssignmentBase):
@@ -48,14 +49,14 @@ class AssignmentResponse(AssignmentBase):
     assigned_by_id: UUID
     assigned_at: datetime
     is_active: bool
-    unassigned_at: Optional[datetime] = None
-    unassigned_by_id: Optional[UUID] = None
-    unassign_reason: Optional[str] = None
+    unassigned_at: datetime | None = None
+    unassigned_by_id: UUID | None = None
+    unassign_reason: str | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     user: Optional["UserResponse"] = None
     team: Optional["TeamResponse"] = None
@@ -64,12 +65,12 @@ class AssignmentResponse(AssignmentBase):
 
 class AssignmentHistoryBase(BaseModel):
     action: str = Field(..., max_length=50)
-    from_user_id: Optional[UUID] = None
-    to_user_id: Optional[UUID] = None
-    from_team_id: Optional[UUID] = None
-    to_team_id: Optional[UUID] = None
-    reason: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    from_user_id: UUID | None = None
+    to_user_id: UUID | None = None
+    from_team_id: UUID | None = None
+    to_team_id: UUID | None = None
+    reason: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class AssignmentHistoryResponse(AssignmentHistoryBase):
@@ -85,7 +86,7 @@ class AssignmentHistoryResponse(AssignmentHistoryBase):
 
 
 class AssignmentHistoryListResponse(BaseModel):
-    items: List[AssignmentHistoryResponse]
+    items: list[AssignmentHistoryResponse]
     total: int
     page: int
     page_size: int
@@ -97,7 +98,7 @@ class EscalationBase(BaseModel):
     escalated_to_id: UUID
     reason: str = Field(..., max_length=50)
     description: str
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class EscalationCreate(EscalationBase):
@@ -105,33 +106,33 @@ class EscalationCreate(EscalationBase):
 
 
 class EscalationUpdate(BaseModel):
-    is_resolved: Optional[bool] = None
-    resolution_notes: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    is_resolved: bool | None = None
+    resolution_notes: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class EscalationResolveRequest(BaseModel):
-    resolution_notes: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    resolution_notes: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class EscalationResponse(EscalationBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    escalated_from_id: Optional[UUID] = None
+    escalated_from_id: UUID | None = None
     escalated_by_id: UUID
-    previous_assignee_id: Optional[UUID] = None
-    previous_team_id: Optional[UUID] = None
+    previous_assignee_id: UUID | None = None
+    previous_team_id: UUID | None = None
     is_resolved: bool
-    resolved_at: Optional[datetime] = None
-    resolved_by_id: Optional[UUID] = None
-    resolution_notes: Optional[str] = None
+    resolved_at: datetime | None = None
+    resolved_by_id: UUID | None = None
+    resolution_notes: str | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     escalated_from: Optional["UserResponse"] = None
     escalated_to: Optional["UserResponse"] = None
@@ -139,18 +140,18 @@ class EscalationResponse(EscalationBase):
 
 
 class EscalationListResponse(BaseModel):
-    items: List[EscalationResponse]
+    items: list[EscalationResponse]
     total: int
     page: int
     page_size: int
 
 
 class BulkAssignmentRequest(BaseModel):
-    assignments: List[AssignmentCreate]
+    assignments: list[AssignmentCreate]
 
 
 class BulkReassignmentRequest(BaseModel):
-    reassignments: List[AssignmentReassignRequest]
+    reassignments: list[AssignmentReassignRequest]
 
 
-from app.modules.users.schemas import UserResponse, TeamResponse
+from app.modules.users.schemas import TeamResponse, UserResponse

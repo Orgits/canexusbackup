@@ -1,24 +1,20 @@
-from typing import Optional, List, Tuple
+from datetime import date
 from uuid import UUID
-from datetime import datetime, date, timezone, timedelta
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.workload.models import (
-    UserAvailability,
     TeamCapacity,
+    UserAvailability,
+    WorkloadPeriod,
     WorkloadSnapshot,
     WorkloadSummary,
-    WorkloadPeriod,
 )
 from app.modules.workload.schemas import (
-    UserAvailabilityCreate,
-    UserAvailabilityUpdate,
     TeamCapacityCreate,
-    TeamCapacityUpdate,
-    WorkloadSnapshotCreate,
-    WorkloadSummaryCreate,
+    UserAvailabilityCreate,
 )
 
 
@@ -33,7 +29,7 @@ class WorkloadRepository:
         await self.db.refresh(availability)
         return availability
 
-    async def get_availability(self, user_id: UUID, date: date, tenant_id: UUID) -> Optional[UserAvailability]:
+    async def get_availability(self, user_id: UUID, date: date, tenant_id: UUID) -> UserAvailability | None:
         result = await self.db.execute(
             select(UserAvailability).where(
                 UserAvailability.user_id == user_id,
@@ -45,7 +41,7 @@ class WorkloadRepository:
 
     async def get_availabilities_for_user(
         self, user_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[UserAvailability]:
+    ) -> list[UserAvailability]:
         result = await self.db.execute(
             select(UserAvailability).where(
                 UserAvailability.user_id == user_id,
@@ -58,7 +54,7 @@ class WorkloadRepository:
 
     async def get_availabilities_for_team(
         self, team_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[UserAvailability]:
+    ) -> list[UserAvailability]:
         from app.modules.users.models import User
         result = await self.db.execute(
             select(UserAvailability)
@@ -85,15 +81,14 @@ class WorkloadRepository:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        else:
-            availability = UserAvailability(
-                user_id=user_id,
-                date=date,
-                **data.model_dump(exclude={"user_id", "date"}),
-                tenant_id=tenant_id,
-                created_by=created_by,
-            )
-            return await self.create_availability(availability)
+        availability = UserAvailability(
+            user_id=user_id,
+            date=date,
+            **data.model_dump(exclude={"user_id", "date"}),
+            tenant_id=tenant_id,
+            created_by=created_by,
+        )
+        return await self.create_availability(availability)
 
     async def update_availability(self, availability: UserAvailability) -> UserAvailability:
         await self.db.flush()
@@ -109,7 +104,7 @@ class WorkloadRepository:
 
     async def get_capacity(
         self, team_id: UUID, period_type: WorkloadPeriod, period_start: date, tenant_id: UUID
-    ) -> Optional[TeamCapacity]:
+    ) -> TeamCapacity | None:
         result = await self.db.execute(
             select(TeamCapacity).where(
                 TeamCapacity.team_id == team_id,
@@ -121,8 +116,8 @@ class WorkloadRepository:
         return result.scalar_one_or_none()
 
     async def get_capacities_for_team(
-        self, team_id: UUID, tenant_id: UUID, period_type: Optional[WorkloadPeriod] = None
-    ) -> List[TeamCapacity]:
+        self, team_id: UUID, tenant_id: UUID, period_type: WorkloadPeriod | None = None
+    ) -> list[TeamCapacity]:
         query = select(TeamCapacity).where(
             TeamCapacity.team_id == team_id,
             TeamCapacity.tenant_id == tenant_id,
@@ -147,17 +142,16 @@ class WorkloadRepository:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        else:
-            capacity = TeamCapacity(
-                team_id=team_id,
-                period_type=period_type,
-                period_start=period_start,
-                period_end=data.period_end,
-                **data.model_dump(exclude={"team_id", "period_type", "period_start", "period_end"}),
-                tenant_id=tenant_id,
-                created_by=created_by,
-            )
-            return await self.create_capacity(capacity)
+        capacity = TeamCapacity(
+            team_id=team_id,
+            period_type=period_type,
+            period_start=period_start,
+            period_end=data.period_end,
+            **data.model_dump(exclude={"team_id", "period_type", "period_start", "period_end"}),
+            tenant_id=tenant_id,
+            created_by=created_by,
+        )
+        return await self.create_capacity(capacity)
 
     async def update_capacity(self, capacity: TeamCapacity) -> TeamCapacity:
         await self.db.flush()
@@ -176,9 +170,9 @@ class WorkloadRepository:
         snapshot_date: date,
         period_type: WorkloadPeriod,
         tenant_id: UUID,
-        user_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-    ) -> Optional[WorkloadSnapshot]:
+        user_id: UUID | None = None,
+        team_id: UUID | None = None,
+    ) -> WorkloadSnapshot | None:
         query = select(WorkloadSnapshot).where(
             WorkloadSnapshot.snapshot_date == snapshot_date,
             WorkloadSnapshot.period_type == period_type,
@@ -193,8 +187,8 @@ class WorkloadRepository:
 
     async def get_snapshots_for_user(
         self, user_id: UUID, tenant_id: UUID, start_date: date, end_date: date,
-        period_type: Optional[WorkloadPeriod] = None
-    ) -> List[WorkloadSnapshot]:
+        period_type: WorkloadPeriod | None = None
+    ) -> list[WorkloadSnapshot]:
         query = select(WorkloadSnapshot).where(
             WorkloadSnapshot.user_id == user_id,
             WorkloadSnapshot.tenant_id == tenant_id,
@@ -209,8 +203,8 @@ class WorkloadRepository:
 
     async def get_snapshots_for_team(
         self, team_id: UUID, tenant_id: UUID, start_date: date, end_date: date,
-        period_type: Optional[WorkloadPeriod] = None
-    ) -> List[WorkloadSnapshot]:
+        period_type: WorkloadPeriod | None = None
+    ) -> list[WorkloadSnapshot]:
         query = select(WorkloadSnapshot).where(
             WorkloadSnapshot.team_id == team_id,
             WorkloadSnapshot.tenant_id == tenant_id,
@@ -238,8 +232,7 @@ class WorkloadRepository:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        else:
-            return await self.create_snapshot(snapshot)
+        return await self.create_snapshot(snapshot)
 
     # Workload Summary methods
     async def create_summary(self, summary: WorkloadSummary) -> WorkloadSummary:
@@ -249,8 +242,8 @@ class WorkloadRepository:
         return summary
 
     async def get_summary(
-        self, summary_date: date, tenant_id: UUID, user_id: Optional[UUID] = None, team_id: Optional[UUID] = None
-    ) -> Optional[WorkloadSummary]:
+        self, summary_date: date, tenant_id: UUID, user_id: UUID | None = None, team_id: UUID | None = None
+    ) -> WorkloadSummary | None:
         query = select(WorkloadSummary).where(
             WorkloadSummary.summary_date == summary_date,
             WorkloadSummary.tenant_id == tenant_id,
@@ -264,7 +257,7 @@ class WorkloadRepository:
 
     async def get_summaries_for_user(
         self, user_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[WorkloadSummary]:
+    ) -> list[WorkloadSummary]:
         result = await self.db.execute(
             select(WorkloadSummary).where(
                 WorkloadSummary.user_id == user_id,
@@ -277,7 +270,7 @@ class WorkloadRepository:
 
     async def get_summaries_for_team(
         self, team_id: UUID, tenant_id: UUID, start_date: date, end_date: date
-    ) -> List[WorkloadSummary]:
+    ) -> list[WorkloadSummary]:
         result = await self.db.execute(
             select(WorkloadSummary).where(
                 WorkloadSummary.team_id == team_id,
@@ -293,11 +286,11 @@ class WorkloadRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        user_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-    ) -> Tuple[List[WorkloadSummary], int]:
+        user_id: UUID | None = None,
+        team_id: UUID | None = None,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> tuple[list[WorkloadSummary], int]:
         query = select(WorkloadSummary).where(WorkloadSummary.tenant_id == tenant_id)
         count_query = select(func.count(WorkloadSummary.id)).where(WorkloadSummary.tenant_id == tenant_id)
 
@@ -346,5 +339,4 @@ class WorkloadRepository:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        else:
-            return await self.create_summary(summary)
+        return await self.create_summary(summary)

@@ -1,24 +1,22 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException, ValidationException
 from app.modules.collaboration.models import (
     Comment,
+    CommentableEntityType,
     CommentAttachment,
     CommentReaction,
-    CommentableEntityType,
     CommentType,
 )
+from app.modules.collaboration.repository import CollaborationRepository
 from app.modules.collaboration.schemas import (
+    CommentAttachmentCreate,
     CommentCreate,
     CommentUpdate,
-    CommentAttachmentCreate,
-    CommentReactionCreate,
 )
-from app.modules.collaboration.repository import CollaborationRepository
 from app.modules.users.models import User
 
 
@@ -81,8 +79,8 @@ class CollaborationService:
         page: int = 1,
         page_size: int = 50,
         include_replies: bool = False,
-        comment_type: Optional[str] = None,
-    ) -> Tuple[List[Comment], int]:
+        comment_type: str | None = None,
+    ) -> tuple[list[Comment], int]:
         try:
             entity_type_enum = CommentableEntityType(entity_type)
         except ValueError:
@@ -99,7 +97,7 @@ class CollaborationService:
             entity_type_enum, entity_id, tenant_id, page, page_size, include_replies, comment_type_enum
         )
 
-    async def get_comment_thread(self, comment_id: UUID, tenant_id: UUID) -> List[Comment]:
+    async def get_comment_thread(self, comment_id: UUID, tenant_id: UUID) -> list[Comment]:
         comment = await self.get_comment(comment_id, tenant_id)
         replies = await self.repository.get_comment_thread(comment_id, tenant_id)
         return [comment] + replies
@@ -151,7 +149,7 @@ class CollaborationService:
         )
         return await self.repository.create_attachment(attachment)
 
-    async def get_attachments(self, comment_id: UUID, tenant_id: UUID) -> List[CommentAttachment]:
+    async def get_attachments(self, comment_id: UUID, tenant_id: UUID) -> list[CommentAttachment]:
         await self.get_comment(comment_id, tenant_id)
         return await self.repository.get_attachments_for_comment(comment_id, tenant_id)
 
@@ -175,13 +173,13 @@ class CollaborationService:
     # Reaction methods
     async def toggle_reaction(
         self, comment_id: UUID, reaction_type: str, tenant_id: UUID, user_id: UUID
-    ) -> Tuple[CommentReaction, bool]:
+    ) -> tuple[CommentReaction, bool]:
         comment = await self.get_comment(comment_id, tenant_id)
 
         reaction, created = await self.repository.toggle_reaction(comment_id, user_id, reaction_type, tenant_id)
         return reaction, created
 
-    async def get_reactions(self, comment_id: UUID, tenant_id: UUID) -> List[CommentReaction]:
+    async def get_reactions(self, comment_id: UUID, tenant_id: UUID) -> list[CommentReaction]:
         await self.get_comment(comment_id, tenant_id)
         return await self.repository.get_reactions_for_comment(comment_id, tenant_id)
 

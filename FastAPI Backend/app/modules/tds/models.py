@@ -1,32 +1,30 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
-    UniqueConstraint,
     Numeric,
+    String,
+    Text,
+    UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
+from app.core.database.encryption_mixin import PIIEncryptionMixin, encrypted_column
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User, Team
     from app.modules.clients.models import Client
-    from app.modules.matters.models import Matter
-    from app.modules.tasks.models import Task
-    from app.modules.documents.models import Document
     from app.modules.compliance.models import ComplianceCycle
+    from app.modules.matters.models import Matter
+    from app.modules.users.models import Team, User
     from app.modules.workflow.models import WorkflowInstance
 
 
@@ -69,7 +67,7 @@ class TDSChallanStatus(str, PyEnum):
     MISMATCH = "mismatch"
 
 
-class TDSComplianceCycle(Base, TenantBaseModelMixin):
+class TDSComplianceCycle(Base, TenantBaseModelMixin, PIIEncryptionMixin):
     __tablename__ = "tds_compliance_cycles"
     __table_args__ = (
         Index("ix_tds_cycles_tenant_client", "tenant_id", "client_id"),
@@ -86,19 +84,19 @@ class TDSComplianceCycle(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    compliance_cycle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    compliance_cycle_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("compliance_cycles.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    matter_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    matter_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("matters.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    workflow_instance_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    workflow_instance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workflow_instances.id", ondelete="SET NULL"),
         nullable=True,
@@ -111,20 +109,20 @@ class TDSComplianceCycle(Base, TenantBaseModelMixin):
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    extended_due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    filing_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    processed_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    extended_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    filing_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    processed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     status: Mapped[TDSStatus] = mapped_column(Enum(TDSStatus), default=TDSStatus.PENDING, nullable=False, index=True)
     priority: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
 
-    assigned_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    assigned_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
@@ -132,24 +130,24 @@ class TDSComplianceCycle(Base, TenantBaseModelMixin):
     )
 
     # TDS-specific fields
-    tan: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    _tan_encrypted: Mapped[bytes | None] = encrypted_column()
     total_deductees: Mapped[int] = mapped_column(default=0, nullable=False)
     total_tax_deducted: Mapped[float] = mapped_column(Numeric(15, 2), default=0, nullable=False)
     total_tax_deposited: Mapped[float] = mapped_column(Numeric(15, 2), default=0, nullable=False)
-    token_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    acknowledgment_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    token_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    acknowledgment_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Checklist and documents
-    checklist: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    document_requirements: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    workflow_stages: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    checklist: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    document_requirements: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    workflow_stages: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
 
     # Missing information tracking
-    missing_info: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    missing_info: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
     missing_info_count: Mapped[int] = mapped_column(default=0, nullable=False)
 
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -158,23 +156,21 @@ class TDSComplianceCycle(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     client: Mapped["Client"] = relationship("Client", lazy="selectin")
     compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     workflow_instance: Mapped[Optional["WorkflowInstance"]] = relationship("WorkflowInstance", lazy="selectin")
     assigned_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_user_id], lazy="selectin")
     assigned_team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")
-    challans: Mapped[List["TDSChallan"]] = relationship("TDSChallan", back_populates="tds_cycle", lazy="dynamic")
-    deductees: Mapped[List["TDSDeductee"]] = relationship("TDSDeductee", back_populates="tds_cycle", lazy="dynamic")
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="tds_cycle", lazy="dynamic")
-    documents: Mapped[List["Document"]] = relationship("Document", back_populates="tds_cycle", lazy="dynamic")
+    challans: Mapped[list["TDSChallan"]] = relationship("TDSChallan", lazy="dynamic")
+    deductees: Mapped[list["TDSDeductee"]] = relationship("TDSDeductee", lazy="dynamic")
 
 
-class TDSChallan(Base, TenantBaseModelMixin):
+class TDSChallan(Base, TenantBaseModelMixin, PIIEncryptionMixin):
     __tablename__ = "tds_challans"
     __table_args__ = (
         Index("ix_tds_challans_tenant_cycle", "tenant_id", "tds_cycle_id"),
-        Index("ix_tds_challans_tenant_cin", "tenant_id", "cin"),
         Index("ix_tds_challans_tenant_status", "tenant_id", "status"),
         Index("ix_tds_challans_tenant_date", "tenant_id", "deposit_date"),
     )
@@ -186,7 +182,7 @@ class TDSChallan(Base, TenantBaseModelMixin):
         index=True,
     )
 
-    cin: Mapped[str] = mapped_column(String(50), nullable=False)
+    _cin_encrypted: Mapped[bytes] = encrypted_column(nullable=False)
     bsr_code: Mapped[str] = mapped_column(String(7), nullable=False)
     deposit_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     challan_serial: Mapped[str] = mapped_column(String(5), nullable=False)
@@ -200,11 +196,11 @@ class TDSChallan(Base, TenantBaseModelMixin):
     total_amount: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
 
     status: Mapped[TDSChallanStatus] = mapped_column(Enum(TDSChallanStatus), default=TDSChallanStatus.PENDING, nullable=False)
-    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    verified_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    verified_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -213,14 +209,14 @@ class TDSChallan(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     tds_cycle: Mapped["TDSComplianceCycle"] = relationship("TDSComplianceCycle", back_populates="challans")
 
 
-class TDSDeductee(Base, TenantBaseModelMixin):
+class TDSDeductee(Base, TenantBaseModelMixin, PIIEncryptionMixin):
     __tablename__ = "tds_deductees"
     __table_args__ = (
         Index("ix_tds_deductees_tenant_cycle", "tenant_id", "tds_cycle_id"),
-        Index("ix_tds_deductees_tenant_pan", "tenant_id", "deductee_pan"),
         Index("ix_tds_deductees_tenant_type", "tenant_id", "deductee_type"),
     )
 
@@ -233,19 +229,19 @@ class TDSDeductee(Base, TenantBaseModelMixin):
 
     deductee_type: Mapped[TDSDeducteeType] = mapped_column(Enum(TDSDeducteeType), nullable=False, index=True)
     deductee_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    deductee_pan: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
-    deductee_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    _deductee_pan_encrypted: Mapped[bytes] = encrypted_column(nullable=False)
+    deductee_address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     section_code: Mapped[str] = mapped_column(String(10), nullable=False)
     amount_paid: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     tax_deducted: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
     tax_deposited: Mapped[float] = mapped_column(Numeric(15, 2), default=0, nullable=False)
     deduction_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    deposit_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    deposit_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    certificate_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    remarks: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    certificate_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    remarks: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -254,4 +250,5 @@ class TDSDeductee(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     tds_cycle: Mapped["TDSComplianceCycle"] = relationship("TDSComplianceCycle", back_populates="deductees")

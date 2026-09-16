@@ -1,24 +1,24 @@
-from typing import Optional, List
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.mca_roc.service import MCAService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.mca_roc.schemas import (
-    MCAFilingCycleCreate,
-    MCAFilingCycleUpdate,
-    MCAFilingCycleResponse,
-    MCAFilingCycleListResponse,
     MCAFilingConfigCreate,
-    MCAFilingConfigUpdate,
     MCAFilingConfigResponse,
+    MCAFilingConfigUpdate,
+    MCAFilingCycleCreate,
+    MCAFilingCycleListResponse,
+    MCAFilingCycleResponse,
+    MCAFilingCycleUpdate,
     MCASummaryResponse,
 )
+from app.modules.mca_roc.service import MCAService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/mca-roc", tags=["MCA/ROC Compliance"])
@@ -35,7 +35,7 @@ def get_mca_service(db: AsyncSession = Depends(get_db)) -> MCAService:
     summary="Get MCA/ROC summary",
 )
 async def get_mca_summary(
-    financial_year: Optional[str] = None,
+    financial_year: str | None = None,
     mca_service: MCAService = Depends(get_mca_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -63,7 +63,7 @@ async def create_mca_config(
 
 @router.post(
     "/configs/initialize",
-    response_model=List[MCAFilingConfigResponse],
+    response_model=list[MCAFilingConfigResponse],
     summary="Initialize system MCA filing configs",
 )
 async def initialize_mca_configs(
@@ -77,13 +77,13 @@ async def initialize_mca_configs(
 
 @router.get(
     "/configs",
-    response_model=List[MCAFilingConfigResponse],
+    response_model=list[MCAFilingConfigResponse],
     summary="List MCA filing configs",
 )
 async def list_mca_configs(
-    entity_type: Optional[str] = None,
-    filing_category: Optional[str] = None,
-    is_active: Optional[bool] = None,
+    entity_type: str | None = None,
+    filing_category: str | None = None,
+    is_active: bool | None = None,
     mca_service: MCAService = Depends(get_mca_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -165,18 +165,18 @@ async def create_mca_cycle(
 async def list_mca_cycles(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = None,
-    client_id: Optional[UUID] = None,
-    entity_type: Optional[str] = None,
-    filing_type: Optional[str] = None,
-    filing_category: Optional[str] = None,
-    financial_year: Optional[str] = None,
-    status: Optional[str] = None,
-    matter_id: Optional[UUID] = None,
-    due_date_from: Optional[datetime] = None,
-    due_date_to: Optional[datetime] = None,
-    assigned_user_id: Optional[UUID] = None,
-    sort_by: Optional[str] = None,
+    search: str | None = None,
+    client_id: UUID | None = None,
+    entity_type: str | None = None,
+    filing_type: str | None = None,
+    filing_category: str | None = None,
+    financial_year: str | None = None,
+    status: str | None = None,
+    matter_id: UUID | None = None,
+    due_date_from: datetime | None = None,
+    due_date_to: datetime | None = None,
+    assigned_user_id: UUID | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     mca_service: MCAService = Depends(get_mca_service),
     tenant_context=Depends(get_tenant_context),
@@ -350,8 +350,8 @@ async def mark_mca_ready_for_filing(
 async def mark_mca_filed(
     cycle_id: UUID,
     srn: str = Query(..., description="SRN from MCA portal"),
-    acknowledgment_number: Optional[str] = Query(None, description="Acknowledgment number"),
-    filing_date: Optional[datetime] = Query(None, description="Filing date"),
+    acknowledgment_number: str | None = Query(None, description="Acknowledgment number"),
+    filing_date: datetime | None = Query(None, description="Filing date"),
     challan_amount: float = Query(0, ge=0, description="Challan amount"),
     additional_fee: float = Query(0, ge=0, description="Additional fee"),
     mca_service: MCAService = Depends(get_mca_service),
@@ -378,7 +378,7 @@ async def mark_mca_filed(
 )
 async def mark_mca_approved(
     cycle_id: UUID,
-    approval_date: Optional[datetime] = Query(None, description="Approval date"),
+    approval_date: datetime | None = Query(None, description="Approval date"),
     mca_service: MCAService = Depends(get_mca_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),

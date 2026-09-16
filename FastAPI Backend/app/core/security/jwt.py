@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import Optional
+from uuid import uuid4
 
 from jose import jwt
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ class TokenPayload(BaseModel):
     type: TokenType
     exp: int
     iat: int
+    jti: str
     permissions: list[str] = []
     roles: list[str] = []
 
@@ -32,15 +33,18 @@ def create_token(
     expires_delta: timedelta,
     permissions: list[str] = None,
     roles: list[str] = None,
+    jti: str = None,
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + expires_delta
+    token_jti = jti or str(uuid4())
     to_encode = {
         "sub": subject,
         "tenant_id": tenant_id,
         "type": token_type.value,
         "exp": int(expire.timestamp()),
         "iat": int(now.timestamp()),
+        "jti": token_jti,
         "permissions": permissions or [],
         "roles": roles or [],
     }
@@ -76,7 +80,7 @@ def create_refresh_token(
     )
 
 
-def decode_token(token: str) -> Optional[TokenPayload]:
+def decode_token(token: str) -> TokenPayload | None:
     try:
         payload = jwt.decode(
             token,

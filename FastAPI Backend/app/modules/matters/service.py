@@ -1,15 +1,15 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.exceptions import NotFoundException, ConflictException
-from app.modules.matters.models import Matter, MatterType, MatterStatus, MatterPriority
-from app.modules.matters.schemas import MatterCreate, MatterUpdate, MatterStatusTransition
-from app.modules.matters.repository import MatterRepository
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException
 from app.modules.clients.models import Client
-from app.modules.users.models import User, Team
+from app.modules.matters.models import Matter, MatterPriority, MatterStatus, MatterType
+from app.modules.matters.repository import MatterRepository
+from app.modules.matters.schemas import MatterCreate, MatterStatusTransition, MatterUpdate
+from app.modules.users.models import Team, User
 
 
 class MatterService:
@@ -65,19 +65,19 @@ class MatterService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_type: Optional[MatterType] = None,
-        status: Optional[MatterStatus] = None,
-        priority: Optional[MatterPriority] = None,
-        responsible_user_id: Optional[UUID] = None,
-        responsible_team_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        tags: Optional[List[str]] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_type: MatterType | None = None,
+        status: MatterStatus | None = None,
+        priority: MatterPriority | None = None,
+        responsible_user_id: UUID | None = None,
+        responsible_team_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        tags: list[str] | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Matter], int]:
+    ) -> tuple[list[Matter], int]:
         return await self.repository.get_all(
             tenant_id, page, page_size, search, client_id, matter_type,
             status, priority, responsible_user_id, responsible_team_id,
@@ -88,12 +88,12 @@ class MatterService:
         matter = await self.get_by_id(matter_id, tenant_id)
         update_data = data.model_dump(exclude_unset=True)
 
-        if "matter_number" in update_data and update_data["matter_number"]:
+        if update_data.get("matter_number"):
             existing = await self.repository.get_by_number(update_data["matter_number"], tenant_id)
             if existing and existing.id != matter_id:
                 raise ConflictException(detail="Matter with this number already exists")
 
-        if "responsible_user_id" in update_data and update_data["responsible_user_id"]:
+        if update_data.get("responsible_user_id"):
             user_result = await self.db.execute(
                 select(User).where(User.id == update_data["responsible_user_id"], User.tenant_id == tenant_id)
             )
@@ -101,7 +101,7 @@ class MatterService:
             if not user:
                 raise NotFoundException(detail="Responsible user not found")
 
-        if "responsible_team_id" in update_data and update_data["responsible_team_id"]:
+        if update_data.get("responsible_team_id"):
             team_result = await self.db.execute(
                 select(Team).where(Team.id == update_data["responsible_team_id"], Team.tenant_id == tenant_id)
             )
@@ -109,7 +109,7 @@ class MatterService:
             if not team:
                 raise NotFoundException(detail="Responsible team not found")
 
-        if "client_id" in update_data and update_data["client_id"]:
+        if update_data.get("client_id"):
             client_result = await self.db.execute(
                 select(Client).where(Client.id == update_data["client_id"], Client.tenant_id == tenant_id)
             )
@@ -143,10 +143,10 @@ class MatterService:
         matter.updated_by = updated_by
 
         if data.status == MatterStatus.FILED:
-            matter.completed_date = datetime.now(timezone.utc)
+            matter.completed_date = datetime.now(UTC)
             matter.progress_percentage = 100
         elif data.status == MatterStatus.CLOSED:
-            matter.completed_date = datetime.now(timezone.utc)
+            matter.completed_date = datetime.now(UTC)
 
         return await self.repository.update(matter)
 

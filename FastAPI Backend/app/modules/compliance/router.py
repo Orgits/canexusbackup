@@ -1,24 +1,24 @@
+from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
-from datetime import datetime
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
+from app.core.tenancy.dependencies import get_current_tenant
 from app.modules.compliance.schemas import (
-    ComplianceTypeCreate,
-    ComplianceTypeUpdate,
-    ComplianceTypeResponse,
-    ComplianceCycleCreate,
-    ComplianceCycleUpdate,
-    ComplianceCycleResponse,
-    ComplianceCycleListResponse,
     ComplianceApplicabilityCreate,
-    ComplianceApplicabilityUpdate,
     ComplianceApplicabilityResponse,
+    ComplianceApplicabilityUpdate,
+    ComplianceCycleCreate,
+    ComplianceCycleListResponse,
+    ComplianceCycleResponse,
+    ComplianceCycleUpdate,
+    ComplianceTypeCreate,
+    ComplianceTypeResponse,
+    ComplianceTypeUpdate,
 )
 from app.modules.compliance.service import ComplianceService
 from app.modules.users.models import User
@@ -91,7 +91,6 @@ async def delete_compliance_type(
 ):
     service = ComplianceService(db)
     await service.delete_type(type_id, current_tenant.id)
-    return None
 
 
 @type_router.post("/initialize", response_model=list[ComplianceTypeResponse])
@@ -189,7 +188,6 @@ async def delete_compliance_cycle(
 ):
     service = ComplianceService(db)
     await service.delete_cycle(cycle_id, current_tenant.id)
-    return None
 
 
 applicability_router = APIRouter(prefix="/applicability", tags=["Compliance Applicability"])
@@ -257,7 +255,6 @@ async def delete_applicability(
 ):
     service = ComplianceService(db)
     await service.delete_applicability(client_id, compliance_type_id, current_tenant.id)
-    return None
 
 
 router.include_router(type_router)

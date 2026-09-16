@@ -1,12 +1,12 @@
-from .session import get_db, get_async_db, AsyncSessionLocal, engine
 from .base import Base, BaseModelMixin, TenantBaseModelMixin
+from .session import AsyncSessionLocal, engine, get_async_db, get_db
 
 __all__ = [
-    "get_db",
-    "get_async_db",
     "AsyncSessionLocal",
-    "engine",
     "Base",
     "BaseModelMixin",
     "TenantBaseModelMixin",
+    "engine",
+    "get_async_db",
+    "get_db",
 ]

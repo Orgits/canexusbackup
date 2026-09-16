@@ -1,11 +1,11 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.audit.models import AuditLog, AuditAction
+from app.modules.audit.models import AuditAction, AuditLog
 
 
 class AuditRepository:
@@ -18,7 +18,7 @@ class AuditRepository:
         await self.db.refresh(audit_log)
         return audit_log
 
-    async def get_by_id(self, log_id: UUID, tenant_id: UUID) -> Optional[AuditLog]:
+    async def get_by_id(self, log_id: UUID, tenant_id: UUID) -> AuditLog | None:
         result = await self.db.execute(
             select(AuditLog)
             .options(selectinload(AuditLog.user))
@@ -31,15 +31,15 @@ class AuditRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-        user_id: Optional[UUID] = None,
-        action: Optional[AuditAction] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[UUID] = None,
-        start_from: Optional[datetime] = None,
-        start_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        user_id: UUID | None = None,
+        action: AuditAction | None = None,
+        resource_type: str | None = None,
+        resource_id: UUID | None = None,
+        start_from: datetime | None = None,
+        start_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "desc",
-    ) -> Tuple[List[AuditLog], int]:
+    ) -> tuple[list[AuditLog], int]:
         query = (
             select(AuditLog)
             .options(selectinload(AuditLog.user))

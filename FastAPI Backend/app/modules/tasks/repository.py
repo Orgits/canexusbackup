@@ -1,11 +1,11 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.tasks.models import Task, TaskStatus, TaskPriority
+from app.modules.tasks.models import Task, TaskPriority, TaskStatus
 
 
 class TaskRepository:
@@ -18,7 +18,7 @@ class TaskRepository:
         await self.db.refresh(task)
         return task
 
-    async def get_by_id(self, task_id: UUID, tenant_id: UUID) -> Optional[Task]:
+    async def get_by_id(self, task_id: UUID, tenant_id: UUID) -> Task | None:
         result = await self.db.execute(
             select(Task)
             .options(
@@ -34,7 +34,7 @@ class TaskRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_number(self, task_number: str, tenant_id: UUID) -> Optional[Task]:
+    async def get_by_number(self, task_number: str, tenant_id: UUID) -> Task | None:
         result = await self.db.execute(
             select(Task).where(Task.task_number == task_number, Task.tenant_id == tenant_id)
         )
@@ -45,20 +45,20 @@ class TaskRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        status: Optional[TaskStatus] = None,
-        priority: Optional[TaskPriority] = None,
-        assignee_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        tags: Optional[List[str]] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assignee_id: UUID | None = None,
+        team_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        tags: list[str] | None = None,
         overdue_only: bool = False,
-        sort_by: Optional[str] = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Task], int]:
+    ) -> tuple[list[Task], int]:
         from datetime import datetime
         query = (
             select(Task)

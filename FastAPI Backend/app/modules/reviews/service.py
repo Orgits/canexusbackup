@@ -1,27 +1,25 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
 from app.modules.reviews.models import (
-    ReviewRequest,
     ReviewComment,
     ReviewHistory,
-    ReviewType,
+    ReviewRequest,
     ReviewStage,
     ReviewStatus,
-)
-from app.modules.reviews.schemas import (
-    ReviewRequestCreate,
-    ReviewRequestUpdate,
-    ReviewCommentCreate,
-    ReviewCommentUpdate,
-    ReviewActionRequest,
+    ReviewType,
 )
 from app.modules.reviews.repository import ReviewRepository
-from app.modules.users.models import User
+from app.modules.reviews.schemas import (
+    ReviewActionRequest,
+    ReviewCommentCreate,
+    ReviewCommentUpdate,
+    ReviewRequestCreate,
+    ReviewRequestUpdate,
+)
 
 
 class ReviewService:
@@ -59,19 +57,19 @@ class ReviewService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        source_type: Optional[str] = None,
-        source_id: Optional[UUID] = None,
-        stage: Optional[str] = None,
-        status: Optional[str] = None,
-        reviewer_id: Optional[UUID] = None,
-        reviewer_team_id: Optional[UUID] = None,
-        submitted_by_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        source_type: str | None = None,
+        source_id: UUID | None = None,
+        stage: str | None = None,
+        status: str | None = None,
+        reviewer_id: UUID | None = None,
+        reviewer_team_id: UUID | None = None,
+        submitted_by_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[ReviewRequest], int]:
+    ) -> tuple[list[ReviewRequest], int]:
         source_type_enum = None
         if source_type:
             try:
@@ -125,7 +123,7 @@ class ReviewService:
         return await self.repository.update_request(request)
 
     async def submit_for_review(
-        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: Optional[str] = None
+        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: str | None = None
     ) -> ReviewRequest:
         request = await self.get_request_by_id(request_id, tenant_id)
 
@@ -138,7 +136,7 @@ class ReviewService:
         request.stage = ReviewStage.SUBMITTED
         request.status = ReviewStatus.IN_PROGRESS
         request.submitted_by_id = actor_id
-        request.submitted_at = datetime.now(timezone.utc)
+        request.submitted_at = datetime.now(UTC)
         request.updated_by = actor_id
 
         await self.repository.update_request(request)
@@ -160,7 +158,7 @@ class ReviewService:
         return request
 
     async def approve(
-        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: Optional[str] = None
+        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: str | None = None
     ) -> ReviewRequest:
         request = await self.get_request_by_id(request_id, tenant_id)
 
@@ -173,7 +171,7 @@ class ReviewService:
         from_stage = request.stage
         request.stage = ReviewStage.APPROVED
         request.status = ReviewStatus.COMPLETED
-        request.completed_at = datetime.now(timezone.utc)
+        request.completed_at = datetime.now(UTC)
         request.updated_by = actor_id
 
         await self.repository.update_request(request)
@@ -208,7 +206,7 @@ class ReviewService:
         return request
 
     async def reject(
-        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: Optional[str] = None
+        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: str | None = None
     ) -> ReviewRequest:
         request = await self.get_request_by_id(request_id, tenant_id)
 
@@ -221,7 +219,7 @@ class ReviewService:
         from_stage = request.stage
         request.stage = ReviewStage.REJECTED
         request.status = ReviewStatus.COMPLETED
-        request.completed_at = datetime.now(timezone.utc)
+        request.completed_at = datetime.now(UTC)
         request.updated_by = actor_id
 
         await self.repository.update_request(request)
@@ -255,7 +253,7 @@ class ReviewService:
         return request
 
     async def request_rework(
-        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: Optional[str] = None
+        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: str | None = None
     ) -> ReviewRequest:
         request = await self.get_request_by_id(request_id, tenant_id)
 
@@ -301,7 +299,7 @@ class ReviewService:
         return request
 
     async def escalate(
-        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: Optional[str] = None, metadata: Optional[dict] = None
+        self, request_id: UUID, tenant_id: UUID, actor_id: UUID, comment: str | None = None, metadata: dict | None = None
     ) -> ReviewRequest:
         request = await self.get_request_by_id(request_id, tenant_id)
 
@@ -333,16 +331,15 @@ class ReviewService:
         action = action_data.action.lower()
         if action == "submit":
             return await self.submit_for_review(request_id, tenant_id, actor_id, action_data.comment)
-        elif action == "approve":
+        if action == "approve":
             return await self.approve(request_id, tenant_id, actor_id, action_data.comment)
-        elif action == "reject":
+        if action == "reject":
             return await self.reject(request_id, tenant_id, actor_id, action_data.comment)
-        elif action == "request_rework":
+        if action == "request_rework":
             return await self.request_rework(request_id, tenant_id, actor_id, action_data.comment)
-        elif action == "escalate":
+        if action == "escalate":
             return await self.escalate(request_id, tenant_id, actor_id, action_data.comment, action_data.metadata)
-        else:
-            raise ValidationException(detail=f"Invalid action: {action}")
+        raise ValidationException(detail=f"Invalid action: {action}")
 
     # Comment methods
     async def add_comment(
@@ -377,7 +374,7 @@ class ReviewService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[ReviewComment], int]:
+    ) -> tuple[list[ReviewComment], int]:
         request = await self.get_request_by_id(request_id, tenant_id)
         return await self.repository.get_comments_for_request(request_id, tenant_id, page, page_size)
 
@@ -413,6 +410,6 @@ class ReviewService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[ReviewHistory], int]:
+    ) -> tuple[list[ReviewHistory], int]:
         request = await self.get_request_by_id(request_id, tenant_id)
         return await self.repository.get_history_for_request(request_id, tenant_id, page, page_size)

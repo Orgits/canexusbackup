@@ -1,5 +1,5 @@
 from .router import router
-from .schemas import Token, LoginRequest, RefreshRequest
+from .schemas import LoginRequest, RefreshRequest, Token
 from .service import AuthService
 
-__all__ = ["router", "Token", "LoginRequest", "RefreshRequest", "AuthService"]
+__all__ = ["AuthService", "LoginRequest", "RefreshRequest", "Token", "router"]

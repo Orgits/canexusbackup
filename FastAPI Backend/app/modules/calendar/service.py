@@ -1,17 +1,17 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from uuid import UUID
 
-from app.core.exceptions import NotFoundException, ConflictException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import NotFoundException
 from app.modules.calendar.models import CalendarEvent, EventType
-from app.modules.calendar.schemas import CalendarEventCreate, CalendarEventUpdate
 from app.modules.calendar.repository import CalendarRepository
+from app.modules.calendar.schemas import CalendarEventCreate, CalendarEventUpdate
 from app.modules.clients.models import Client
+from app.modules.compliance.models import ComplianceCycle
 from app.modules.matters.models import Matter
 from app.modules.tasks.models import Task
-from app.modules.compliance.models import ComplianceCycle
 from app.modules.users.models import User
 
 
@@ -81,16 +81,16 @@ class CalendarService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        event_type: Optional[EventType] = None,
-        start_from: Optional[datetime] = None,
-        start_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        user_id: UUID | None = None,
+        event_type: EventType | None = None,
+        start_from: datetime | None = None,
+        start_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[CalendarEvent], int]:
+    ) -> tuple[list[CalendarEvent], int]:
         return await self.repository.get_all(
             tenant_id, page, page_size, search, client_id, matter_id,
             user_id, event_type, start_from, start_to, sort_by, sort_order
@@ -101,43 +101,43 @@ class CalendarService:
         tenant_id: UUID,
         start_from: datetime,
         start_to: datetime,
-        user_id: Optional[UUID] = None,
-    ) -> List[CalendarEvent]:
+        user_id: UUID | None = None,
+    ) -> list[CalendarEvent]:
         return await self.repository.get_events_in_range(tenant_id, start_from, start_to, user_id)
 
     async def update(self, event_id: UUID, tenant_id: UUID, data: CalendarEventUpdate, updated_by: UUID) -> CalendarEvent:
         event = await self.get_by_id(event_id, tenant_id)
         update_data = data.model_dump(exclude_unset=True)
 
-        if "client_id" in update_data and update_data["client_id"]:
+        if update_data.get("client_id"):
             client_result = await self.db.execute(
                 select(Client).where(Client.id == update_data["client_id"], Client.tenant_id == tenant_id)
             )
             if not client_result.scalar_one_or_none():
                 raise NotFoundException(detail="Client not found")
 
-        if "matter_id" in update_data and update_data["matter_id"]:
+        if update_data.get("matter_id"):
             matter_result = await self.db.execute(
                 select(Matter).where(Matter.id == update_data["matter_id"], Matter.tenant_id == tenant_id)
             )
             if not matter_result.scalar_one_or_none():
                 raise NotFoundException(detail="Matter not found")
 
-        if "task_id" in update_data and update_data["task_id"]:
+        if update_data.get("task_id"):
             task_result = await self.db.execute(
                 select(Task).where(Task.id == update_data["task_id"], Task.tenant_id == tenant_id)
             )
             if not task_result.scalar_one_or_none():
                 raise NotFoundException(detail="Task not found")
 
-        if "compliance_cycle_id" in update_data and update_data["compliance_cycle_id"]:
+        if update_data.get("compliance_cycle_id"):
             cycle_result = await self.db.execute(
                 select(ComplianceCycle).where(ComplianceCycle.id == update_data["compliance_cycle_id"], ComplianceCycle.tenant_id == tenant_id)
             )
             if not cycle_result.scalar_one_or_none():
                 raise NotFoundException(detail="Compliance cycle not found")
 
-        if "user_id" in update_data and update_data["user_id"]:
+        if update_data.get("user_id"):
             user_result = await self.db.execute(
                 select(User).where(User.id == update_data["user_id"], User.tenant_id == tenant_id)
             )

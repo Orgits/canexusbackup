@@ -1,31 +1,27 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
     Boolean,
-    Text,
     DateTime,
-    ForeignKey,
-    func,
     Enum,
-    ARRAY,
+    ForeignKey,
     Index,
+    String,
+    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User, Team
     from app.modules.clients.models import Client
     from app.modules.matters.models import Matter
-    from app.modules.tasks.models import Task
-    from app.modules.documents.models import Document
+    from app.modules.users.models import Team, User
     from app.modules.workflow.models import WorkflowInstance
-    from app.modules.reviews.models import ReviewRequest
 
 
 class NoticeAuthority(str, PyEnum):
@@ -108,76 +104,76 @@ class Notice(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    matter_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    matter_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("matters.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    workflow_instance_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    workflow_instance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workflow_instances.id", ondelete="SET NULL"),
         nullable=True,
     )
 
     authority: Mapped[NoticeAuthority] = mapped_column(Enum(NoticeAuthority), nullable=False, index=True)
-    authority_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    authority_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     reference_number: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     notice_type: Mapped[NoticeType] = mapped_column(Enum(NoticeType), nullable=False, index=True)
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     received_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    notice_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    notice_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     response_deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    extended_deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    extended_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     status: Mapped[NoticeStatus] = mapped_column(Enum(NoticeStatus), default=NoticeStatus.RECEIVED, nullable=False, index=True)
     priority: Mapped[NoticePriority] = mapped_column(Enum(NoticePriority), default=NoticePriority.MEDIUM, nullable=False)
 
-    assignee_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assignee_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    escalated_to_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    escalated_to_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
 
     # Financial impact
-    demand_amount: Mapped[Optional[float]] = mapped_column(nullable=True)
-    penalty_amount: Mapped[Optional[float]] = mapped_column(nullable=True)
-    interest_amount: Mapped[Optional[float]] = mapped_column(nullable=True)
-    total_amount: Mapped[Optional[float]] = mapped_column(nullable=True)
+    demand_amount: Mapped[float | None] = mapped_column(nullable=True)
+    penalty_amount: Mapped[float | None] = mapped_column(nullable=True)
+    interest_amount: Mapped[float | None] = mapped_column(nullable=True)
+    total_amount: Mapped[float | None] = mapped_column(nullable=True)
 
     # Response tracking
-    response_draft: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    response_filed_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    response_acknowledgment: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    response_mode: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    response_draft: Mapped[str | None] = mapped_column(Text, nullable=True)
+    response_filed_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    response_acknowledgment: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    response_mode: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Outcome
-    outcome: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    order_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    order_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    outcome: Mapped[str | None] = mapped_column(Text, nullable=True)
+    order_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    order_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     appeal_filed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    appeal_details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    appeal_details: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Closure
-    closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    closed_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
-    closure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    closed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    closure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -186,16 +182,14 @@ class Notice(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     client: Mapped["Client"] = relationship("Client", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     workflow_instance: Mapped[Optional["WorkflowInstance"]] = relationship("WorkflowInstance", lazy="selectin")
     assignee: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assignee_id], lazy="selectin")
     team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")
     escalated_to: Mapped[Optional["User"]] = relationship("User", foreign_keys=[escalated_to_id], lazy="selectin")
-    documents: Mapped[List["Document"]] = relationship("Document", back_populates="notice", lazy="dynamic")
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="notice", lazy="dynamic")
-    review_request: Mapped[Optional["ReviewRequest"]] = relationship("ReviewRequest", lazy="selectin")
-    escalation_history: Mapped[List["NoticeEscalation"]] = relationship("NoticeEscalation", back_populates="notice", lazy="dynamic")
+    escalation_history: Mapped[list["NoticeEscalation"]] = relationship("NoticeEscalation", lazy="dynamic")
 
 
 class NoticeEscalation(Base, TenantBaseModelMixin):
@@ -213,7 +207,7 @@ class NoticeEscalation(Base, TenantBaseModelMixin):
         index=True,
     )
 
-    escalated_from_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    escalated_from_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
@@ -232,14 +226,14 @@ class NoticeEscalation(Base, TenantBaseModelMixin):
     )
 
     reason: Mapped[str] = mapped_column(Text, nullable=False)
-    previous_deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    new_deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    previous_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    new_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    resolved_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -248,6 +242,7 @@ class NoticeEscalation(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     notice: Mapped["Notice"] = relationship("Notice", back_populates="escalation_history")
     escalated_from: Mapped[Optional["User"]] = relationship("User", foreign_keys=[escalated_from_id], lazy="selectin")
     escalated_to: Mapped["User"] = relationship("User", foreign_keys=[escalated_to_id], lazy="selectin")

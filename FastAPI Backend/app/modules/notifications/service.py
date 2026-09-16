@@ -1,34 +1,29 @@
-from typing import Optional, List, Tuple, Dict, Any
+from datetime import datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundException, ValidationException
 from app.modules.notifications.models import (
     Notification,
-    NotificationTemplate,
+    NotificationChannel,
     NotificationDelivery,
     NotificationPreference,
-    NotificationTrigger,
-    NotificationChannel,
-    NotificationStatus,
     NotificationPriority,
-)
-from app.modules.notifications.schemas import (
-    NotificationCreate,
-    NotificationUpdate,
-    NotificationTemplateCreate,
-    NotificationTemplateUpdate,
-    NotificationDeliveryCreate,
-    NotificationDeliveryUpdate,
-    NotificationPreferenceCreate,
-    NotificationPreferenceUpdate,
-    SendNotificationRequest,
-    NotificationStatsResponse,
+    NotificationStatus,
+    NotificationTemplate,
+    NotificationTrigger,
 )
 from app.modules.notifications.repository import NotificationRepository
-from app.modules.users.models import User
+from app.modules.notifications.schemas import (
+    NotificationPreferenceCreate,
+    NotificationPreferenceUpdate,
+    NotificationStatsResponse,
+    NotificationTemplateCreate,
+    NotificationTemplateUpdate,
+    SendNotificationRequest,
+)
 
 
 class NotificationService:
@@ -69,7 +64,7 @@ class NotificationService:
             raise NotFoundException(detail="Notification template not found")
         return template
 
-    async def get_templates_by_trigger(self, trigger: str, tenant_id: UUID) -> List[NotificationTemplate]:
+    async def get_templates_by_trigger(self, trigger: str, tenant_id: UUID) -> list[NotificationTemplate]:
         try:
             trigger_enum = NotificationTrigger(trigger)
         except ValueError:
@@ -81,9 +76,9 @@ class NotificationService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        trigger: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[NotificationTemplate], int]:
+        trigger: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[NotificationTemplate], int]:
         trigger_enum = None
         if trigger:
             try:
@@ -121,7 +116,7 @@ class NotificationService:
             raise ValidationException(detail="Cannot delete system template")
         await self.repository.delete_template(template)
 
-    async def initialize_system_templates(self, tenant_id: UUID) -> List[NotificationTemplate]:
+    async def initialize_system_templates(self, tenant_id: UUID) -> list[NotificationTemplate]:
         system_templates = [
             {
                 "code": "ASSIGNMENT_CREATED",
@@ -319,7 +314,7 @@ class NotificationService:
     # Notification methods
     async def send_notification(
         self, request: SendNotificationRequest, tenant_id: UUID, actor_id: UUID
-    ) -> List[Notification]:
+    ) -> list[Notification]:
         notifications = []
 
         for recipient_id in request.recipient_ids:
@@ -374,7 +369,7 @@ class NotificationService:
                 entity_id=request.entity_id,
                 actor_id=actor_id,
                 channels=filtered_channels,
-                channel_status={ch: NotificationStatus.PENDING.value for ch in filtered_channels},
+                channel_status=dict.fromkeys(filtered_channels, NotificationStatus.PENDING.value),
                 metadata=request.metadata,
                 tenant_id=tenant_id,
                 created_by=actor_id,
@@ -410,16 +405,16 @@ class NotificationService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        recipient_id: Optional[UUID] = None,
-        trigger: Optional[str] = None,
-        status: Optional[str] = None,
-        entity_type: Optional[str] = None,
-        entity_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        recipient_id: UUID | None = None,
+        trigger: str | None = None,
+        status: str | None = None,
+        entity_type: str | None = None,
+        entity_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Notification], int]:
+    ) -> tuple[list[Notification], int]:
         trigger_enum = None
         if trigger:
             try:
@@ -539,7 +534,7 @@ class NotificationService:
             user_id, trigger_enum, channel_enum, tenant_id, data, created_by
         )
 
-    async def get_preferences(self, user_id: UUID, tenant_id: UUID) -> List[NotificationPreference]:
+    async def get_preferences(self, user_id: UUID, tenant_id: UUID) -> list[NotificationPreference]:
         return await self.repository.get_preferences_for_user(user_id, tenant_id)
 
     async def update_preference(

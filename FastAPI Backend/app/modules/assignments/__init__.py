@@ -1,51 +1,49 @@
 from app.modules.assignments.models import (
+    AssignableEntityType,
     Assignment,
+    AssignmentAction,
     AssignmentHistory,
     Escalation,
-    AssignableEntityType,
-    AssignmentAction,
     EscalationReason,
 )
-
+from app.modules.assignments.repository import AssignmentRepository
+from app.modules.assignments.router import router as assignments_router
 from app.modules.assignments.schemas import (
     AssignmentCreate,
-    AssignmentUpdate,
-    AssignmentResponse,
-    AssignmentReassignRequest,
-    AssignmentUnassignRequest,
     AssignmentHistoryResponse,
-    EscalationCreate,
-    EscalationUpdate,
-    EscalationResponse,
-    EscalationResolveRequest,
+    AssignmentReassignRequest,
+    AssignmentResponse,
+    AssignmentUnassignRequest,
+    AssignmentUpdate,
     BulkAssignmentRequest,
     BulkReassignmentRequest,
+    EscalationCreate,
+    EscalationResolveRequest,
+    EscalationResponse,
+    EscalationUpdate,
 )
-
-from app.modules.assignments.repository import AssignmentRepository
 from app.modules.assignments.service import AssignmentService
-from app.modules.assignments.router import router as assignments_router
 
 __all__ = [
-    "Assignment",
-    "AssignmentHistory",
-    "Escalation",
     "AssignableEntityType",
+    "Assignment",
     "AssignmentAction",
-    "EscalationReason",
     "AssignmentCreate",
-    "AssignmentUpdate",
-    "AssignmentResponse",
-    "AssignmentReassignRequest",
-    "AssignmentUnassignRequest",
+    "AssignmentHistory",
     "AssignmentHistoryResponse",
-    "EscalationCreate",
-    "EscalationUpdate",
-    "EscalationResponse",
-    "EscalationResolveRequest",
+    "AssignmentReassignRequest",
+    "AssignmentRepository",
+    "AssignmentResponse",
+    "AssignmentService",
+    "AssignmentUnassignRequest",
+    "AssignmentUpdate",
     "BulkAssignmentRequest",
     "BulkReassignmentRequest",
-    "AssignmentRepository",
-    "AssignmentService",
+    "Escalation",
+    "EscalationCreate",
+    "EscalationReason",
+    "EscalationResolveRequest",
+    "EscalationResponse",
+    "EscalationUpdate",
     "assignments_router",
 ]

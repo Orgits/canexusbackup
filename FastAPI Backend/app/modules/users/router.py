@@ -1,15 +1,16 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant, setup_tenant_context
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.modules.users.schemas import UserCreate, UserUpdate, UserResponse, UserListResponse
-from app.modules.users.service import UserService, TeamService
+from app.core.security.dependencies import get_current_active_user
+from app.core.tenancy.dependencies import get_current_tenant
 from app.modules.users.models import User
+from app.modules.users.schemas import UserCreate, UserListResponse, UserResponse, UserUpdate
+from app.modules.users.service import TeamService, UserService
 
 router = APIRouter()
 
@@ -90,7 +91,6 @@ async def delete_user(
 ):
     service = UserService(db)
     await service.delete(user_id, current_tenant.id)
-    return None
 
 
 @router.post("/{user_id}/password", status_code=status.HTTP_204_NO_CONTENT)
@@ -103,7 +103,6 @@ async def change_password(
 ):
     service = UserService(db)
     await service.update_password(user_id, current_tenant.id, new_password)
-    return None
 
 
 team_router = APIRouter(prefix="/teams", tags=["Teams"])
@@ -201,7 +200,6 @@ async def delete_team(
 ):
     service = TeamService(db)
     await service.delete(team_id, current_tenant.id)
-    return None
 
 
 router.include_router(team_router)

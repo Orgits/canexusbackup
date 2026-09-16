@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Request, HTTPException
+import structlog
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.exc import IntegrityError
-import structlog
 
 from app.core.exceptions.base import CAException
 

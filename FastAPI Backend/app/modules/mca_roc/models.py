@@ -1,31 +1,29 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
+    String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User, Team
     from app.modules.clients.models import Client
-    from app.modules.matters.models import Matter
-    from app.modules.tasks.models import Task
-    from app.modules.documents.models import Document
     from app.modules.compliance.models import ComplianceCycle
+    from app.modules.matters.models import Matter
+    from app.modules.users.models import Team, User
     from app.modules.workflow.models import WorkflowInstance
 
 
@@ -102,19 +100,19 @@ class MCAFilingCycle(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    compliance_cycle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    compliance_cycle_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("compliance_cycles.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    matter_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    matter_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("matters.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    workflow_instance_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    workflow_instance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workflow_instances.id", ondelete="SET NULL"),
         nullable=True,
@@ -124,28 +122,28 @@ class MCAFilingCycle(Base, TenantBaseModelMixin):
     filing_type: Mapped[MCAFilingType] = mapped_column(Enum(MCAFilingType), nullable=False, index=True)
     filing_category: Mapped[MCAFilingCategory] = mapped_column(Enum(MCAFilingCategory), nullable=False, index=True)
 
-    financial_year: Mapped[Optional[str]] = mapped_column(String(9), nullable=True, index=True)
-    event_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    event_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    financial_year: Mapped[str | None] = mapped_column(String(9), nullable=True, index=True)
+    event_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    event_description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    period_start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    period_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
-    extended_due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    agm_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    filing_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    approval_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    extended_due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    agm_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    filing_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    approval_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     status: Mapped[MCAStatus] = mapped_column(Enum(MCAStatus), default=MCAStatus.PENDING, nullable=False, index=True)
     priority: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
 
-    assigned_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    assigned_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
@@ -153,27 +151,27 @@ class MCAFilingCycle(Base, TenantBaseModelMixin):
     )
 
     # Company/LLP specific fields
-    cin_llpin: Mapped[Optional[str]] = mapped_column(String(21), nullable=True)
-    company_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    roc_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    cin_llpin: Mapped[str | None] = mapped_column(String(21), nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    roc_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
     # Filing specific data
-    srn: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    acknowledgment_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    srn: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    acknowledgment_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     challan_amount: Mapped[float] = mapped_column(default=0, nullable=False)
     additional_fee: Mapped[float] = mapped_column(default=0, nullable=False)
 
     # Checklist and documents
-    checklist: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    document_requirements: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    workflow_stages: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    checklist: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    document_requirements: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    workflow_stages: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
 
     # Missing information tracking
-    missing_info: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    missing_info: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
     missing_info_count: Mapped[int] = mapped_column(default=0, nullable=False)
 
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -182,14 +180,13 @@ class MCAFilingCycle(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     client: Mapped["Client"] = relationship("Client", lazy="selectin")
     compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     workflow_instance: Mapped[Optional["WorkflowInstance"]] = relationship("WorkflowInstance", lazy="selectin")
     assigned_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_user_id], lazy="selectin")
     assigned_team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")
-    documents: Mapped[List["Document"]] = relationship("Document", back_populates="mca_cycle", lazy="dynamic")
-    tasks: Mapped[List["Task"]] = relationship("Task", back_populates="mca_cycle", lazy="dynamic")
 
 
 class MCAFilingConfig(Base, TenantBaseModelMixin):
@@ -204,7 +201,7 @@ class MCAFilingConfig(Base, TenantBaseModelMixin):
     filing_category: Mapped[MCAFilingCategory] = mapped_column(Enum(MCAFilingCategory), nullable=False)
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     form_name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Due date rules
@@ -213,9 +210,9 @@ class MCAFilingConfig(Base, TenantBaseModelMixin):
     is_annual: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Default checklist and documents
-    default_checklist: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    default_document_requirements: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    default_workflow_stages: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    default_checklist: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    default_document_requirements: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    default_workflow_stages: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
 
     # Fee structure
     base_fee: Mapped[float] = mapped_column(default=0, nullable=False)
@@ -224,7 +221,7 @@ class MCAFilingConfig(Base, TenantBaseModelMixin):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -232,3 +229,5 @@ class MCAFilingConfig(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
+
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")

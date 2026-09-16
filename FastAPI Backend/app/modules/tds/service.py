@@ -1,30 +1,30 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
+from app.modules.clients.models import Client
 from app.modules.tds.models import (
-    TDSComplianceCycle,
     TDSChallan,
+    TDSChallanStatus,
+    TDSComplianceCycle,
     TDSDeductee,
+    TDSDeducteeType,
     TDSFormType,
     TDSQuarter,
     TDSStatus,
-    TDSChallanStatus,
-    TDSDeducteeType,
 )
+from app.modules.tds.repository import TDSRepository
 from app.modules.tds.schemas import (
-    TDSComplianceCycleCreate,
-    TDSComplianceCycleUpdate,
     TDSChallanCreate,
     TDSChallanUpdate,
+    TDSComplianceCycleCreate,
+    TDSComplianceCycleUpdate,
     TDSDeducteeCreate,
     TDSDeducteeUpdate,
 )
-from app.modules.tds.repository import TDSRepository
-from app.modules.clients.models import Client
 
 
 class TDSService:
@@ -85,19 +85,19 @@ class TDSService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        form_type: Optional[str] = None,
-        financial_year: Optional[str] = None,
-        quarter: Optional[str] = None,
-        status: Optional[str] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        form_type: str | None = None,
+        financial_year: str | None = None,
+        quarter: str | None = None,
+        status: str | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[TDSComplianceCycle], int]:
+    ) -> tuple[list[TDSComplianceCycle], int]:
         form_type_enum = None
         if form_type:
             try:
@@ -202,15 +202,15 @@ class TDSService:
         tenant_id: UUID,
         actor_id: UUID,
         token_number: str,
-        acknowledgment_number: Optional[str] = None,
-        filing_date: Optional[datetime] = None,
+        acknowledgment_number: str | None = None,
+        filing_date: datetime | None = None,
     ) -> TDSComplianceCycle:
         cycle = await self.get_cycle_by_id(cycle_id, tenant_id)
         if cycle.status not in [TDSStatus.READY_FOR_FILING, TDSStatus.VALIDATION]:
             raise ValidationException(detail="Can only mark as filed from READY_FOR_FILING or VALIDATION status")
 
         cycle.status = TDSStatus.FILED
-        cycle.filing_date = filing_date or datetime.now(timezone.utc)
+        cycle.filing_date = filing_date or datetime.now(UTC)
         cycle.token_number = token_number
         if acknowledgment_number:
             cycle.acknowledgment_number = acknowledgment_number
@@ -218,14 +218,14 @@ class TDSService:
         return await self.repository.update_cycle(cycle)
 
     async def mark_processed(
-        self, cycle_id: UUID, tenant_id: UUID, actor_id: UUID, processed_date: Optional[datetime] = None
+        self, cycle_id: UUID, tenant_id: UUID, actor_id: UUID, processed_date: datetime | None = None
     ) -> TDSComplianceCycle:
         cycle = await self.get_cycle_by_id(cycle_id, tenant_id)
         if cycle.status != TDSStatus.FILED:
             raise ValidationException(detail="Can only mark as processed from FILED status")
 
         cycle.status = TDSStatus.PROCESSED
-        cycle.processed_date = processed_date or datetime.now(timezone.utc)
+        cycle.processed_date = processed_date or datetime.now(UTC)
         cycle.updated_by = actor_id
         return await self.repository.update_cycle(cycle)
 
@@ -306,7 +306,7 @@ class TDSService:
     async def verify_challan(self, challan_id: UUID, tenant_id: UUID, actor_id: UUID) -> TDSChallan:
         challan = await self.get_challan(challan_id, tenant_id)
         challan.status = TDSChallanStatus.VERIFIED
-        challan.verified_at = datetime.now(timezone.utc)
+        challan.verified_at = datetime.now(UTC)
         challan.verified_by = actor_id
         challan.updated_by = actor_id
         return await self.repository.update_challan(challan)
@@ -344,8 +344,8 @@ class TDSService:
         return created
 
     async def bulk_add_deductees(
-        self, cycle_id: UUID, data_list: List[TDSDeducteeCreate], tenant_id: UUID, created_by: UUID
-    ) -> List[TDSDeductee]:
+        self, cycle_id: UUID, data_list: list[TDSDeducteeCreate], tenant_id: UUID, created_by: UUID
+    ) -> list[TDSDeductee]:
         cycle = await self.get_cycle_by_id(cycle_id, tenant_id)
 
         deductees = [
@@ -376,7 +376,7 @@ class TDSService:
 
     async def get_deductees_for_cycle(
         self, cycle_id: UUID, tenant_id: UUID, page: int = 1, page_size: int = 100
-    ) -> Tuple[List[TDSDeductee], int]:
+    ) -> tuple[list[TDSDeductee], int]:
         return await self.repository.get_deductees_for_cycle(cycle_id, tenant_id, page, page_size)
 
     async def update_deductee(
@@ -419,5 +419,5 @@ class TDSService:
 
         await self.repository.delete_deductee(deductee)
 
-    async def get_summary(self, tenant_id: UUID, financial_year: Optional[str] = None) -> dict:
+    async def get_summary(self, tenant_id: UUID, financial_year: str | None = None) -> dict:
         return await self.repository.get_summary(tenant_id, financial_year)

@@ -1,27 +1,26 @@
-from typing import Optional, List
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.notices.service import NoticeService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.notices.schemas import (
-    NoticeCreate,
-    NoticeUpdate,
-    NoticeStatusUpdate,
-    NoticeResponseUpdate,
     NoticeClosureUpdate,
-    NoticeResponse,
-    NoticeListResponse,
-    NoticeSummaryResponse,
+    NoticeCreate,
     NoticeEscalationCreate,
     NoticeEscalationResponse,
-    NoticeEscalationListResponse,
+    NoticeListResponse,
+    NoticeResponse,
+    NoticeResponseUpdate,
+    NoticeStatusUpdate,
+    NoticeSummaryResponse,
+    NoticeUpdate,
 )
+from app.modules.notices.service import NoticeService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/notices", tags=["Notice Management"])
@@ -71,19 +70,19 @@ async def create_notice(
 async def list_notices(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = None,
-    client_id: Optional[UUID] = None,
-    authority: Optional[str] = None,
-    notice_type: Optional[str] = None,
-    status: Optional[str] = None,
-    priority: Optional[str] = None,
-    assignee_id: Optional[UUID] = None,
-    team_id: Optional[UUID] = None,
-    received_date_from: Optional[datetime] = None,
-    received_date_to: Optional[datetime] = None,
-    deadline_from: Optional[datetime] = None,
-    deadline_to: Optional[datetime] = None,
-    sort_by: Optional[str] = None,
+    search: str | None = None,
+    client_id: UUID | None = None,
+    authority: str | None = None,
+    notice_type: str | None = None,
+    status: str | None = None,
+    priority: str | None = None,
+    assignee_id: UUID | None = None,
+    team_id: UUID | None = None,
+    received_date_from: datetime | None = None,
+    received_date_to: datetime | None = None,
+    deadline_from: datetime | None = None,
+    deadline_to: datetime | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     notice_service: NoticeService = Depends(get_notice_service),
     tenant_context=Depends(get_tenant_context),
@@ -226,7 +225,7 @@ async def escalate_notice(
 
 @router.get(
     "/{notice_id}/escalations",
-    response_model=List[NoticeEscalationResponse],
+    response_model=list[NoticeEscalationResponse],
     summary="Get escalation history",
 )
 async def get_escalation_history(

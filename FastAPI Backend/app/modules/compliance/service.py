@@ -1,21 +1,27 @@
-from typing import Optional, List, Tuple
+from datetime import datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException
-from app.modules.compliance.models import ComplianceType, ComplianceCycle, ComplianceApplicability, ComplianceStatus, ComplianceFrequency
-from app.modules.compliance.schemas import (
-    ComplianceTypeCreate,
-    ComplianceTypeUpdate,
-    ComplianceCycleCreate,
-    ComplianceCycleUpdate,
-    ComplianceApplicabilityCreate,
-    ComplianceApplicabilityUpdate,
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException
+from app.modules.clients.models import Client
+from app.modules.compliance.models import (
+    ComplianceApplicability,
+    ComplianceCycle,
+    ComplianceFrequency,
+    ComplianceStatus,
+    ComplianceType,
 )
 from app.modules.compliance.repository import ComplianceRepository
-from app.modules.clients.models import Client
+from app.modules.compliance.schemas import (
+    ComplianceApplicabilityCreate,
+    ComplianceApplicabilityUpdate,
+    ComplianceCycleCreate,
+    ComplianceCycleUpdate,
+    ComplianceTypeCreate,
+    ComplianceTypeUpdate,
+)
 
 
 class ComplianceService:
@@ -46,10 +52,10 @@ class ComplianceService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[ComplianceType], int]:
+        search: str | None = None,
+        category: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[ComplianceType], int]:
         return await self.repository.get_all_types(tenant_id, page, page_size, search, category, is_active)
 
     async def update_type(self, type_id: UUID, tenant_id: UUID, data: ComplianceTypeUpdate, updated_by: UUID) -> ComplianceType:
@@ -98,19 +104,19 @@ class ComplianceService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        compliance_type_id: Optional[UUID] = None,
-        status: Optional[ComplianceStatus] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        period_start: Optional[datetime] = None,
-        period_end: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        compliance_type_id: UUID | None = None,
+        status: ComplianceStatus | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[ComplianceCycle], int]:
+    ) -> tuple[list[ComplianceCycle], int]:
         return await self.repository.get_all_cycles(
             tenant_id, page, page_size, search, client_id, compliance_type_id,
             status, matter_id, due_date_from, due_date_to, period_start, period_end,
@@ -151,9 +157,9 @@ class ComplianceService:
     async def get_all_applicability(
         self,
         tenant_id: UUID,
-        client_id: Optional[UUID] = None,
-        compliance_type_id: Optional[UUID] = None,
-    ) -> List[ComplianceApplicability]:
+        client_id: UUID | None = None,
+        compliance_type_id: UUID | None = None,
+    ) -> list[ComplianceApplicability]:
         return await self.repository.get_all_applicability(tenant_id, client_id, compliance_type_id)
 
     async def update_applicability(
@@ -176,7 +182,7 @@ class ComplianceService:
         applicability = await self.get_applicability(client_id, compliance_type_id, tenant_id)
         await self.repository.delete_applicability(applicability)
 
-    async def initialize_system_types(self, tenant_id: UUID) -> List[ComplianceType]:
+    async def initialize_system_types(self, tenant_id: UUID) -> list[ComplianceType]:
         system_types = [
             {
                 "code": "ITR",

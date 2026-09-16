@@ -1,10 +1,11 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database.session import get_async_db, get_tenant_db
-from app.core.tenancy.dependencies import setup_tenant_context
 from app.core.tenancy.context import TenantContext
+from app.core.tenancy.dependencies import setup_tenant_context
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

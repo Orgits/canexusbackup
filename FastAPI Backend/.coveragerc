@@ -1,0 +1,32 @@
+[run]
+source = app
+omit = 
+    */tests/*
+    */migrations/*
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    */env/*
+    */.env/*
+    app/main.py
+    app/core/celery/app.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    .*abstractmethod
+    pass
+    \.model_config = 
+
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov

@@ -1,20 +1,20 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
+    String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
@@ -43,17 +43,17 @@ class WorkflowDefinition(Base, TenantBaseModelMixin):
 
     code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     entity_type: Mapped[WorkflowEntityType] = mapped_column(Enum(WorkflowEntityType), nullable=False, index=True)
     version: Mapped[int] = mapped_column(default=1, nullable=False)
 
     initial_state: Mapped[str] = mapped_column(String(100), nullable=False)
-    states: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
-    transitions: Mapped[List[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    states: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
+    transitions: Mapped[list[dict]] = mapped_column(ARRAY(JSONB), default=list, nullable=False)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -62,8 +62,9 @@ class WorkflowDefinition(Base, TenantBaseModelMixin):
         index=True,
     )
 
-    instances: Mapped[List["WorkflowInstance"]] = relationship("WorkflowInstance", back_populates="definition", lazy="dynamic")
-    transitions_def: Mapped[List["WorkflowTransitionDefinition"]] = relationship("WorkflowTransitionDefinition", back_populates="definition", lazy="dynamic")
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
+    instances: Mapped[list["WorkflowInstance"]] = relationship("WorkflowInstance", lazy="dynamic")
+    transitions_def: Mapped[list["WorkflowTransitionDefinition"]] = relationship("WorkflowTransitionDefinition", lazy="dynamic")
 
 
 class WorkflowTransitionDefinition(Base, TenantBaseModelMixin):
@@ -83,19 +84,19 @@ class WorkflowTransitionDefinition(Base, TenantBaseModelMixin):
 
     code: Mapped[str] = mapped_column(String(100), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     from_state: Mapped[str] = mapped_column(String(100), nullable=False)
     to_state: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    required_permissions: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    required_roles: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    required_permissions: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    required_roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     conditions: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     auto_transition: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    auto_transition_delay: Mapped[Optional[int]] = mapped_column(nullable=True)
+    auto_transition_delay: Mapped[int | None] = mapped_column(nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -104,6 +105,7 @@ class WorkflowTransitionDefinition(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     definition: Mapped["WorkflowDefinition"] = relationship("WorkflowDefinition", back_populates="transitions_def")
 
 
@@ -128,15 +130,15 @@ class WorkflowInstance(Base, TenantBaseModelMixin):
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
 
     current_state: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    previous_state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    previous_state: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    assigned_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    assigned_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
@@ -145,8 +147,8 @@ class WorkflowInstance(Base, TenantBaseModelMixin):
 
     context_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -155,9 +157,10 @@ class WorkflowInstance(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     definition: Mapped["WorkflowDefinition"] = relationship("WorkflowDefinition", back_populates="instances")
     assigned_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_user_id], lazy="selectin")
-    history: Mapped[List["WorkflowTransitionHistory"]] = relationship("WorkflowTransitionHistory", back_populates="instance", lazy="dynamic")
+    history: Mapped[list["WorkflowTransitionHistory"]] = relationship("WorkflowTransitionHistory", lazy="dynamic")
 
 
 class WorkflowTransitionHistory(Base, TenantBaseModelMixin):
@@ -174,7 +177,7 @@ class WorkflowTransitionHistory(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    transition_definition_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    transition_definition_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workflow_transition_definitions.id", ondelete="SET NULL"),
         nullable=True,
@@ -182,7 +185,7 @@ class WorkflowTransitionHistory(Base, TenantBaseModelMixin):
 
     from_state: Mapped[str] = mapped_column(String(100), nullable=False)
     to_state: Mapped[str] = mapped_column(String(100), nullable=False)
-    transition_code: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    transition_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     actor_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -190,14 +193,14 @@ class WorkflowTransitionHistory(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    actor_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    actor_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
     )
 
-    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -207,5 +210,6 @@ class WorkflowTransitionHistory(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     instance: Mapped["WorkflowInstance"] = relationship("WorkflowInstance", back_populates="history")
     actor: Mapped["User"] = relationship("User", foreign_keys=[actor_id], lazy="selectin")

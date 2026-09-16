@@ -1,13 +1,12 @@
+from sqlalchemy import select
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from sqlalchemy import select
 
-from app.core.tenancy.context import TenantContext, set_tenant_context, clear_tenant_context
-from app.core.security.dependencies import get_optional_user
 from app.core.database import get_async_db
+from app.core.security.dependencies import get_optional_user
+from app.core.tenancy.context import TenantContext, clear_tenant_context, set_tenant_context
 from app.modules.firms.models import Firm
-from app.modules.users.models import User
 
 
 class TenantMiddleware(BaseHTTPMiddleware):

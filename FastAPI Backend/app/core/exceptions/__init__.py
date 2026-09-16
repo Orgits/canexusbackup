@@ -1,21 +1,25 @@
 from .base import (
     CAException,
-    ValidationException,
-    NotFoundException,
     ConflictException,
-    UnauthorizedException,
     ForbiddenException,
     InternalServerException,
+    MalwareException,
+    NotFoundException,
+    StorageException,
+    UnauthorizedException,
+    ValidationException,
 )
 from .handlers import register_exception_handlers
 
 __all__ = [
     "CAException",
-    "ValidationException",
-    "NotFoundException",
     "ConflictException",
-    "UnauthorizedException",
     "ForbiddenException",
     "InternalServerException",
+    "MalwareException",
+    "NotFoundException",
+    "StorageException",
+    "UnauthorizedException",
+    "ValidationException",
     "register_exception_handlers",
 ]

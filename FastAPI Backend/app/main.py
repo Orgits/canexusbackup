@@ -1,14 +1,19 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from app.core.config import get_settings
-from app.core.database import engine, Base
-from app.core.logging import configure_logging, get_logger
-from app.core.exceptions import register_exception_handlers
-from app.core.observability import setup_metrics, get_metrics
-from app.api.middleware import TenantMiddleware, LoggingMiddleware, MetricsMiddleware
+# Import all models FIRST to ensure they are registered with SQLAlchemy
+import app.models
+from app.api.middleware import LoggingMiddleware, MetricsMiddleware, TenantMiddleware
 from app.api.routers import api_router
+from app.core.config import get_settings
+from app.core.database import engine
+from app.core.exceptions import register_exception_handlers
+from app.core.logging import configure_logging, get_logger
+from app.core.observability import get_metrics, setup_metrics
+from app.core.redis.client import close_redis, get_redis, init_redis
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -18,9 +23,11 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     configure_logging()
     setup_metrics()
+    await init_redis()
     logger.info("Application starting up", environment=settings.ENVIRONMENT)
     yield
     logger.info("Application shutting down")
+    await close_redis()
     await engine.dispose()
 
 
@@ -58,6 +65,18 @@ def create_app() -> FastAPI:
 
     @app.get("/ready", tags=["Health"])
     async def readiness_check():
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+        except Exception:
+            return {"status": "not ready", "service": settings.APP_NAME, "database": "disconnected"}
+
+        try:
+            redis_client = await get_redis()
+            await redis_client.ping()
+        except Exception:
+            return {"status": "not ready", "service": settings.APP_NAME, "redis": "disconnected"}
+
         return {"status": "ready", "service": settings.APP_NAME}
 
     if settings.ENABLE_METRICS:

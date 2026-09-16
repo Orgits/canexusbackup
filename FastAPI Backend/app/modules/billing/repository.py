@@ -1,11 +1,18 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.billing.models import Invoice, InvoiceItem, Payment, Expense, InvoiceStatus, PaymentStatus, ExpenseStatus
+from app.modules.billing.models import (
+    Expense,
+    ExpenseStatus,
+    Invoice,
+    InvoiceStatus,
+    Payment,
+    PaymentStatus,
+)
 
 
 class BillingRepository:
@@ -18,7 +25,7 @@ class BillingRepository:
         await self.db.refresh(invoice)
         return invoice
 
-    async def get_invoice_by_id(self, invoice_id: UUID, tenant_id: UUID) -> Optional[Invoice]:
+    async def get_invoice_by_id(self, invoice_id: UUID, tenant_id: UUID) -> Invoice | None:
         result = await self.db.execute(
             select(Invoice)
             .options(
@@ -31,7 +38,7 @@ class BillingRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_invoice_by_number(self, invoice_number: str, tenant_id: UUID) -> Optional[Invoice]:
+    async def get_invoice_by_number(self, invoice_number: str, tenant_id: UUID) -> Invoice | None:
         result = await self.db.execute(
             select(Invoice).where(Invoice.invoice_number == invoice_number, Invoice.tenant_id == tenant_id)
         )
@@ -42,16 +49,15 @@ class BillingRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        status: Optional[InvoiceStatus] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        status: InvoiceStatus | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Invoice], int]:
-        from datetime import datetime
+    ) -> tuple[list[Invoice], int]:
         query = (
             select(Invoice)
             .options(
@@ -123,7 +129,7 @@ class BillingRepository:
         await self.db.refresh(payment)
         return payment
 
-    async def get_payment_by_id(self, payment_id: UUID, tenant_id: UUID) -> Optional[Payment]:
+    async def get_payment_by_id(self, payment_id: UUID, tenant_id: UUID) -> Payment | None:
         result = await self.db.execute(
             select(Payment)
             .options(
@@ -139,12 +145,12 @@ class BillingRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        client_id: Optional[UUID] = None,
-        invoice_id: Optional[UUID] = None,
-        status: Optional[PaymentStatus] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> Tuple[List[Payment], int]:
+        client_id: UUID | None = None,
+        invoice_id: UUID | None = None,
+        status: PaymentStatus | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> tuple[list[Payment], int]:
         query = (
             select(Payment)
             .options(
@@ -199,7 +205,7 @@ class BillingRepository:
         await self.db.refresh(expense)
         return expense
 
-    async def get_expense_by_id(self, expense_id: UUID, tenant_id: UUID) -> Optional[Expense]:
+    async def get_expense_by_id(self, expense_id: UUID, tenant_id: UUID) -> Expense | None:
         result = await self.db.execute(
             select(Expense)
             .options(
@@ -216,13 +222,13 @@ class BillingRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        status: Optional[ExpenseStatus] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> Tuple[List[Expense], int]:
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        user_id: UUID | None = None,
+        status: ExpenseStatus | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> tuple[list[Expense], int]:
         query = (
             select(Expense)
             .options(

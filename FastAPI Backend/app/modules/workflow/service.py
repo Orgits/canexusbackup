@@ -1,28 +1,28 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
+from app.modules.users.models import User
 from app.modules.workflow.models import (
     WorkflowDefinition,
-    WorkflowTransitionDefinition,
-    WorkflowInstance,
-    WorkflowTransitionHistory,
     WorkflowEntityType,
+    WorkflowInstance,
+    WorkflowTransitionDefinition,
+    WorkflowTransitionHistory,
 )
+from app.modules.workflow.repository import WorkflowRepository
 from app.modules.workflow.schemas import (
     WorkflowDefinitionCreate,
     WorkflowDefinitionUpdate,
-    WorkflowTransitionDefinitionCreate,
-    WorkflowTransitionDefinitionUpdate,
     WorkflowInstanceCreate,
     WorkflowInstanceUpdate,
+    WorkflowTransitionDefinitionCreate,
+    WorkflowTransitionDefinitionUpdate,
     WorkflowTransitionRequest,
 )
-from app.modules.workflow.repository import WorkflowRepository
-from app.modules.users.models import User
 
 
 class WorkflowService:
@@ -77,7 +77,7 @@ class WorkflowService:
         await self.db.refresh(created_definition)
         return created_definition
 
-    async def _ensure_single_default(self, entity_type: WorkflowEntityType, tenant_id: UUID, exclude_id: Optional[UUID] = None):
+    async def _ensure_single_default(self, entity_type: WorkflowEntityType, tenant_id: UUID, exclude_id: UUID | None = None):
         # Find other defaults for this entity type
         result = await self.db.execute(
             select(WorkflowDefinition).where(
@@ -104,12 +104,12 @@ class WorkflowService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        entity_type: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        entity_type: str | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[WorkflowDefinition], int]:
+    ) -> tuple[list[WorkflowDefinition], int]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -133,7 +133,7 @@ class WorkflowService:
             if existing and existing.id != definition_id:
                 raise ConflictException(detail="Workflow definition with this code already exists")
 
-        if "is_default" in update_data and update_data["is_default"]:
+        if update_data.get("is_default"):
             await self._ensure_single_default(definition.entity_type, tenant_id, definition_id)
 
         # Handle states and transitions updates
@@ -301,16 +301,16 @@ class WorkflowService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        entity_type: Optional[str] = None,
-        workflow_definition_id: Optional[UUID] = None,
-        current_state: Optional[str] = None,
-        assigned_user_id: Optional[UUID] = None,
-        assigned_team_id: Optional[UUID] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        entity_type: str | None = None,
+        workflow_definition_id: UUID | None = None,
+        current_state: str | None = None,
+        assigned_user_id: UUID | None = None,
+        assigned_team_id: UUID | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[WorkflowInstance], int]:
+    ) -> tuple[list[WorkflowInstance], int]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -350,7 +350,7 @@ class WorkflowService:
         tenant_id: UUID,
         request: WorkflowTransitionRequest,
         actor_id: UUID,
-        actor_team_id: Optional[UUID] = None,
+        actor_team_id: UUID | None = None,
     ) -> WorkflowInstance:
         instance = await self.get_instance_by_id(instance_id, tenant_id)
 
@@ -402,7 +402,7 @@ class WorkflowService:
 
         if to_state in [s.get("code") for s in instance.definition.states if s.get("is_terminal")]:
             instance.is_active = False
-            instance.completed_at = datetime.now(timezone.utc)
+            instance.completed_at = datetime.now(UTC)
 
         await self.repository.update_instance(instance)
 
@@ -426,7 +426,7 @@ class WorkflowService:
 
     async def get_available_transitions(
         self, instance_id: UUID, tenant_id: UUID, actor_id: UUID
-    ) -> List[WorkflowTransitionDefinition]:
+    ) -> list[WorkflowTransitionDefinition]:
         instance = await self.get_instance_by_id(instance_id, tenant_id)
         transitions = await self.repository.get_transitions_from_state(
             instance.workflow_definition_id, instance.current_state, tenant_id
@@ -440,6 +440,6 @@ class WorkflowService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[WorkflowTransitionHistory], int]:
+    ) -> tuple[list[WorkflowTransitionHistory], int]:
         instance = await self.get_instance_by_id(instance_id, tenant_id)
         return await self.repository.get_history_for_instance(instance_id, tenant_id, page, page_size)

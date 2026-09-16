@@ -1,32 +1,28 @@
-from typing import Optional, List, Dict, Any
+from datetime import date
+from typing import Any
 from uuid import UUID
-from datetime import date, datetime
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.workload.service import WorkloadService
-from app.modules.workload.schemas import (
-    UserAvailabilityCreate,
-    UserAvailabilityUpdate,
-    UserAvailabilityResponse,
-    TeamCapacityCreate,
-    TeamCapacityUpdate,
-    TeamCapacityResponse,
-    WorkloadSnapshotCreate,
-    WorkloadSnapshotResponse,
-    WorkloadSummaryCreate,
-    WorkloadSummaryResponse,
-    WorkloadSummaryListResponse,
-    UserWorkloadResponse,
-    TeamWorkloadResponse,
-    WorkloadDashboardResponse,
-)
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.users.models import User
 from app.modules.workload.models import WorkloadPeriod
+from app.modules.workload.schemas import (
+    TeamCapacityCreate,
+    TeamCapacityResponse,
+    TeamWorkloadResponse,
+    UserAvailabilityCreate,
+    UserAvailabilityResponse,
+    UserWorkloadResponse,
+    WorkloadDashboardResponse,
+    WorkloadSnapshotResponse,
+    WorkloadSummaryListResponse,
+)
+from app.modules.workload.service import WorkloadService
 
 router = APIRouter(prefix="/workload", tags=["Workload & Capacity"])
 
@@ -42,9 +38,9 @@ def get_workload_service(db: AsyncSession = Depends(get_db)) -> WorkloadService:
     summary="Get workload dashboard",
 )
 async def get_workload_dashboard(
-    user_id: Optional[UUID] = None,
-    team_id: Optional[UUID] = None,
-    as_of_date: Optional[date] = None,
+    user_id: UUID | None = None,
+    team_id: UUID | None = None,
+    as_of_date: date | None = None,
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -63,7 +59,7 @@ async def get_workload_dashboard(
 )
 async def get_user_workload(
     user_id: UUID,
-    as_of_date: Optional[date] = None,
+    as_of_date: date | None = None,
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -80,7 +76,7 @@ async def get_user_workload(
 )
 async def get_team_workload(
     team_id: UUID,
-    as_of_date: Optional[date] = None,
+    as_of_date: date | None = None,
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -110,13 +106,13 @@ async def set_user_availability(
 
 @router.post(
     "/availability/bulk",
-    response_model=List[UserAvailabilityResponse],
+    response_model=list[UserAvailabilityResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Bulk set user availability",
 )
 async def bulk_set_user_availability(
     user_id: UUID,
-    availabilities: List[Dict[str, Any]],
+    availabilities: list[dict[str, Any]],
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -127,7 +123,7 @@ async def bulk_set_user_availability(
 
 @router.get(
     "/availability/user/{user_id}",
-    response_model=List[UserAvailabilityResponse],
+    response_model=list[UserAvailabilityResponse],
     summary="Get user availability for date range",
 )
 async def get_user_availability(
@@ -144,7 +140,7 @@ async def get_user_availability(
 
 @router.get(
     "/availability/team/{team_id}",
-    response_model=List[UserAvailabilityResponse],
+    response_model=list[UserAvailabilityResponse],
     summary="Get team availability for date range",
 )
 async def get_team_availability(
@@ -181,12 +177,12 @@ async def set_team_capacity(
 
 @router.get(
     "/capacity/team/{team_id}",
-    response_model=List[TeamCapacityResponse],
+    response_model=list[TeamCapacityResponse],
     summary="Get team capacity",
 )
 async def get_team_capacity(
     team_id: UUID,
-    period_type: Optional[str] = None,
+    period_type: str | None = None,
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -201,11 +197,11 @@ async def get_team_capacity(
 # Workload Snapshot endpoints
 @router.post(
     "/snapshots/generate",
-    response_model=List[WorkloadSnapshotResponse],
+    response_model=list[WorkloadSnapshotResponse],
     summary="Generate workload snapshots",
 )
 async def generate_snapshots(
-    snapshot_date: Optional[date] = None,
+    snapshot_date: date | None = None,
     period_type: str = Query("daily", pattern="^(daily|weekly|monthly|quarterly)$"),
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
@@ -227,10 +223,10 @@ async def generate_snapshots(
 async def list_workload_summaries(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    user_id: Optional[UUID] = None,
-    team_id: Optional[UUID] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    user_id: UUID | None = None,
+    team_id: UUID | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     workload_service: WorkloadService = Depends(get_workload_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -242,4 +238,4 @@ async def list_workload_summaries(
     return WorkloadSummaryListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
-from typing import Dict, Any
+from typing import Any

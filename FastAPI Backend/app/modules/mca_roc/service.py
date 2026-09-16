@@ -1,26 +1,26 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
+from app.modules.clients.models import Client
 from app.modules.mca_roc.models import (
-    MCAFilingCycle,
-    MCAFilingConfig,
     MCAEntityType,
-    MCAFilingType,
     MCAFilingCategory,
+    MCAFilingConfig,
+    MCAFilingCycle,
+    MCAFilingType,
     MCAStatus,
 )
+from app.modules.mca_roc.repository import MCARepository
 from app.modules.mca_roc.schemas import (
-    MCAFilingCycleCreate,
-    MCAFilingCycleUpdate,
     MCAFilingConfigCreate,
     MCAFilingConfigUpdate,
+    MCAFilingCycleCreate,
+    MCAFilingCycleUpdate,
 )
-from app.modules.mca_roc.repository import MCARepository
-from app.modules.clients.models import Client
 
 
 class MCAService:
@@ -58,10 +58,10 @@ class MCAService:
     async def get_all_configs(
         self,
         tenant_id: UUID,
-        entity_type: Optional[str] = None,
-        filing_category: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> List[MCAFilingConfig]:
+        entity_type: str | None = None,
+        filing_category: str | None = None,
+        is_active: bool | None = None,
+    ) -> list[MCAFilingConfig]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -95,7 +95,7 @@ class MCAService:
             raise ConflictException(detail="Cannot delete system config")
         await self.repository.delete_config(config)
 
-    async def initialize_system_configs(self, tenant_id: UUID) -> List[MCAFilingConfig]:
+    async def initialize_system_configs(self, tenant_id: UUID) -> list[MCAFilingConfig]:
         return await self.repository.initialize_system_configs(tenant_id)
 
     # MCA Filing Cycle methods
@@ -147,20 +147,20 @@ class MCAService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        entity_type: Optional[str] = None,
-        filing_type: Optional[str] = None,
-        filing_category: Optional[str] = None,
-        financial_year: Optional[str] = None,
-        status: Optional[str] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        entity_type: str | None = None,
+        filing_type: str | None = None,
+        filing_category: str | None = None,
+        financial_year: str | None = None,
+        status: str | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[MCAFilingCycle], int]:
+    ) -> tuple[list[MCAFilingCycle], int]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -304,8 +304,8 @@ class MCAService:
         tenant_id: UUID,
         actor_id: UUID,
         srn: str,
-        acknowledgment_number: Optional[str] = None,
-        filing_date: Optional[datetime] = None,
+        acknowledgment_number: str | None = None,
+        filing_date: datetime | None = None,
         challan_amount: float = 0,
         additional_fee: float = 0,
     ) -> MCAFilingCycle:
@@ -314,7 +314,7 @@ class MCAService:
             raise ValidationException(detail="Can only mark as filed from READY_FOR_FILING status")
 
         cycle.status = MCAStatus.FILED
-        cycle.filing_date = filing_date or datetime.now(timezone.utc)
+        cycle.filing_date = filing_date or datetime.now(UTC)
         cycle.srn = srn
         if acknowledgment_number:
             cycle.acknowledgment_number = acknowledgment_number
@@ -324,14 +324,14 @@ class MCAService:
         return await self.repository.update_cycle(cycle)
 
     async def mark_approved(
-        self, cycle_id: UUID, tenant_id: UUID, actor_id: UUID, approval_date: Optional[datetime] = None
+        self, cycle_id: UUID, tenant_id: UUID, actor_id: UUID, approval_date: datetime | None = None
     ) -> MCAFilingCycle:
         cycle = await self.get_cycle_by_id(cycle_id, tenant_id)
         if cycle.status != MCAStatus.FILED:
             raise ValidationException(detail="Can only mark as approved from FILED status")
 
         cycle.status = MCAStatus.APPROVED
-        cycle.approval_date = approval_date or datetime.now(timezone.utc)
+        cycle.approval_date = approval_date or datetime.now(UTC)
         cycle.updated_by = actor_id
         return await self.repository.update_cycle(cycle)
 
@@ -371,5 +371,5 @@ class MCAService:
         cycle.updated_by = actor_id
         return await self.repository.update_cycle(cycle)
 
-    async def get_summary(self, tenant_id: UUID, financial_year: Optional[str] = None) -> dict:
+    async def get_summary(self, tenant_id: UUID, financial_year: str | None = None) -> dict:
         return await self.repository.get_summary(tenant_id, financial_year)

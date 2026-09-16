@@ -1,11 +1,11 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.documents.models import Document, DocumentStatus, DocumentCategory
+from app.modules.documents.models import Document, DocumentCategory, DocumentStatus
 
 
 class DocumentRepository:
@@ -18,7 +18,7 @@ class DocumentRepository:
         await self.db.refresh(document)
         return document
 
-    async def get_by_id(self, document_id: UUID, tenant_id: UUID) -> Optional[Document]:
+    async def get_by_id(self, document_id: UUID, tenant_id: UUID) -> Document | None:
         result = await self.db.execute(
             select(Document)
             .options(
@@ -37,21 +37,20 @@ class DocumentRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        task_id: Optional[UUID] = None,
-        compliance_cycle_id: Optional[UUID] = None,
-        status: Optional[DocumentStatus] = None,
-        category: Optional[DocumentCategory] = None,
-        uploaded_by: Optional[UUID] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        tags: Optional[List[str]] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        task_id: UUID | None = None,
+        compliance_cycle_id: UUID | None = None,
+        status: DocumentStatus | None = None,
+        category: DocumentCategory | None = None,
+        uploaded_by: UUID | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        tags: list[str] | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Document], int]:
-        from datetime import datetime
+    ) -> tuple[list[Document], int]:
         query = (
             select(Document)
             .options(

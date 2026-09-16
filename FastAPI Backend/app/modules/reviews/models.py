@@ -1,26 +1,26 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
+    String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User, Team
+    from app.modules.users.models import Team, User
     from app.modules.workflow.models import WorkflowInstance
 
 
@@ -63,40 +63,40 @@ class ReviewRequest(Base, TenantBaseModelMixin):
 
     source_object_type: Mapped[ReviewType] = mapped_column(Enum(ReviewType), nullable=False, index=True)
     source_object_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
-    workflow_instance_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    workflow_instance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("workflow_instances.id", ondelete="SET NULL"),
         nullable=True,
     )
 
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     stage: Mapped[ReviewStage] = mapped_column(Enum(ReviewStage), default=ReviewStage.DRAFT, nullable=False, index=True)
     status: Mapped[ReviewStatus] = mapped_column(Enum(ReviewStatus), default=ReviewStatus.PENDING, nullable=False, index=True)
 
-    reviewer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    reviewer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    reviewer_team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    reviewer_team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
 
-    submitted_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    submitted_by_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     priority: Mapped[str] = mapped_column(String(20), default="medium", nullable=False)
     extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
@@ -108,12 +108,13 @@ class ReviewRequest(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     reviewer: Mapped[Optional["User"]] = relationship("User", foreign_keys=[reviewer_id], lazy="selectin")
     reviewer_team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")
     submitted_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[submitted_by_id], lazy="selectin")
     workflow_instance: Mapped[Optional["WorkflowInstance"]] = relationship("WorkflowInstance", lazy="selectin")
-    comments: Mapped[List["ReviewComment"]] = relationship("ReviewComment", back_populates="review_request", lazy="dynamic")
-    history: Mapped[List["ReviewHistory"]] = relationship("ReviewHistory", back_populates="review_request", lazy="dynamic")
+    comments: Mapped[list["ReviewComment"]] = relationship("ReviewComment", back_populates="review_request", lazy="dynamic")
+    history: Mapped[list["ReviewHistory"]] = relationship("ReviewHistory", back_populates="review_request", lazy="dynamic")
 
 
 class ReviewComment(Base, TenantBaseModelMixin):
@@ -139,9 +140,9 @@ class ReviewComment(Base, TenantBaseModelMixin):
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
     is_internal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    mentions: Mapped[List[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
+    mentions: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
 
-    parent_comment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    parent_comment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("review_comments.id", ondelete="SET NULL"),
         nullable=True,
@@ -156,10 +157,11 @@ class ReviewComment(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     review_request: Mapped["ReviewRequest"] = relationship("ReviewRequest", back_populates="comments")
     author: Mapped["User"] = relationship("User", foreign_keys=[author_id], lazy="selectin")
     parent_comment: Mapped[Optional["ReviewComment"]] = relationship("ReviewComment", remote_side="ReviewComment.id", back_populates="replies", lazy="selectin")
-    replies: Mapped[List["ReviewComment"]] = relationship("ReviewComment", back_populates="parent_comment", lazy="dynamic")
+    replies: Mapped[list["ReviewComment"]] = relationship("ReviewComment", back_populates="parent_comment", lazy="dynamic")
 
 
 class ReviewHistory(Base, TenantBaseModelMixin):
@@ -185,12 +187,12 @@ class ReviewHistory(Base, TenantBaseModelMixin):
     )
 
     action: Mapped[str] = mapped_column(String(50), nullable=False)
-    from_stage: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    to_stage: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    from_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    to_status: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    from_stage: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    to_stage: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    from_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    to_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -200,5 +202,6 @@ class ReviewHistory(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     review_request: Mapped["ReviewRequest"] = relationship("ReviewRequest", back_populates="history")
     actor: Mapped["User"] = relationship("User", foreign_keys=[actor_id], lazy="selectin")

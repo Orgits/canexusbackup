@@ -1,6 +1,6 @@
-from typing import Optional, List
 from uuid import UUID
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.firms.models import Firm
@@ -16,11 +16,11 @@ class FirmRepository:
         await self.db.refresh(firm)
         return firm
 
-    async def get_by_id(self, firm_id: UUID) -> Optional[Firm]:
+    async def get_by_id(self, firm_id: UUID) -> Firm | None:
         result = await self.db.execute(select(Firm).where(Firm.id == firm_id))
         return result.scalar_one_or_none()
 
-    async def get_by_name(self, name: str) -> Optional[Firm]:
+    async def get_by_name(self, name: str) -> Firm | None:
         result = await self.db.execute(select(Firm).where(Firm.name == name))
         return result.scalar_one_or_none()
 
@@ -28,9 +28,9 @@ class FirmRepository:
         self,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> tuple[List[Firm], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[Firm], int]:
         query = select(Firm)
         count_query = select(func.count(Firm.id))
 

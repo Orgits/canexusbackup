@@ -1,31 +1,30 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
     Numeric,
+    String,
+    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
     from app.modules.clients.models import Client
+    from app.modules.communications.models import Communication
+    from app.modules.compliance.models import ComplianceCycle
     from app.modules.matters.models import Matter
     from app.modules.tasks.models import Task
-    from app.modules.compliance.models import ComplianceCycle
     from app.modules.users.models import User
-    from app.modules.communications.models import Communication
 
 
 class DocumentStatus(str, PyEnum):
@@ -68,19 +67,19 @@ class Document(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    matter_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    matter_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("matters.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    task_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    task_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tasks.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    compliance_cycle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    compliance_cycle_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("compliance_cycles.id", ondelete="SET NULL"),
         nullable=True,
@@ -95,11 +94,11 @@ class Document(Base, TenantBaseModelMixin):
 
     storage_path: Mapped[str] = mapped_column(String(1000), nullable=False)
     storage_provider: Mapped[str] = mapped_column(String(50), default="azure_blob", nullable=False)
-    storage_bucket: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    storage_bucket: Mapped[str | None] = mapped_column(String(100), nullable=True)
     storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
     version: Mapped[int] = mapped_column(default=1, nullable=False)
     is_latest_version: Mapped[bool] = mapped_column(default=True, nullable=False)
-    previous_version_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    previous_version_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("documents.id", ondelete="SET NULL"),
         nullable=True,
@@ -108,9 +107,9 @@ class Document(Base, TenantBaseModelMixin):
     category: Mapped[DocumentCategory] = mapped_column(Enum(DocumentCategory), default=DocumentCategory.OTHER, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(Enum(DocumentStatus), default=DocumentStatus.UPLOADED, nullable=False, index=True)
 
-    title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
 
     uploaded_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -119,22 +118,22 @@ class Document(Base, TenantBaseModelMixin):
         index=True,
     )
     source: Mapped[str] = mapped_column(String(50), default="manual", nullable=False)
-    source_communication_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    source_communication_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("communications.id", ondelete="SET NULL"),
         nullable=True,
     )
 
-    checksum: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
-    ocr_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    checksum: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    ocr_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     extracted_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
-    classification: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    confidence_score: Mapped[Optional[float]] = mapped_column(Numeric(5, 4), nullable=True)
+    classification: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    confidence_score: Mapped[float | None] = mapped_column(Numeric(5, 4), nullable=True)
 
-    retention_policy: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    retention_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    retention_policy: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    retention_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -143,11 +142,12 @@ class Document(Base, TenantBaseModelMixin):
         index=True,
     )
 
-    client: Mapped["Client"] = relationship("Client", back_populates="documents", lazy="selectin")
-    matter: Mapped[Optional["Matter"]] = relationship("Matter", back_populates="documents", lazy="selectin")
-    task: Mapped[Optional["Task"]] = relationship("Task", back_populates="documents", lazy="selectin")
-    compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", back_populates="documents", lazy="selectin")
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
+    client: Mapped["Client"] = relationship("Client", lazy="selectin")
+    matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
+    task: Mapped[Optional["Task"]] = relationship("Task", lazy="selectin")
+    compliance_cycle: Mapped[Optional["ComplianceCycle"]] = relationship("ComplianceCycle", lazy="selectin")
     uploaded_by_user: Mapped["User"] = relationship("User", foreign_keys=[uploaded_by], lazy="selectin")
     source_communication: Mapped[Optional["Communication"]] = relationship("Communication", lazy="selectin")
-    previous_version: Mapped[Optional["Document"]] = relationship("Document", remote_side="Document.id", back_populates="next_version", lazy="selectin")
-    next_version: Mapped[Optional["Document"]] = relationship("Document", back_populates="previous_version", lazy="selectin")
+    previous_version: Mapped[Optional["Document"]] = relationship("Document", remote_side="Document.id", lazy="selectin")
+    next_version: Mapped[Optional["Document"]] = relationship("Document", lazy="selectin")

@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 
 class EventType(str, Enum):
@@ -22,27 +23,27 @@ class EventType(str, Enum):
 
 class CalendarEventBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     event_type: EventType
     start_time: datetime
     end_time: datetime
     all_day: bool = False
     timezone: str = "Asia/Kolkata"
-    location: Optional[str] = Field(None, max_length=500)
-    meeting_url: Optional[str] = Field(None, max_length=500)
-    client_id: Optional[UUID] = None
-    matter_id: Optional[UUID] = None
-    task_id: Optional[UUID] = None
-    compliance_cycle_id: Optional[UUID] = None
-    notice_id: Optional[UUID] = None
-    user_id: Optional[UUID] = None
-    attendee_ids: List[UUID] = Field(default_factory=list)
-    reminder_minutes: List[int] = Field(default_factory=list)
+    location: str | None = Field(None, max_length=500)
+    meeting_url: str | None = Field(None, max_length=500)
+    client_id: UUID | None = None
+    matter_id: UUID | None = None
+    task_id: UUID | None = None
+    compliance_cycle_id: UUID | None = None
+    notice_id: UUID | None = None
+    user_id: UUID | None = None
+    attendee_ids: list[UUID] = Field(default_factory=list)
+    reminder_minutes: list[int] = Field(default_factory=list)
     is_recurring: bool = False
-    recurrence_rule: Optional[str] = None
-    recurrence_end: Optional[datetime] = None
-    color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    recurrence_rule: str | None = None
+    recurrence_end: datetime | None = None
+    color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class CalendarEventCreate(CalendarEventBase):
@@ -50,28 +51,28 @@ class CalendarEventCreate(CalendarEventBase):
 
 
 class CalendarEventUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    event_type: Optional[EventType] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    all_day: Optional[bool] = None
-    timezone: Optional[str] = None
-    location: Optional[str] = Field(None, max_length=500)
-    meeting_url: Optional[str] = Field(None, max_length=500)
-    client_id: Optional[UUID] = None
-    matter_id: Optional[UUID] = None
-    task_id: Optional[UUID] = None
-    compliance_cycle_id: Optional[UUID] = None
-    notice_id: Optional[UUID] = None
-    user_id: Optional[UUID] = None
-    attendee_ids: Optional[List[UUID]] = None
-    reminder_minutes: Optional[List[int]] = None
-    is_recurring: Optional[bool] = None
-    recurrence_rule: Optional[str] = None
-    recurrence_end: Optional[datetime] = None
-    color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
-    metadata: Optional[Dict[str, Any]] = None
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    event_type: EventType | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    all_day: bool | None = None
+    timezone: str | None = None
+    location: str | None = Field(None, max_length=500)
+    meeting_url: str | None = Field(None, max_length=500)
+    client_id: UUID | None = None
+    matter_id: UUID | None = None
+    task_id: UUID | None = None
+    compliance_cycle_id: UUID | None = None
+    notice_id: UUID | None = None
+    user_id: UUID | None = None
+    attendee_ids: list[UUID] | None = None
+    reminder_minutes: list[int] | None = None
+    is_recurring: bool | None = None
+    recurrence_rule: str | None = None
+    recurrence_end: datetime | None = None
+    color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    metadata: dict[str, Any] | None = None
 
 
 class CalendarEventResponse(CalendarEventBase):
@@ -85,7 +86,7 @@ class CalendarEventResponse(CalendarEventBase):
 
 
 class CalendarEventListResponse(BaseModel):
-    items: List[CalendarEventResponse]
+    items: list[CalendarEventResponse]
     total: int
     page: int
     page_size: int

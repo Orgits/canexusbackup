@@ -1,31 +1,30 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
     Integer,
+    String,
+    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
     from app.modules.clients.models import Client
+    from app.modules.compliance.models import ComplianceCycle
     from app.modules.matters.models import Matter
     from app.modules.tasks.models import Task
-    from app.modules.compliance.models import ComplianceCycle
     from app.modules.users.models import User
-    from app.modules.billing.models import Invoice
 
 
 class EventType(str, PyEnum):
@@ -54,7 +53,7 @@ class CalendarEvent(Base, TenantBaseModelMixin):
     )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     event_type: Mapped[EventType] = mapped_column(Enum(EventType), nullable=False, index=True)
 
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
@@ -62,54 +61,54 @@ class CalendarEvent(Base, TenantBaseModelMixin):
     all_day: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     timezone: Mapped[str] = mapped_column(String(50), default="Asia/Kolkata", nullable=False)
 
-    location: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    meeting_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    location: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    meeting_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
-    client_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("clients.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    matter_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    matter_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("matters.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    task_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    task_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tasks.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    compliance_cycle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    compliance_cycle_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("compliance_cycles.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    notice_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    notice_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
         index=True,
     )
 
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    attendee_ids: Mapped[List[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
+    attendee_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
 
-    reminder_minutes: Mapped[List[int]] = mapped_column(ARRAY(Integer), default=list, nullable=False)
+    reminder_minutes: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list, nullable=False)
     is_recurring: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    recurrence_rule: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    recurrence_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    recurrence_rule: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    recurrence_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    color: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -118,6 +117,7 @@ class CalendarEvent(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     client: Mapped[Optional["Client"]] = relationship("Client", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     task: Mapped[Optional["Task"]] = relationship("Task", lazy="selectin")

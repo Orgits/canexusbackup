@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Set
 
 
 class Permission(str, Enum):
@@ -139,6 +138,12 @@ class Permission(str, Enum):
     EVENTS_READ = "events.read"
     EVENTS_CREATE = "events.create"
 
+    # Calendar
+    CALENDAR_READ = "calendar.read"
+    CALENDAR_CREATE = "calendar.create"
+    CALENDAR_UPDATE = "calendar.update"
+    CALENDAR_DELETE = "calendar.delete"
+
 
 class Role(str, Enum):
     SUPER_ADMIN = "super_admin"
@@ -154,7 +159,7 @@ class Role(str, Enum):
 
 @dataclass
 class PermissionRegistry:
-    role_permissions: Dict[Role, Set[Permission]] = field(default_factory=dict)
+    role_permissions: dict[Role, set[Permission]] = field(default_factory=dict)
 
     def __post_init__(self):
         self._init_default_permissions()
@@ -188,6 +193,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE, Permission.TEMPLATES_UPDATE, Permission.TEMPLATES_DELETE,
             Permission.WEBHOOKS_READ, Permission.WEBHOOKS_CREATE, Permission.WEBHOOKS_UPDATE, Permission.WEBHOOKS_DELETE,
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
         }
 
         partner_perms = {
@@ -216,6 +223,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE, Permission.TEMPLATES_UPDATE, Permission.TEMPLATES_DELETE,
             Permission.WEBHOOKS_READ, Permission.WEBHOOKS_CREATE, Permission.WEBHOOKS_UPDATE, Permission.WEBHOOKS_DELETE,
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
         }
 
         manager_perms = {
@@ -243,6 +252,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE, Permission.TEMPLATES_UPDATE, Permission.TEMPLATES_DELETE,
             Permission.WEBHOOKS_READ, Permission.WEBHOOKS_CREATE, Permission.WEBHOOKS_UPDATE, Permission.WEBHOOKS_DELETE,
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
         }
 
         senior_associate_perms = {
@@ -269,6 +280,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE, Permission.TEMPLATES_UPDATE,
             Permission.WEBHOOKS_READ,
             Permission.EVENTS_READ,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE,
         }
 
         associate_perms = {
@@ -295,6 +308,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE,
             Permission.WEBHOOKS_READ,
             Permission.EVENTS_READ,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE,
         }
 
         junior_associate_perms = {
@@ -321,6 +336,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ,
             Permission.WEBHOOKS_READ,
             Permission.EVENTS_READ,
+            # Calendar
+            Permission.CALENDAR_READ,
         }
 
         admin_staff_perms = {
@@ -346,6 +363,8 @@ class PermissionRegistry:
             Permission.TEMPLATES_READ, Permission.TEMPLATES_CREATE, Permission.TEMPLATES_UPDATE,
             Permission.WEBHOOKS_READ, Permission.WEBHOOKS_CREATE, Permission.WEBHOOKS_UPDATE,
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
+            # Calendar
+            Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE,
         }
 
         client_portal_perms = {
@@ -357,6 +376,8 @@ class PermissionRegistry:
             Permission.COMMUNICATIONS_READ, Permission.COMMUNICATIONS_CREATE,
             Permission.CONVERSATIONS_READ,
             Permission.DOCUMENT_REQUESTS_READ,
+            # Calendar
+            Permission.CALENDAR_READ,
         }
 
         self.role_permissions = {
@@ -371,16 +392,16 @@ class PermissionRegistry:
             Role.CLIENT_PORTAL: client_portal_perms,
         }
 
-    def get_permissions_for_role(self, role: Role) -> Set[Permission]:
+    def get_permissions_for_role(self, role: Role) -> set[Permission]:
         return self.role_permissions.get(role, set())
 
     def role_has_permission(self, role: Role, permission: Permission) -> bool:
         return permission in self.get_permissions_for_role(role)
 
-    def get_all_permissions(self) -> List[Permission]:
+    def get_all_permissions(self) -> list[Permission]:
         return list(Permission)
 
-    def get_all_roles(self) -> List[Role]:
+    def get_all_roles(self) -> list[Role]:
         return list(Role)
 
 

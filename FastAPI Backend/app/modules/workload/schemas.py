@@ -1,7 +1,8 @@
-from typing import Optional, List, Dict, Any
+from datetime import date, datetime
+from typing import Any, Optional
 from uuid import UUID
-from datetime import datetime, date
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserAvailabilityBase(BaseModel):
@@ -9,8 +10,8 @@ class UserAvailabilityBase(BaseModel):
     date: date
     is_available: bool = True
     available_hours: float = Field(default=8.0, ge=0, le=24)
-    reason: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    reason: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class UserAvailabilityCreate(UserAvailabilityBase):
@@ -18,10 +19,10 @@ class UserAvailabilityCreate(UserAvailabilityBase):
 
 
 class UserAvailabilityUpdate(BaseModel):
-    is_available: Optional[bool] = None
-    available_hours: Optional[float] = Field(None, ge=0, le=24)
-    reason: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    is_available: bool | None = None
+    available_hours: float | None = Field(None, ge=0, le=24)
+    reason: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class UserAvailabilityResponse(UserAvailabilityBase):
@@ -31,8 +32,8 @@ class UserAvailabilityResponse(UserAvailabilityBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     user: Optional["UserResponse"] = None
 
@@ -45,7 +46,7 @@ class TeamCapacityBase(BaseModel):
     total_capacity_hours: float = Field(default=0, ge=0)
     allocated_hours: float = Field(default=0, ge=0)
     available_hours: float = Field(default=0, ge=0)
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class TeamCapacityCreate(TeamCapacityBase):
@@ -53,10 +54,10 @@ class TeamCapacityCreate(TeamCapacityBase):
 
 
 class TeamCapacityUpdate(BaseModel):
-    total_capacity_hours: Optional[float] = Field(None, ge=0)
-    allocated_hours: Optional[float] = Field(None, ge=0)
-    available_hours: Optional[float] = Field(None, ge=0)
-    metadata: Optional[Dict[str, Any]] = None
+    total_capacity_hours: float | None = Field(None, ge=0)
+    allocated_hours: float | None = Field(None, ge=0)
+    available_hours: float | None = Field(None, ge=0)
+    metadata: dict[str, Any] | None = None
 
 
 class TeamCapacityResponse(TeamCapacityBase):
@@ -66,15 +67,15 @@ class TeamCapacityResponse(TeamCapacityBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     team: Optional["TeamResponse"] = None
 
 
 class WorkloadSnapshotBase(BaseModel):
-    user_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
+    user_id: UUID | None = None
+    team_id: UUID | None = None
     snapshot_date: date
     period_type: str = Field(..., pattern="^(daily|weekly|monthly|quarterly)$")
 
@@ -98,7 +99,7 @@ class WorkloadSnapshotBase(BaseModel):
     pending_notices: int = 0
     overdue_notices: int = 0
 
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class WorkloadSnapshotCreate(WorkloadSnapshotBase):
@@ -112,16 +113,16 @@ class WorkloadSnapshotResponse(WorkloadSnapshotBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     user: Optional["UserResponse"] = None
     team: Optional["TeamResponse"] = None
 
 
 class WorkloadSummaryBase(BaseModel):
-    user_id: Optional[UUID] = None
-    team_id: Optional[UUID] = None
+    user_id: UUID | None = None
+    team_id: UUID | None = None
     summary_date: date
 
     current_open_tasks: int = 0
@@ -148,7 +149,7 @@ class WorkloadSummaryBase(BaseModel):
     capacity_utilization: float = Field(default=0, ge=0, le=100)
     is_overloaded: bool = False
 
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class WorkloadSummaryCreate(WorkloadSummaryBase):
@@ -162,15 +163,15 @@ class WorkloadSummaryResponse(WorkloadSummaryBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     user: Optional["UserResponse"] = None
     team: Optional["TeamResponse"] = None
 
 
 class WorkloadSummaryListResponse(BaseModel):
-    items: List[WorkloadSummaryResponse]
+    items: list[WorkloadSummaryResponse]
     total: int
     page: int
     page_size: int
@@ -180,8 +181,8 @@ class UserWorkloadResponse(BaseModel):
     user_id: UUID
     user_name: str
     user_email: str
-    team_id: Optional[UUID] = None
-    team_name: Optional[str] = None
+    team_id: UUID | None = None
+    team_name: str | None = None
 
     open_tasks: int = 0
     overdue_tasks: int = 0
@@ -235,13 +236,13 @@ class TeamWorkloadResponse(BaseModel):
     allocated_hours: float = 0
     available_hours: float = 0
 
-    members: List[UserWorkloadResponse] = []
+    members: list[UserWorkloadResponse] = []
 
 
 class WorkloadDashboardResponse(BaseModel):
     summary: WorkloadSummaryResponse
-    user_workloads: List[UserWorkloadResponse] = []
-    team_workloads: List[TeamWorkloadResponse] = []
+    user_workloads: list[UserWorkloadResponse] = []
+    team_workloads: list[TeamWorkloadResponse] = []
 
 
-from app.modules.users.schemas import UserResponse, TeamResponse
+from app.modules.users.schemas import TeamResponse, UserResponse

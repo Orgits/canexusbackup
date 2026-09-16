@@ -1,19 +1,19 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=255)
-    phone: Optional[str] = Field(None, max_length=20)
-    department: Optional[str] = Field(None, max_length=100)
-    designation: Optional[str] = Field(None, max_length=100)
-    employee_id: Optional[str] = Field(None, max_length=50)
-    team_id: Optional[UUID] = None
-    roles: List[str] = Field(default_factory=list)
-    direct_permissions: List[str] = Field(default_factory=list)
+    phone: str | None = Field(None, max_length=20)
+    department: str | None = Field(None, max_length=100)
+    designation: str | None = Field(None, max_length=100)
+    employee_id: str | None = Field(None, max_length=50)
+    team_id: UUID | None = None
+    roles: list[str] = Field(default_factory=list)
+    direct_permissions: list[str] = Field(default_factory=list)
 
 
 class UserCreate(UserBase):
@@ -21,28 +21,28 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    phone: Optional[str] = Field(None, max_length=20)
-    avatar_url: Optional[str] = Field(None, max_length=500)
-    is_active: Optional[bool] = None
-    department: Optional[str] = Field(None, max_length=100)
-    designation: Optional[str] = Field(None, max_length=100)
-    employee_id: Optional[str] = Field(None, max_length=50)
-    team_id: Optional[UUID] = None
-    roles: Optional[List[str]] = None
-    direct_permissions: Optional[List[str]] = None
+    full_name: str | None = Field(None, min_length=1, max_length=255)
+    phone: str | None = Field(None, max_length=20)
+    avatar_url: str | None = Field(None, max_length=500)
+    is_active: bool | None = None
+    department: str | None = Field(None, max_length=100)
+    designation: str | None = Field(None, max_length=100)
+    employee_id: str | None = Field(None, max_length=50)
+    team_id: UUID | None = None
+    roles: list[str] | None = None
+    direct_permissions: list[str] | None = None
 
 
 class UserResponse(UserBase):
     id: UUID
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     is_active: bool
     is_superuser: bool
-    date_of_joining: Optional[datetime] = None
-    last_login_at: Optional[datetime] = None
+    date_of_joining: datetime | None = None
+    last_login_at: datetime | None = None
     tenant_id: UUID
-    tenant_name: Optional[str] = None
-    team_name: Optional[str] = None
+    tenant_name: str | None = None
+    team_name: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -51,7 +51,7 @@ class UserResponse(UserBase):
 
 
 class UserListResponse(BaseModel):
-    items: List[UserResponse]
+    items: list[UserResponse]
     total: int
     page: int
     page_size: int
@@ -62,8 +62,8 @@ class UserMeResponse(BaseModel):
     id: UUID
     email: str
     full_name: str
-    roles: List[str]
-    permissions: List[str]
+    roles: list[str]
+    permissions: list[str]
     tenant_id: UUID
     tenant_name: str
     is_active: bool
@@ -71,11 +71,11 @@ class UserMeResponse(BaseModel):
 
 class TeamBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    department: Optional[str] = Field(None, max_length=100)
-    specialization: List[str] = Field(default_factory=list)
+    description: str | None = None
+    department: str | None = Field(None, max_length=100)
+    specialization: list[str] = Field(default_factory=list)
     is_active: bool = True
-    lead_id: Optional[UUID] = None
+    lead_id: UUID | None = None
 
 
 class TeamCreate(TeamBase):
@@ -83,12 +83,12 @@ class TeamCreate(TeamBase):
 
 
 class TeamUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    department: Optional[str] = Field(None, max_length=100)
-    specialization: Optional[List[str]] = None
-    is_active: Optional[bool] = None
-    lead_id: Optional[UUID] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    department: str | None = Field(None, max_length=100)
+    specialization: list[str] | None = None
+    is_active: bool | None = None
+    lead_id: UUID | None = None
 
 
 class TeamResponse(TeamBase):
@@ -96,9 +96,9 @@ class TeamResponse(TeamBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
-    lead: Optional[UserResponse] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
+    lead: UserResponse | None = None
     member_count: int = 0
 
     class Config:
@@ -106,7 +106,7 @@ class TeamResponse(TeamBase):
 
 
 class TeamListResponse(BaseModel):
-    items: List[TeamResponse]
+    items: list[TeamResponse]
     total: int
     page: int
     page_size: int

@@ -1,10 +1,10 @@
-from typing import Optional, List, Tuple, Dict, Any
-from uuid import UUID
 from datetime import datetime
+from typing import Any
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.audit.models import AuditLog, AuditAction
-from app.modules.audit.schemas import AuditLogResponse
+from app.modules.audit.models import AuditAction, AuditLog
 from app.modules.audit.repository import AuditRepository
 
 
@@ -17,16 +17,16 @@ class AuditService:
         self,
         tenant_id: UUID,
         action: AuditAction,
-        user_id: Optional[UUID] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[UUID] = None,
-        old_values: Optional[Dict[str, Any]] = None,
-        new_values: Optional[Dict[str, Any]] = None,
-        changed_fields: Optional[List[str]] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        request_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        user_id: UUID | None = None,
+        resource_type: str | None = None,
+        resource_id: UUID | None = None,
+        old_values: dict[str, Any] | None = None,
+        new_values: dict[str, Any] | None = None,
+        changed_fields: list[str] | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        request_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AuditLog:
         audit_log = AuditLog(
             tenant_id=tenant_id,
@@ -56,13 +56,13 @@ class AuditService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-        user_id: Optional[UUID] = None,
-        action: Optional[AuditAction] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[UUID] = None,
-        start_from: Optional[datetime] = None,
-        start_to: Optional[datetime] = None,
-    ) -> Tuple[List[AuditLog], int]:
+        user_id: UUID | None = None,
+        action: AuditAction | None = None,
+        resource_type: str | None = None,
+        resource_id: UUID | None = None,
+        start_from: datetime | None = None,
+        start_to: datetime | None = None,
+    ) -> tuple[list[AuditLog], int]:
         return await self.repository.get_all(
             tenant_id, page, page_size, user_id, action,
             resource_type, resource_id, start_from, start_to
@@ -93,9 +93,9 @@ class AuditService:
         user_id: UUID,
         resource_type: str,
         resource_id: UUID,
-        new_values: Dict[str, Any],
-        ip_address: Optional[str] = None,
-        request_id: Optional[str] = None,
+        new_values: dict[str, Any],
+        ip_address: str | None = None,
+        request_id: str | None = None,
     ) -> AuditLog:
         return await self.log(
             tenant_id=tenant_id,
@@ -114,11 +114,11 @@ class AuditService:
         user_id: UUID,
         resource_type: str,
         resource_id: UUID,
-        old_values: Dict[str, Any],
-        new_values: Dict[str, Any],
-        changed_fields: List[str],
-        ip_address: Optional[str] = None,
-        request_id: Optional[str] = None,
+        old_values: dict[str, Any],
+        new_values: dict[str, Any],
+        changed_fields: list[str],
+        ip_address: str | None = None,
+        request_id: str | None = None,
     ) -> AuditLog:
         return await self.log(
             tenant_id=tenant_id,
@@ -139,9 +139,9 @@ class AuditService:
         user_id: UUID,
         resource_type: str,
         resource_id: UUID,
-        old_values: Dict[str, Any],
-        ip_address: Optional[str] = None,
-        request_id: Optional[str] = None,
+        old_values: dict[str, Any],
+        ip_address: str | None = None,
+        request_id: str | None = None,
     ) -> AuditLog:
         return await self.log(
             tenant_id=tenant_id,
@@ -159,12 +159,12 @@ class AuditService:
         tenant_id: UUID,
         user_id: UUID,
         target_user_id: UUID,
-        old_roles: List[str],
-        new_roles: List[str],
-        old_permissions: List[str],
-        new_permissions: List[str],
-        ip_address: Optional[str] = None,
-        request_id: Optional[str] = None,
+        old_roles: list[str],
+        new_roles: list[str],
+        old_permissions: list[str],
+        new_permissions: list[str],
+        ip_address: str | None = None,
+        request_id: str | None = None,
     ) -> AuditLog:
         return await self.log(
             tenant_id=tenant_id,

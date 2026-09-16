@@ -1,23 +1,17 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from datetime import datetime, timezone, timedelta
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.mca_roc.models import (
-    MCAFilingCycle,
-    MCAFilingConfig,
     MCAEntityType,
-    MCAFilingType,
     MCAFilingCategory,
+    MCAFilingConfig,
+    MCAFilingCycle,
+    MCAFilingType,
     MCAStatus,
-)
-from app.modules.mca_roc.schemas import (
-    MCAFilingCycleCreate,
-    MCAFilingCycleUpdate,
-    MCAFilingConfigCreate,
-    MCAFilingConfigUpdate,
 )
 
 
@@ -32,7 +26,7 @@ class MCARepository:
         await self.db.refresh(config)
         return config
 
-    async def get_config_by_id(self, config_id: UUID, tenant_id: UUID) -> Optional[MCAFilingConfig]:
+    async def get_config_by_id(self, config_id: UUID, tenant_id: UUID) -> MCAFilingConfig | None:
         result = await self.db.execute(
             select(MCAFilingConfig).where(
                 MCAFilingConfig.id == config_id,
@@ -41,7 +35,7 @@ class MCARepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_config_by_filing_type(self, filing_type: MCAFilingType, tenant_id: UUID) -> Optional[MCAFilingConfig]:
+    async def get_config_by_filing_type(self, filing_type: MCAFilingType, tenant_id: UUID) -> MCAFilingConfig | None:
         result = await self.db.execute(
             select(MCAFilingConfig).where(
                 MCAFilingConfig.filing_type == filing_type,
@@ -53,10 +47,10 @@ class MCARepository:
     async def get_all_configs(
         self,
         tenant_id: UUID,
-        entity_type: Optional[MCAEntityType] = None,
-        filing_category: Optional[MCAFilingCategory] = None,
-        is_active: Optional[bool] = None,
-    ) -> List[MCAFilingConfig]:
+        entity_type: MCAEntityType | None = None,
+        filing_category: MCAFilingCategory | None = None,
+        is_active: bool | None = None,
+    ) -> list[MCAFilingConfig]:
         query = select(MCAFilingConfig).where(MCAFilingConfig.tenant_id == tenant_id)
 
         if entity_type:
@@ -86,7 +80,7 @@ class MCARepository:
         await self.db.refresh(cycle)
         return cycle
 
-    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> Optional[MCAFilingCycle]:
+    async def get_cycle_by_id(self, cycle_id: UUID, tenant_id: UUID) -> MCAFilingCycle | None:
         result = await self.db.execute(
             select(MCAFilingCycle)
             .where(
@@ -107,20 +101,20 @@ class MCARepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        entity_type: Optional[MCAEntityType] = None,
-        filing_type: Optional[MCAFilingType] = None,
-        filing_category: Optional[MCAFilingCategory] = None,
-        financial_year: Optional[str] = None,
-        status: Optional[MCAStatus] = None,
-        matter_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        assigned_user_id: Optional[UUID] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        entity_type: MCAEntityType | None = None,
+        filing_type: MCAFilingType | None = None,
+        filing_category: MCAFilingCategory | None = None,
+        financial_year: str | None = None,
+        status: MCAStatus | None = None,
+        matter_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        assigned_user_id: UUID | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[MCAFilingCycle], int]:
+    ) -> tuple[list[MCAFilingCycle], int]:
         query = select(MCAFilingCycle).where(MCAFilingCycle.tenant_id == tenant_id)
         count_query = select(func.count(MCAFilingCycle.id)).where(MCAFilingCycle.tenant_id == tenant_id)
 
@@ -219,7 +213,7 @@ class MCARepository:
         await self.db.delete(cycle)
         await self.db.flush()
 
-    async def get_summary(self, tenant_id: UUID, financial_year: Optional[str] = None) -> dict:
+    async def get_summary(self, tenant_id: UUID, financial_year: str | None = None) -> dict:
         query = select(MCAFilingCycle).where(MCAFilingCycle.tenant_id == tenant_id)
         if financial_year:
             query = query.where(MCAFilingCycle.financial_year == financial_year)
@@ -240,7 +234,7 @@ class MCARepository:
         overdue = sum(1 for c in cycles if c.status == MCAStatus.OVERDUE)
 
         # Upcoming deadlines (next 30 days)
-        upcoming_date = datetime.now(timezone.utc) + timedelta(days=30)
+        upcoming_date = datetime.now(UTC) + timedelta(days=30)
         upcoming = [
             c for c in cycles
             if c.status not in [MCAStatus.FILED, MCAStatus.APPROVED, MCAStatus.COMPLETED, MCAStatus.CANCELLED]
@@ -260,7 +254,7 @@ class MCARepository:
             "upcoming_deadlines": upcoming[:10],
         }
 
-    async def initialize_system_configs(self, tenant_id: UUID) -> List[MCAFilingConfig]:
+    async def initialize_system_configs(self, tenant_id: UUID) -> list[MCAFilingConfig]:
         system_configs = [
             # Company Annual Filings
             {

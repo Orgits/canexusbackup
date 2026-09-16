@@ -30,27 +30,37 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.4",
-    "pytest-asyncio>=0.23.3",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-timeout>=2.2.0",
     "httpx>=0.26.0",
     "faker>=22.0.0",
     "ruff>=0.1.15",
     "mypy>=1.7.1",
     "pre-commit>=3.6.0",
+    "factory-boy>=3.3.0",
 ]
 test = [
-    "pytest>=7.4.4",
-    "pytest-asyncio>=0.23.3",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-timeout>=2.2.0",
     "httpx>=0.26.0",
     "faker>=22.0.0",
+    "factory-boy>=3.3.0",
+    "asyncpg>=0.29.0",
+    "psycopg2-binary>=2.9.9",
+    "coverage>=7.4.0",
+    "codecov>=2.1.0",
 ]
 
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-select = ["E", "F", "I", "UP", "W", "B", "C4", "ARG", "SIM", "TID", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RSE", "RET", "ASYNC", "DTZ", "TCH", "INT", "LOG", "PERF", "PIE", "QL", "RUF", "SLF", "SLOT", "T10", "FA", "ISC", "ICN", "PD", "PGH", "PL", "TRY", "NPY", "RSE", "RET", "ASYNC", "DTZ", "TCH", "INT", "LOG", "PERF", "PIE", "QL", "RUF", "SLF", "SLOT", "T10", "FA", "ISC", "ICN"]
+select = ["E", "F", "I", "UP", "W", "B", "C4", "ARG", "SIM", "TID", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RSE", "RET", "ASYNC", "DTZ", "TCH", "INT", "LOG", "PERF", "PIE", "RUF", "SLF", "SLOT", "T10", "FA", "ISC", "ICN"]
 ignore = ["E501", "B008", "ARG001", "ARG002", "SIM103", "T201", "T203", "PTH118", "PTH123", "S101", "PLW0108", "PERF401"]
 exclude = ["migrations", ".venv", "dist", "build"]
 

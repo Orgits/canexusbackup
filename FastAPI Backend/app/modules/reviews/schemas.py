@@ -1,15 +1,16 @@
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReviewCommentBase(BaseModel):
     content: str = Field(..., min_length=1)
     is_internal: bool = False
-    mentions: List[UUID] = []
-    parent_comment_id: Optional[UUID] = None
-    metadata: Dict[str, Any] = {}
+    mentions: list[UUID] = []
+    parent_comment_id: UUID | None = None
+    metadata: dict[str, Any] = {}
 
 
 class ReviewCommentCreate(ReviewCommentBase):
@@ -17,9 +18,9 @@ class ReviewCommentCreate(ReviewCommentBase):
 
 
 class ReviewCommentUpdate(BaseModel):
-    content: Optional[str] = Field(None, min_length=1)
-    is_internal: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
+    content: str | None = Field(None, min_length=1)
+    is_internal: bool | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ReviewCommentResponse(ReviewCommentBase):
@@ -31,21 +32,21 @@ class ReviewCommentResponse(ReviewCommentBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     author: Optional["UserResponse"] = None
-    replies: List["ReviewCommentResponse"] = []
+    replies: list["ReviewCommentResponse"] = []
 
 
 class ReviewHistoryBase(BaseModel):
     action: str = Field(..., max_length=50)
-    from_stage: Optional[str] = None
-    to_stage: Optional[str] = None
-    from_status: Optional[str] = None
-    to_status: Optional[str] = None
-    comment: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    from_stage: str | None = None
+    to_stage: str | None = None
+    from_status: str | None = None
+    to_status: str | None = None
+    comment: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class ReviewHistoryResponse(ReviewHistoryBase):
@@ -64,13 +65,13 @@ class ReviewRequestBase(BaseModel):
     source_object_type: str = Field(..., max_length=50)
     source_object_id: UUID
     title: str = Field(..., max_length=500)
-    description: Optional[str] = None
+    description: str | None = None
     stage: str = Field(default="draft", max_length=50)
-    reviewer_id: Optional[UUID] = None
-    reviewer_team_id: Optional[UUID] = None
-    due_date: Optional[datetime] = None
+    reviewer_id: UUID | None = None
+    reviewer_team_id: UUID | None = None
+    due_date: datetime | None = None
     priority: str = Field(default="medium", max_length=20)
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class ReviewRequestCreate(ReviewRequestBase):
@@ -78,35 +79,35 @@ class ReviewRequestCreate(ReviewRequestBase):
 
 
 class ReviewRequestUpdate(BaseModel):
-    title: Optional[str] = Field(None, max_length=500)
-    description: Optional[str] = None
-    reviewer_id: Optional[UUID] = None
-    reviewer_team_id: Optional[UUID] = None
-    due_date: Optional[datetime] = None
-    priority: Optional[str] = Field(None, max_length=20)
-    metadata: Optional[Dict[str, Any]] = None
+    title: str | None = Field(None, max_length=500)
+    description: str | None = None
+    reviewer_id: UUID | None = None
+    reviewer_team_id: UUID | None = None
+    due_date: datetime | None = None
+    priority: str | None = Field(None, max_length=20)
+    metadata: dict[str, Any] | None = None
 
 
 class ReviewActionRequest(BaseModel):
     action: str = Field(..., pattern="^(approve|reject|request_rework|escalate|submit)$")
-    comment: Optional[str] = None
-    metadata: Dict[str, Any] = {}
+    comment: str | None = None
+    metadata: dict[str, Any] = {}
 
 
 class ReviewRequestResponse(ReviewRequestBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    workflow_instance_id: Optional[UUID] = None
+    workflow_instance_id: UUID | None = None
     status: str
-    submitted_by_id: Optional[UUID] = None
-    submitted_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    submitted_by_id: UUID | None = None
+    submitted_at: datetime | None = None
+    completed_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     reviewer: Optional["UserResponse"] = None
     reviewer_team: Optional["TeamResponse"] = None
@@ -115,30 +116,30 @@ class ReviewRequestResponse(ReviewRequestBase):
 
 
 class ReviewRequestDetailResponse(ReviewRequestResponse):
-    comments: List[ReviewCommentResponse] = []
-    history: List[ReviewHistoryResponse] = []
+    comments: list[ReviewCommentResponse] = []
+    history: list[ReviewHistoryResponse] = []
 
 
 class ReviewRequestListResponse(BaseModel):
-    items: List[ReviewRequestResponse]
+    items: list[ReviewRequestResponse]
     total: int
     page: int
     page_size: int
 
 
 class ReviewCommentListResponse(BaseModel):
-    items: List[ReviewCommentResponse]
+    items: list[ReviewCommentResponse]
     total: int
     page: int
     page_size: int
 
 
 class ReviewHistoryListResponse(BaseModel):
-    items: List[ReviewHistoryResponse]
+    items: list[ReviewHistoryResponse]
     total: int
     page: int
     page_size: int
 
 
-from app.modules.users.schemas import UserResponse, TeamResponse
+from app.modules.users.schemas import TeamResponse, UserResponse
 from app.modules.workflow.schemas import WorkflowInstanceResponse

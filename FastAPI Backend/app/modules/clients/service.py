@@ -1,18 +1,25 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.exceptions import NotFoundException, ConflictException
-from app.modules.clients.models import Client, ClientContact, ClientService, ClientCategory, ClientStatus
-from app.modules.clients.schemas import ClientCreate, ClientUpdate, ContactCreate, ContactUpdate, ServiceCreate, ServiceUpdate
-from app.modules.clients.repository import ClientRepository, ClientContactRepository, ClientServiceRepository
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException
+from app.modules.billing.models import Invoice
+from app.modules.clients.models import Client, ClientCategory, ClientContact, ClientService, ClientStatus
+from app.modules.clients.repository import ClientContactRepository, ClientRepository, ClientServiceRepository
+from app.modules.clients.schemas import (
+    ClientCreate,
+    ClientUpdate,
+    ContactCreate,
+    ContactUpdate,
+    ServiceCreate,
+    ServiceUpdate,
+)
+from app.modules.compliance.models import ComplianceCycle
+from app.modules.documents.models import Document
 from app.modules.matters.models import Matter
 from app.modules.tasks.models import Task
-from app.modules.documents.models import Document
-from app.modules.compliance.models import ComplianceCycle
-from app.modules.billing.models import Invoice
 
 
 class ClientService:
@@ -61,7 +68,7 @@ class ClientService:
         overdue_tasks_count = await self.db.scalar(
             select(func.count(Task.id)).where(
                 Task.client_id == client_id, Task.tenant_id == tenant_id,
-                Task.due_date < datetime.now(timezone.utc), Task.status != "completed"
+                Task.due_date < datetime.now(UTC), Task.status != "completed"
             )
         ) or 0
         documents_count = await self.db.scalar(
@@ -107,16 +114,16 @@ class ClientService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        category: Optional[ClientCategory] = None,
-        status: Optional[ClientStatus] = None,
-        responsible_user_id: Optional[UUID] = None,
-        responsible_team_id: Optional[UUID] = None,
+        search: str | None = None,
+        category: ClientCategory | None = None,
+        status: ClientStatus | None = None,
+        responsible_user_id: UUID | None = None,
+        responsible_team_id: UUID | None = None,
         is_archived: bool = False,
-        tags: Optional[List[str]] = None,
-        sort_by: Optional[str] = None,
+        tags: list[str] | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Client], int]:
+    ) -> tuple[list[Client], int]:
         return await self.repository.get_all(
             tenant_id, page, page_size, search, category, status,
             responsible_user_id, responsible_team_id, is_archived, tags, sort_by, sort_order
@@ -126,11 +133,11 @@ class ClientService:
         client = await self.get_by_id(client_id, tenant_id)
         update_data = data.model_dump(exclude_unset=True)
 
-        if "pan" in update_data and update_data["pan"]:
+        if update_data.get("pan"):
             existing = await self.repository.get_by_pan(update_data["pan"], tenant_id)
             if existing and existing.id != client_id:
                 raise ConflictException(detail="Client with this PAN already exists")
-        if "gstin" in update_data and update_data["gstin"]:
+        if update_data.get("gstin"):
             existing = await self.repository.get_by_gstin(update_data["gstin"], tenant_id)
             if existing and existing.id != client_id:
                 raise ConflictException(detail="Client with this GSTIN already exists")
@@ -175,7 +182,7 @@ class ClientContactService:
             raise NotFoundException(detail="Contact not found")
         return contact
 
-    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> List[ClientContact]:
+    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> list[ClientContact]:
         return await self.repo.get_by_client(client_id, tenant_id)
 
     async def update(self, contact_id: UUID, tenant_id: UUID, data: ContactUpdate, updated_by: UUID) -> ClientContact:
@@ -233,7 +240,7 @@ class ClientServiceService:
             raise NotFoundException(detail="Service not found")
         return service
 
-    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> List[ClientService]:
+    async def get_by_client(self, client_id: UUID, tenant_id: UUID) -> list[ClientService]:
         return await self.repo.get_by_client(client_id, tenant_id)
 
     async def update(self, service_id: UUID, tenant_id: UUID, data: ServiceUpdate, updated_by: UUID) -> ClientService:

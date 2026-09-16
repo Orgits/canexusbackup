@@ -1,24 +1,23 @@
-from typing import Optional, List
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.collaboration.service import CollaborationService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.collaboration.schemas import (
-    CommentCreate,
-    CommentUpdate,
-    CommentResponse,
-    CommentListResponse,
-    CommentThreadResponse,
     CommentAttachmentCreate,
     CommentAttachmentResponse,
-    CommentReactionCreate,
+    CommentCreate,
+    CommentListResponse,
     CommentReactionResponse,
+    CommentResponse,
+    CommentThreadResponse,
+    CommentUpdate,
 )
+from app.modules.collaboration.service import CollaborationService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/collaboration", tags=["Collaboration & Comments"])
@@ -56,7 +55,7 @@ async def get_comments(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     include_replies: bool = Query(False, description="Include reply threads"),
-    comment_type: Optional[str] = Query(None, description="Filter by comment type (comment, internal_note, mention, system)"),
+    comment_type: str | None = Query(None, description="Filter by comment type (comment, internal_note, mention, system)"),
     collab_service: CollaborationService = Depends(get_collaboration_service),
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -155,7 +154,7 @@ async def add_comment_attachment(
 
 @router.get(
     "/{comment_id}/attachments",
-    response_model=List[CommentAttachmentResponse],
+    response_model=list[CommentAttachmentResponse],
     summary="Get comment attachments",
 )
 async def get_comment_attachments(
@@ -205,7 +204,7 @@ async def toggle_comment_reaction(
 
 @router.get(
     "/{comment_id}/reactions",
-    response_model=List[CommentReactionResponse],
+    response_model=list[CommentReactionResponse],
     summary="Get comment reactions",
 )
 async def get_comment_reactions(

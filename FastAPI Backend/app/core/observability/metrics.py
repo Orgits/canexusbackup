@@ -1,14 +1,14 @@
-from typing import Optional
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from starlette.responses import Response
 
 from app.core.config import get_settings
 
 settings = get_settings()
 
-_request_count: Optional[Counter] = None
-_request_duration: Optional[Histogram] = None
-_active_requests: Optional[Gauge] = None
+_request_count: Counter | None = None
+_request_duration: Histogram | None = None
+_active_requests: Gauge | None = None
 
 
 def setup_metrics() -> None:

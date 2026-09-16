@@ -1,29 +1,21 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.notifications.models import (
     Notification,
-    NotificationTemplate,
+    NotificationChannel,
     NotificationDelivery,
     NotificationPreference,
-    NotificationTrigger,
-    NotificationChannel,
     NotificationStatus,
-    NotificationPriority,
+    NotificationTemplate,
+    NotificationTrigger,
 )
 from app.modules.notifications.schemas import (
-    NotificationCreate,
-    NotificationUpdate,
-    NotificationTemplateCreate,
-    NotificationTemplateUpdate,
-    NotificationDeliveryCreate,
-    NotificationDeliveryUpdate,
     NotificationPreferenceCreate,
-    NotificationPreferenceUpdate,
 )
 
 
@@ -38,7 +30,7 @@ class NotificationRepository:
         await self.db.refresh(template)
         return template
 
-    async def get_template_by_id(self, template_id: UUID, tenant_id: UUID) -> Optional[NotificationTemplate]:
+    async def get_template_by_id(self, template_id: UUID, tenant_id: UUID) -> NotificationTemplate | None:
         result = await self.db.execute(
             select(NotificationTemplate).where(
                 NotificationTemplate.id == template_id,
@@ -47,7 +39,7 @@ class NotificationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_template_by_code(self, code: str, tenant_id: UUID) -> Optional[NotificationTemplate]:
+    async def get_template_by_code(self, code: str, tenant_id: UUID) -> NotificationTemplate | None:
         result = await self.db.execute(
             select(NotificationTemplate).where(
                 NotificationTemplate.code == code,
@@ -56,7 +48,7 @@ class NotificationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_templates_by_trigger(self, trigger: NotificationTrigger, tenant_id: UUID) -> List[NotificationTemplate]:
+    async def get_templates_by_trigger(self, trigger: NotificationTrigger, tenant_id: UUID) -> list[NotificationTemplate]:
         result = await self.db.execute(
             select(NotificationTemplate).where(
                 NotificationTemplate.trigger == trigger,
@@ -71,9 +63,9 @@ class NotificationRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        trigger: Optional[NotificationTrigger] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[NotificationTemplate], int]:
+        trigger: NotificationTrigger | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[NotificationTemplate], int]:
         query = select(NotificationTemplate).where(NotificationTemplate.tenant_id == tenant_id)
         count_query = select(func.count(NotificationTemplate.id)).where(NotificationTemplate.tenant_id == tenant_id)
 
@@ -113,14 +105,14 @@ class NotificationRepository:
         await self.db.refresh(notification)
         return notification
 
-    async def bulk_create_notifications(self, notifications: List[Notification]) -> List[Notification]:
+    async def bulk_create_notifications(self, notifications: list[Notification]) -> list[Notification]:
         self.db.add_all(notifications)
         await self.db.flush()
         for n in notifications:
             await self.db.refresh(n)
         return notifications
 
-    async def get_notification_by_id(self, notification_id: UUID, tenant_id: UUID) -> Optional[Notification]:
+    async def get_notification_by_id(self, notification_id: UUID, tenant_id: UUID) -> Notification | None:
         result = await self.db.execute(
             select(Notification)
             .where(
@@ -140,16 +132,16 @@ class NotificationRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        recipient_id: Optional[UUID] = None,
-        trigger: Optional[NotificationTrigger] = None,
-        status: Optional[NotificationStatus] = None,
-        entity_type: Optional[str] = None,
-        entity_id: Optional[UUID] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        recipient_id: UUID | None = None,
+        trigger: NotificationTrigger | None = None,
+        status: NotificationStatus | None = None,
+        entity_type: str | None = None,
+        entity_id: UUID | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Notification], int]:
+    ) -> tuple[list[Notification], int]:
         query = select(Notification).where(Notification.tenant_id == tenant_id)
         count_query = select(func.count(Notification.id)).where(Notification.tenant_id == tenant_id)
 
@@ -220,7 +212,7 @@ class NotificationRepository:
         notification = await self.get_notification_by_id(notification_id, tenant_id)
         if notification:
             notification.status = NotificationStatus.READ
-            notification.read_at = datetime.now(timezone.utc)
+            notification.read_at = datetime.now(UTC)
             await self.db.flush()
             await self.db.refresh(notification)
         return notification
@@ -237,7 +229,7 @@ class NotificationRepository:
         count = 0
         for n in notifications:
             n.status = NotificationStatus.READ
-            n.read_at = datetime.now(timezone.utc)
+            n.read_at = datetime.now(UTC)
             count += 1
         await self.db.flush()
         return count
@@ -254,7 +246,7 @@ class NotificationRepository:
         await self.db.refresh(delivery)
         return delivery
 
-    async def get_delivery_by_id(self, delivery_id: UUID, tenant_id: UUID) -> Optional[NotificationDelivery]:
+    async def get_delivery_by_id(self, delivery_id: UUID, tenant_id: UUID) -> NotificationDelivery | None:
         result = await self.db.execute(
             select(NotificationDelivery).where(
                 NotificationDelivery.id == delivery_id,
@@ -263,7 +255,7 @@ class NotificationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_deliveries_for_notification(self, notification_id: UUID, tenant_id: UUID) -> List[NotificationDelivery]:
+    async def get_deliveries_for_notification(self, notification_id: UUID, tenant_id: UUID) -> list[NotificationDelivery]:
         result = await self.db.execute(
             select(NotificationDelivery).where(
                 NotificationDelivery.notification_id == notification_id,
@@ -286,7 +278,7 @@ class NotificationRepository:
 
     async def get_preference(
         self, user_id: UUID, trigger: NotificationTrigger, channel: NotificationChannel, tenant_id: UUID
-    ) -> Optional[NotificationPreference]:
+    ) -> NotificationPreference | None:
         result = await self.db.execute(
             select(NotificationPreference).where(
                 NotificationPreference.user_id == user_id,
@@ -297,7 +289,7 @@ class NotificationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_preferences_for_user(self, user_id: UUID, tenant_id: UUID) -> List[NotificationPreference]:
+    async def get_preferences_for_user(self, user_id: UUID, tenant_id: UUID) -> list[NotificationPreference]:
         result = await self.db.execute(
             select(NotificationPreference).where(
                 NotificationPreference.user_id == user_id,
@@ -318,16 +310,15 @@ class NotificationRepository:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        else:
-            preference = NotificationPreference(
-                user_id=user_id,
-                trigger=trigger,
-                channel=channel,
-                **data.model_dump(exclude={"user_id", "trigger", "channel"}),
-                tenant_id=tenant_id,
-                created_by=created_by,
-            )
-            return await self.create_preference(preference)
+        preference = NotificationPreference(
+            user_id=user_id,
+            trigger=trigger,
+            channel=channel,
+            **data.model_dump(exclude={"user_id", "trigger", "channel"}),
+            tenant_id=tenant_id,
+            created_by=created_by,
+        )
+        return await self.create_preference(preference)
 
     async def update_preference(self, preference: NotificationPreference) -> NotificationPreference:
         await self.db.flush()
@@ -335,4 +326,3 @@ class NotificationRepository:
         return preference
 
 
-from datetime import timezone

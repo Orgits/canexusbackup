@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.modules.firms.schemas import FirmCreate, FirmUpdate, FirmResponse, FirmListResponse
+from app.modules.firms.schemas import FirmCreate, FirmListResponse, FirmResponse, FirmUpdate
 from app.modules.firms.service import FirmService
 from app.modules.users.models import User
 
@@ -74,7 +73,6 @@ async def delete_firm(
 ):
     service = FirmService(db)
     await service.delete(firm_id)
-    return None
 
 
 @router.post("/{firm_id}/activate", response_model=FirmResponse)

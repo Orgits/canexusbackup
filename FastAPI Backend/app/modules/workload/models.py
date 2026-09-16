@@ -1,31 +1,25 @@
 import uuid
-from datetime import datetime, timezone, date
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import date
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
     Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
-    ARRAY,
-    Index,
-    UniqueConstraint,
-    Numeric,
     Date,
+    Enum,
+    ForeignKey,
+    Index,
+    Numeric,
+    Text,
+    UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User, Team
-    from app.modules.clients.models import Client
-    from app.modules.matters.models import Matter
-    from app.modules.tasks.models import Task
+    from app.modules.users.models import Team, User
 
 
 class WorkloadPeriod(str, PyEnum):
@@ -54,9 +48,9 @@ class UserAvailability(Base, TenantBaseModelMixin):
 
     is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     available_hours: Mapped[float] = mapped_column(Numeric(4, 2), default=8.0, nullable=False)
-    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -65,6 +59,7 @@ class UserAvailability(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     user: Mapped["User"] = relationship("User", lazy="selectin")
 
 
@@ -91,7 +86,7 @@ class TeamCapacity(Base, TenantBaseModelMixin):
     allocated_hours: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
     available_hours: Mapped[float] = mapped_column(Numeric(10, 2), default=0, nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -100,6 +95,7 @@ class TeamCapacity(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     team: Mapped["Team"] = relationship("Team", lazy="selectin")
 
 
@@ -111,13 +107,13 @@ class WorkloadSnapshot(Base, TenantBaseModelMixin):
         Index("ix_workload_snapshots_tenant_date", "tenant_id", "snapshot_date"),
     )
 
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
@@ -152,7 +148,7 @@ class WorkloadSnapshot(Base, TenantBaseModelMixin):
     pending_notices: Mapped[int] = mapped_column(default=0, nullable=False)
     overdue_notices: Mapped[int] = mapped_column(default=0, nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -161,6 +157,7 @@ class WorkloadSnapshot(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     user: Mapped[Optional["User"]] = relationship("User", lazy="selectin")
     team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")
 
@@ -173,13 +170,13 @@ class WorkloadSummary(Base, TenantBaseModelMixin):
         Index("ix_workload_summaries_tenant_date", "tenant_id", "summary_date"),
     )
 
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-    team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
@@ -218,7 +215,7 @@ class WorkloadSummary(Base, TenantBaseModelMixin):
     capacity_utilization: Mapped[float] = mapped_column(Numeric(5, 2), default=0, nullable=False)
     is_overloaded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -227,5 +224,6 @@ class WorkloadSummary(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     user: Mapped[Optional["User"]] = relationship("User", lazy="selectin")
     team: Mapped[Optional["Team"]] = relationship("Team", lazy="selectin")

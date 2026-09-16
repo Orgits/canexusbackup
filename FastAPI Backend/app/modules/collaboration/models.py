@@ -1,32 +1,26 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
-    String,
-    Boolean,
-    Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
     ARRAY,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
     Index,
+    String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
     from app.modules.users.models import User
-    from app.modules.clients.models import Client
-    from app.modules.matters.models import Matter
-    from app.modules.tasks.models import Task
-    from app.modules.documents.models import Document
-    from app.modules.notices.models import Notice
-    from app.modules.reviews.models import ReviewRequest
 
 
 class CommentableEntityType(str, PyEnum):
@@ -70,18 +64,18 @@ class Comment(Base, TenantBaseModelMixin):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     comment_type: Mapped[CommentType] = mapped_column(Enum(CommentType), default=CommentType.COMMENT, nullable=False)
 
-    parent_comment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    parent_comment_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("comments.id", ondelete="SET NULL"),
         nullable=True,
     )
 
-    mentions: Mapped[List[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
+    mentions: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list, nullable=False)
 
     is_edited: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    edited_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -90,10 +84,11 @@ class Comment(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     author: Mapped["User"] = relationship("User", foreign_keys=[author_id], lazy="selectin")
-    parent_comment: Mapped[Optional["Comment"]] = relationship("Comment", remote_side="Comment.id", back_populates="replies", lazy="selectin")
-    replies: Mapped[List["Comment"]] = relationship("Comment", back_populates="parent_comment", lazy="dynamic")
-    attachments: Mapped[List["CommentAttachment"]] = relationship("CommentAttachment", back_populates="comment", lazy="dynamic")
+    parent_comment: Mapped[Optional["Comment"]] = relationship("Comment", remote_side="Comment.id", lazy="selectin")
+    replies: Mapped[list["Comment"]] = relationship("Comment", lazy="dynamic")
+    attachments: Mapped[list["CommentAttachment"]] = relationship("CommentAttachment", lazy="dynamic")
 
 
 class CommentAttachment(Base, TenantBaseModelMixin):
@@ -116,7 +111,7 @@ class CommentAttachment(Base, TenantBaseModelMixin):
     storage_provider: Mapped[str] = mapped_column(String(50), default="azure_blob", nullable=False)
     storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -125,6 +120,7 @@ class CommentAttachment(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     comment: Mapped["Comment"] = relationship("Comment", back_populates="attachments")
 
 
@@ -152,7 +148,7 @@ class CommentReaction(Base, TenantBaseModelMixin):
 
     reaction_type: Mapped[str] = mapped_column(String(20), nullable=False)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -161,9 +157,10 @@ class CommentReaction(Base, TenantBaseModelMixin):
         index=True,
     )
 
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     comment: Mapped["Comment"] = relationship("Comment", back_populates="reactions")
     user: Mapped["User"] = relationship("User", foreign_keys=[user_id], lazy="selectin")
 
 
 # Add reactions relationship to Comment model
-Comment.reactions: Mapped[List["CommentReaction"]] = relationship("CommentReaction", back_populates="comment", lazy="dynamic")
+Comment.reactions: Mapped[list["CommentReaction"]] = relationship("CommentReaction", lazy="dynamic")

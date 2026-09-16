@@ -1,28 +1,27 @@
-from typing import Optional, List
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.reviews.service import ReviewService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.reviews.schemas import (
-    ReviewRequestCreate,
-    ReviewRequestUpdate,
-    ReviewRequestResponse,
-    ReviewRequestDetailResponse,
-    ReviewRequestListResponse,
     ReviewActionRequest,
     ReviewCommentCreate,
-    ReviewCommentUpdate,
-    ReviewCommentResponse,
     ReviewCommentListResponse,
-    ReviewHistoryResponse,
+    ReviewCommentResponse,
+    ReviewCommentUpdate,
     ReviewHistoryListResponse,
+    ReviewRequestCreate,
+    ReviewRequestDetailResponse,
+    ReviewRequestListResponse,
+    ReviewRequestResponse,
+    ReviewRequestUpdate,
 )
+from app.modules.reviews.service import ReviewService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/reviews", tags=["Review & Approval Engine"])
@@ -57,17 +56,17 @@ async def create_review_request(
 async def list_review_requests(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    search: Optional[str] = None,
-    source_type: Optional[str] = None,
-    source_id: Optional[UUID] = None,
-    stage: Optional[str] = None,
-    status: Optional[str] = None,
-    reviewer_id: Optional[UUID] = None,
-    reviewer_team_id: Optional[UUID] = None,
-    submitted_by_id: Optional[UUID] = None,
-    due_date_from: Optional[datetime] = None,
-    due_date_to: Optional[datetime] = None,
-    sort_by: Optional[str] = None,
+    search: str | None = None,
+    source_type: str | None = None,
+    source_id: UUID | None = None,
+    stage: str | None = None,
+    status: str | None = None,
+    reviewer_id: UUID | None = None,
+    reviewer_team_id: UUID | None = None,
+    submitted_by_id: UUID | None = None,
+    due_date_from: datetime | None = None,
+    due_date_to: datetime | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     review_service: ReviewService = Depends(get_review_service),
     tenant_context=Depends(get_tenant_context),

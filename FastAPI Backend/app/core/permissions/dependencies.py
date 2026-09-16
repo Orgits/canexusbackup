@@ -1,4 +1,5 @@
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
 from fastapi import Depends, HTTPException, status
 
 from app.core.permissions.registry import Permission, Role, get_permission_registry
@@ -40,7 +41,7 @@ def require_role(role: Role):
     return role_checker
 
 
-def require_any_permission(permissions: List[Permission]):
+def require_any_permission(permissions: list[Permission]):
     async def permission_checker(current_user: "User" = Depends(get_current_user)) -> "User":
         registry = get_permission_registry()
         user_roles = [Role(r) for r in current_user.roles if r in [r.value for r in Role]]
@@ -59,7 +60,7 @@ def require_any_permission(permissions: List[Permission]):
     return permission_checker
 
 
-def require_all_permissions(permissions: List[Permission]):
+def require_all_permissions(permissions: list[Permission]):
     async def permission_checker(current_user: "User" = Depends(get_current_user)) -> "User":
         registry = get_permission_registry()
         user_roles = [Role(r) for r in current_user.roles if r in [r.value for r in Role]]

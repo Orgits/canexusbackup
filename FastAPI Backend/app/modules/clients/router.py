@@ -1,26 +1,26 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant, setup_tenant_context
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
+from app.core.tenancy.dependencies import get_current_tenant
 from app.modules.clients.schemas import (
     ClientCreate,
-    ClientUpdate,
-    ClientResponse,
     ClientListResponse,
     ClientOverviewResponse,
+    ClientResponse,
+    ClientUpdate,
     ContactCreate,
-    ContactUpdate,
     ContactResponse,
+    ContactUpdate,
     ServiceCreate,
-    ServiceUpdate,
     ServiceResponse,
+    ServiceUpdate,
 )
-from app.modules.clients.service import ClientService, ClientContactService, ClientServiceService
+from app.modules.clients.service import ClientContactService, ClientService, ClientServiceService
 from app.modules.users.models import User
 
 router = APIRouter()
@@ -116,7 +116,6 @@ async def delete_client(
 ):
     service = ClientService(db)
     await service.delete(client_id, current_tenant.id)
-    return None
 
 
 @router.post("/{client_id}/archive", response_model=ClientResponse)
@@ -208,7 +207,6 @@ async def delete_contact(
 ):
     service = ClientContactService(db)
     await service.delete(contact_id, current_tenant.id)
-    return None
 
 
 service_router = APIRouter(prefix="/{client_id}/services", tags=["Client Services"])
@@ -276,7 +274,6 @@ async def delete_service(
 ):
     service = ClientServiceService(db)
     await service.delete(service_id, current_tenant.id)
-    return None
 
 
 router.include_router(contact_router)

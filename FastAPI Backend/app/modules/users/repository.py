@@ -1,10 +1,10 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
-from sqlalchemy import select, func, or_
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.users.models import User, Team
+from app.modules.users.models import Team, User
 
 
 class UserRepository:
@@ -17,7 +17,7 @@ class UserRepository:
         await self.db.refresh(user)
         return user
 
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: UUID) -> User | None:
         result = await self.db.execute(
             select(User)
             .options(selectinload(User.tenant), selectinload(User.team))
@@ -25,11 +25,11 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def get_by_email_and_tenant(self, email: str, tenant_id: UUID) -> Optional[User]:
+    async def get_by_email_and_tenant(self, email: str, tenant_id: UUID) -> User | None:
         result = await self.db.execute(
             select(User).where(User.email == email, User.tenant_id == tenant_id)
         )
@@ -40,11 +40,11 @@ class UserRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        role: Optional[str] = None,
-        team_id: Optional[UUID] = None,
-    ) -> Tuple[List[User], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+        role: str | None = None,
+        team_id: UUID | None = None,
+    ) -> tuple[list[User], int]:
         query = (
             select(User)
             .options(selectinload(User.tenant), selectinload(User.team))
@@ -102,7 +102,7 @@ class TeamRepository:
         await self.db.refresh(team)
         return team
 
-    async def get_by_id(self, team_id: UUID) -> Optional[Team]:
+    async def get_by_id(self, team_id: UUID) -> Team | None:
         result = await self.db.execute(
             select(Team).options(selectinload(Team.lead)).where(Team.id == team_id)
         )
@@ -113,9 +113,9 @@ class TeamRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[Team], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[Team], int]:
         query = (
             select(Team)
             .options(selectinload(Team.lead))

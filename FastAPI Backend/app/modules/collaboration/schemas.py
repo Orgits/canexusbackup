@@ -1,7 +1,8 @@
-from typing import Optional, List, Dict, Any
-from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CommentAttachmentBase(BaseModel):
@@ -11,7 +12,7 @@ class CommentAttachmentBase(BaseModel):
     storage_path: str = Field(..., max_length=1000)
     storage_provider: str = Field(default="azure_blob", max_length=50)
     storage_key: str = Field(..., max_length=500)
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class CommentAttachmentCreate(CommentAttachmentBase):
@@ -26,14 +27,14 @@ class CommentAttachmentResponse(CommentAttachmentBase):
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
 
 class CommentReactionBase(BaseModel):
     comment_id: UUID
     reaction_type: str = Field(..., max_length=20)
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class CommentReactionCreate(CommentReactionBase):
@@ -56,9 +57,9 @@ class CommentBase(BaseModel):
     entity_id: UUID
     content: str = Field(..., min_length=1)
     comment_type: str = Field(default="comment", max_length=20)
-    parent_comment_id: Optional[UUID] = None
-    mentions: List[UUID] = []
-    metadata: Dict[str, Any] = {}
+    parent_comment_id: UUID | None = None
+    mentions: list[UUID] = []
+    metadata: dict[str, Any] = {}
 
 
 class CommentCreate(CommentBase):
@@ -66,10 +67,10 @@ class CommentCreate(CommentBase):
 
 
 class CommentUpdate(BaseModel):
-    content: Optional[str] = Field(None, min_length=1)
-    comment_type: Optional[str] = Field(None, max_length=20)
-    mentions: Optional[List[UUID]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    content: str | None = Field(None, min_length=1)
+    comment_type: str | None = Field(None, max_length=20)
+    mentions: list[UUID] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class CommentResponse(CommentBase):
@@ -78,29 +79,29 @@ class CommentResponse(CommentBase):
     id: UUID
     author_id: UUID
     is_edited: bool
-    edited_at: Optional[datetime] = None
+    edited_at: datetime | None = None
     tenant_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: Optional[UUID] = None
-    updated_by: Optional[UUID] = None
+    created_by: UUID | None = None
+    updated_by: UUID | None = None
 
     author: Optional["UserResponse"] = None
     parent_comment: Optional["CommentResponse"] = None
-    replies: List["CommentResponse"] = []
-    attachments: List[CommentAttachmentResponse] = []
-    reactions: List[CommentReactionResponse] = []
+    replies: list["CommentResponse"] = []
+    attachments: list[CommentAttachmentResponse] = []
+    reactions: list[CommentReactionResponse] = []
 
 
 class CommentListResponse(BaseModel):
-    items: List[CommentResponse]
+    items: list[CommentResponse]
     total: int
     page: int
     page_size: int
 
 
 class CommentThreadResponse(BaseModel):
-    comments: List[CommentResponse]
+    comments: list[CommentResponse]
     total: int
     page: int
     page_size: int

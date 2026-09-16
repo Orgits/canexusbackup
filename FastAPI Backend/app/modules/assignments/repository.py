@@ -1,25 +1,14 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
-from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.assignments.models import (
+    AssignableEntityType,
     Assignment,
     AssignmentHistory,
     Escalation,
-    AssignableEntityType,
-    AssignmentAction,
-    EscalationReason,
-)
-from app.modules.assignments.schemas import (
-    AssignmentCreate,
-    AssignmentUpdate,
-    AssignmentReassignRequest,
-    AssignmentUnassignRequest,
-    EscalationCreate,
-    EscalationUpdate,
 )
 
 
@@ -34,7 +23,7 @@ class AssignmentRepository:
         await self.db.refresh(assignment)
         return assignment
 
-    async def get_assignment_by_id(self, assignment_id: UUID, tenant_id: UUID) -> Optional[Assignment]:
+    async def get_assignment_by_id(self, assignment_id: UUID, tenant_id: UUID) -> Assignment | None:
         result = await self.db.execute(
             select(Assignment)
             .where(
@@ -51,7 +40,7 @@ class AssignmentRepository:
 
     async def get_active_assignment(
         self, entity_type: AssignableEntityType, entity_id: UUID, tenant_id: UUID
-    ) -> Optional[Assignment]:
+    ) -> Assignment | None:
         result = await self.db.execute(
             select(Assignment).where(
                 Assignment.entity_type == entity_type,
@@ -72,14 +61,14 @@ class AssignmentRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        entity_type: Optional[AssignableEntityType] = None,
-        entity_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        entity_type: AssignableEntityType | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        team_id: UUID | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Assignment], int]:
+    ) -> tuple[list[Assignment], int]:
         query = select(Assignment).where(Assignment.tenant_id == tenant_id)
         count_query = select(func.count(Assignment.id)).where(Assignment.tenant_id == tenant_id)
 
@@ -147,7 +136,7 @@ class AssignmentRepository:
 
     async def get_history_for_assignment(
         self, assignment_id: UUID, tenant_id: UUID, page: int = 1, page_size: int = 50
-    ) -> Tuple[List[AssignmentHistory], int]:
+    ) -> tuple[list[AssignmentHistory], int]:
         query = (
             select(AssignmentHistory)
             .where(
@@ -174,7 +163,7 @@ class AssignmentRepository:
 
     async def get_history_for_entity(
         self, entity_type: AssignableEntityType, entity_id: UUID, tenant_id: UUID
-    ) -> List[AssignmentHistory]:
+    ) -> list[AssignmentHistory]:
         result = await self.db.execute(
             select(AssignmentHistory)
             .join(Assignment, AssignmentHistory.assignment_id == Assignment.id)
@@ -195,7 +184,7 @@ class AssignmentRepository:
         await self.db.refresh(escalation)
         return escalation
 
-    async def get_escalation_by_id(self, escalation_id: UUID, tenant_id: UUID) -> Optional[Escalation]:
+    async def get_escalation_by_id(self, escalation_id: UUID, tenant_id: UUID) -> Escalation | None:
         result = await self.db.execute(
             select(Escalation)
             .where(
@@ -212,7 +201,7 @@ class AssignmentRepository:
 
     async def get_escalations_for_entity(
         self, entity_type: AssignableEntityType, entity_id: UUID, tenant_id: UUID
-    ) -> List[Escalation]:
+    ) -> list[Escalation]:
         result = await self.db.execute(
             select(Escalation)
             .where(
@@ -234,13 +223,13 @@ class AssignmentRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        entity_type: Optional[AssignableEntityType] = None,
-        escalated_to_id: Optional[UUID] = None,
-        escalated_by_id: Optional[UUID] = None,
-        is_resolved: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        entity_type: AssignableEntityType | None = None,
+        escalated_to_id: UUID | None = None,
+        escalated_by_id: UUID | None = None,
+        is_resolved: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Escalation], int]:
+    ) -> tuple[list[Escalation], int]:
         query = select(Escalation).where(Escalation.tenant_id == tenant_id)
         count_query = select(func.count(Escalation.id)).where(Escalation.tenant_id == tenant_id)
 

@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.modules.audit.schemas import AuditLogResponse, AuditLogListResponse
+from app.core.tenancy.dependencies import get_current_tenant
+from app.modules.audit.schemas import AuditLogListResponse, AuditLogResponse
 from app.modules.audit.service import AuditService
 from app.modules.users.models import User
 

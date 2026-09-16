@@ -1,29 +1,28 @@
-from typing import Optional, List
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.tenancy import get_tenant_context
-from app.core.security.dependencies import get_current_user
 from app.core.permissions.dependencies import require_permission
-from app.modules.assignments.service import AssignmentService
+from app.core.security.dependencies import get_current_user
+from app.core.tenancy import get_tenant_context
 from app.modules.assignments.schemas import (
     AssignmentCreate,
-    AssignmentUpdate,
-    AssignmentResponse,
-    AssignmentReassignRequest,
-    AssignmentUnassignRequest,
-    AssignmentHistoryResponse,
     AssignmentHistoryListResponse,
-    EscalationCreate,
-    EscalationUpdate,
-    EscalationResponse,
-    EscalationResolveRequest,
-    EscalationListResponse,
+    AssignmentHistoryResponse,
+    AssignmentReassignRequest,
+    AssignmentResponse,
+    AssignmentUnassignRequest,
+    AssignmentUpdate,
     BulkAssignmentRequest,
     BulkReassignmentRequest,
+    EscalationCreate,
+    EscalationListResponse,
+    EscalationResolveRequest,
+    EscalationResponse,
 )
+from app.modules.assignments.service import AssignmentService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/assignments", tags=["Assignment, Reassignment & Escalation"])
@@ -52,7 +51,7 @@ async def create_assignment(
 
 @router.post(
     "/bulk",
-    response_model=List[AssignmentResponse],
+    response_model=list[AssignmentResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Bulk create assignments",
 )
@@ -68,18 +67,18 @@ async def bulk_create_assignments(
 
 @router.get(
     "",
-    response_model=List[AssignmentResponse],
+    response_model=list[AssignmentResponse],
     summary="List assignments",
 )
 async def list_assignments(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    entity_type: Optional[str] = None,
-    entity_id: Optional[UUID] = None,
-    user_id: Optional[UUID] = None,
-    team_id: Optional[UUID] = None,
-    is_active: Optional[bool] = None,
-    sort_by: Optional[str] = None,
+    entity_type: str | None = None,
+    entity_id: UUID | None = None,
+    user_id: UUID | None = None,
+    team_id: UUID | None = None,
+    is_active: bool | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     assignment_service: AssignmentService = Depends(get_assignment_service),
     tenant_context=Depends(get_tenant_context),
@@ -171,7 +170,7 @@ async def unassign_entity(
 
 @router.post(
     "/bulk-reassign",
-    response_model=List[AssignmentResponse],
+    response_model=list[AssignmentResponse],
     summary="Bulk reassign entities",
 )
 async def bulk_reassign_entities(
@@ -212,7 +211,7 @@ async def get_assignment_history(
 
 @router.get(
     "/history/entity/{entity_type}/{entity_id}",
-    response_model=List[AssignmentHistoryResponse],
+    response_model=list[AssignmentHistoryResponse],
     summary="Get assignment history for entity",
 )
 async def get_entity_assignment_history(
@@ -251,11 +250,11 @@ async def create_escalation(
 async def list_escalations(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    entity_type: Optional[str] = None,
-    escalated_to_id: Optional[UUID] = None,
-    escalated_by_id: Optional[UUID] = None,
-    is_resolved: Optional[bool] = None,
-    sort_by: Optional[str] = None,
+    entity_type: str | None = None,
+    escalated_to_id: UUID | None = None,
+    escalated_by_id: UUID | None = None,
+    is_resolved: bool | None = None,
+    sort_by: str | None = None,
     sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     assignment_service: AssignmentService = Depends(get_assignment_service),
     tenant_context=Depends(get_tenant_context),
@@ -285,7 +284,7 @@ async def get_escalation(
 
 @router.get(
     "/escalations/entity/{entity_type}/{entity_id}",
-    response_model=List[EscalationResponse],
+    response_model=list[EscalationResponse],
     summary="Get escalations for entity",
 )
 async def get_escalations_for_entity(

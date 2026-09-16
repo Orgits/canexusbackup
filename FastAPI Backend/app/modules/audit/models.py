@@ -1,25 +1,23 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, TYPE_CHECKING
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING, Optional
+
 from sqlalchemy import (
+    ARRAY,
+    Enum,
+    ForeignKey,
+    Index,
     String,
     Text,
-    DateTime,
-    ForeignKey,
-    func,
-    Enum,
-    Index,
-    ARRAY,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
 
 if TYPE_CHECKING:
-    from app.modules.users.models import User
     from app.modules.firms.models import Firm
+    from app.modules.users.models import User
 
 
 class AuditAction(str, PyEnum):
@@ -61,7 +59,7 @@ class AuditLog(Base, TenantBaseModelMixin):
         Index("ix_audit_logs_tenant_timestamp", "tenant_id", "created_at"),
     )
 
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
@@ -69,18 +67,18 @@ class AuditLog(Base, TenantBaseModelMixin):
     )
 
     action: Mapped[AuditAction] = mapped_column(Enum(AuditAction), nullable=False, index=True)
-    resource_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
-    resource_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    resource_type: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
 
     old_values: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     new_values: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
-    changed_fields: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    changed_fields: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
 
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
-    user_agent: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    request_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=lambda: {}, nullable=False)
+    extra_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

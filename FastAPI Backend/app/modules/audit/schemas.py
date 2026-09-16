@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
-from uuid import UUID
-from pydantic import BaseModel
 from enum import Enum
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel
 
 
 class AuditAction(str, Enum):
@@ -37,17 +38,17 @@ class AuditAction(str, Enum):
 
 class AuditLogResponse(BaseModel):
     id: UUID
-    user_id: Optional[UUID] = None
+    user_id: UUID | None = None
     action: AuditAction
-    resource_type: Optional[str] = None
-    resource_id: Optional[UUID] = None
-    old_values: Dict[str, Any]
-    new_values: Dict[str, Any]
-    changed_fields: List[str]
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    request_id: Optional[str] = None
-    metadata: Dict[str, Any]
+    resource_type: str | None = None
+    resource_id: UUID | None = None
+    old_values: dict[str, Any]
+    new_values: dict[str, Any]
+    changed_fields: list[str]
+    ip_address: str | None = None
+    user_agent: str | None = None
+    request_id: str | None = None
+    metadata: dict[str, Any]
     tenant_id: UUID
     created_at: datetime
 
@@ -56,7 +57,7 @@ class AuditLogResponse(BaseModel):
 
 
 class AuditLogListResponse(BaseModel):
-    items: List[AuditLogResponse]
+    items: list[AuditLogResponse]
     total: int
     page: int
     page_size: int

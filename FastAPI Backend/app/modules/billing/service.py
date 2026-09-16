@@ -1,14 +1,22 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from uuid import UUID
 
-from app.core.exceptions import NotFoundException, ConflictException
-from app.modules.billing.models import Invoice, InvoiceItem, Payment, Expense, InvoiceStatus, PaymentStatus, ExpenseStatus
-from app.modules.billing.schemas import InvoiceCreate, InvoiceUpdate, InvoiceItemCreate, PaymentCreate, ExpenseCreate
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException
+from app.modules.billing.models import (
+    Expense,
+    ExpenseStatus,
+    Invoice,
+    InvoiceItem,
+    InvoiceStatus,
+    Payment,
+    PaymentStatus,
+)
 from app.modules.billing.repository import BillingRepository
+from app.modules.billing.schemas import ExpenseCreate, InvoiceCreate, InvoiceItemCreate, InvoiceUpdate, PaymentCreate
 from app.modules.clients.models import Client
 from app.modules.matters.models import Matter
 from app.modules.users.models import User
@@ -19,7 +27,7 @@ class BillingService:
         self.db = db
         self.repository = BillingRepository(db)
 
-    def _calculate_invoice_totals(self, items: List[InvoiceItemCreate]) -> tuple:
+    def _calculate_invoice_totals(self, items: list[InvoiceItemCreate]) -> tuple:
         subtotal = Decimal("0")
         tax_amount = Decimal("0")
         discount_amount = Decimal("0")
@@ -115,15 +123,15 @@ class BillingService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        status: Optional[InvoiceStatus] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        status: InvoiceStatus | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Invoice], int]:
+    ) -> tuple[list[Invoice], int]:
         return await self.repository.get_all_invoices(
             tenant_id, page, page_size, search, client_id, matter_id, status,
             due_date_from, due_date_to, sort_by, sort_order
@@ -173,9 +181,9 @@ class BillingService:
         invoice.updated_by = updated_by
 
         if invoice.status == InvoiceStatus.SENT and not invoice.sent_at:
-            invoice.sent_at = datetime.now(timezone.utc)
+            invoice.sent_at = datetime.now(UTC)
         elif invoice.status == InvoiceStatus.PAID and not invoice.paid_at:
-            invoice.paid_at = datetime.now(timezone.utc)
+            invoice.paid_at = datetime.now(UTC)
 
         return await self.repository.update_invoice(invoice)
 
@@ -188,7 +196,7 @@ class BillingService:
         if invoice.status != InvoiceStatus.DRAFT:
             raise ConflictException(detail="Only draft invoices can be sent")
         invoice.status = InvoiceStatus.SENT
-        invoice.sent_at = datetime.now(timezone.utc)
+        invoice.sent_at = datetime.now(UTC)
         invoice.updated_by = sent_by
         return await self.repository.update_invoice(invoice)
 
@@ -228,7 +236,7 @@ class BillingService:
             invoice.balance_amount = invoice.total_amount - invoice.paid_amount
             if invoice.balance_amount <= 0:
                 invoice.status = InvoiceStatus.PAID
-                invoice.paid_at = datetime.now(timezone.utc)
+                invoice.paid_at = datetime.now(UTC)
             elif invoice.paid_amount > 0:
                 invoice.status = InvoiceStatus.PARTIAL
             invoice.updated_by = created_by
@@ -261,12 +269,12 @@ class BillingService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        client_id: Optional[UUID] = None,
-        invoice_id: Optional[UUID] = None,
-        status: Optional[PaymentStatus] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> Tuple[List[Payment], int]:
+        client_id: UUID | None = None,
+        invoice_id: UUID | None = None,
+        status: PaymentStatus | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> tuple[list[Payment], int]:
         return await self.repository.get_all_payments(tenant_id, page, page_size, client_id, invoice_id, status, date_from, date_to)
 
     async def update_payment(self, payment_id: UUID, tenant_id: UUID, status: PaymentStatus, updated_by: UUID) -> Payment:
@@ -348,27 +356,27 @@ class BillingService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        status: Optional[ExpenseStatus] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> Tuple[List[Expense], int]:
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        user_id: UUID | None = None,
+        status: ExpenseStatus | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+    ) -> tuple[list[Expense], int]:
         return await self.repository.get_all_expenses(tenant_id, page, page_size, client_id, matter_id, user_id, status, date_from, date_to)
 
     async def update_expense(self, expense_id: UUID, tenant_id: UUID, data: ExpenseCreate, updated_by: UUID) -> Expense:
         expense = await self.get_expense_by_id(expense_id, tenant_id)
         update_data = data.model_dump(exclude_unset=True)
 
-        if "client_id" in update_data and update_data["client_id"]:
+        if update_data.get("client_id"):
             client_result = await self.db.execute(
                 select(Client).where(Client.id == update_data["client_id"], Client.tenant_id == tenant_id)
             )
             if not client_result.scalar_one_or_none():
                 raise NotFoundException(detail="Client not found")
 
-        if "matter_id" in update_data and update_data["matter_id"]:
+        if update_data.get("matter_id"):
             matter_result = await self.db.execute(
                 select(Matter).where(Matter.id == update_data["matter_id"], Matter.tenant_id == tenant_id)
             )
@@ -384,14 +392,14 @@ class BillingService:
         expense = await self.get_expense_by_id(expense_id, tenant_id)
         expense.status = ExpenseStatus.APPROVED
         expense.approved_by = approved_by
-        expense.approved_at = datetime.now(timezone.utc)
+        expense.approved_at = datetime.now(UTC)
         expense.updated_by = approved_by
         return await self.repository.update_expense(expense)
 
     async def reimburse_expense(self, expense_id: UUID, tenant_id: UUID, reimbursed_by: UUID) -> Expense:
         expense = await self.get_expense_by_id(expense_id, tenant_id)
         expense.status = ExpenseStatus.REIMBURSED
-        expense.reimbursed_at = datetime.now(timezone.utc)
+        expense.reimbursed_at = datetime.now(UTC)
         expense.updated_by = reimbursed_by
         return await self.repository.update_expense(expense)
 

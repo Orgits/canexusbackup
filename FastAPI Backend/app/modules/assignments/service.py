@@ -1,30 +1,28 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException, ValidationException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException, ValidationException
 from app.modules.assignments.models import (
+    AssignableEntityType,
     Assignment,
+    AssignmentAction,
     AssignmentHistory,
     Escalation,
-    AssignableEntityType,
-    AssignmentAction,
     EscalationReason,
 )
+from app.modules.assignments.repository import AssignmentRepository
 from app.modules.assignments.schemas import (
     AssignmentCreate,
-    AssignmentUpdate,
     AssignmentReassignRequest,
     AssignmentUnassignRequest,
-    EscalationCreate,
-    EscalationUpdate,
-    EscalationResolveRequest,
+    AssignmentUpdate,
     BulkAssignmentRequest,
-    BulkReassignmentRequest,
+    EscalationCreate,
+    EscalationResolveRequest,
 )
-from app.modules.assignments.repository import AssignmentRepository
 from app.modules.users.models import User
 
 
@@ -66,7 +64,7 @@ class AssignmentService:
             user_id=data.user_id,
             team_id=data.team_id,
             assigned_by_id=created_by,
-            assigned_at=datetime.now(timezone.utc),
+            assigned_at=datetime.now(UTC),
             notes=data.notes,
             metadata=data.metadata,
             tenant_id=tenant_id,
@@ -114,14 +112,14 @@ class AssignmentService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        entity_type: Optional[str] = None,
-        entity_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        entity_type: str | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        team_id: UUID | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Assignment], int]:
+    ) -> tuple[list[Assignment], int]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -259,7 +257,7 @@ class AssignmentService:
         old_team_id = assignment.team_id
 
         assignment.is_active = False
-        assignment.unassigned_at = datetime.now(timezone.utc)
+        assignment.unassigned_at = datetime.now(UTC)
         assignment.unassigned_by_id = actor_id
         assignment.unassign_reason = data.reason
         assignment.updated_by = actor_id
@@ -283,7 +281,7 @@ class AssignmentService:
 
     async def bulk_assign(
         self, data: BulkAssignmentRequest, tenant_id: UUID, actor_id: UUID
-    ) -> List[Assignment]:
+    ) -> list[Assignment]:
         results = []
         for assignment_data in data.assignments:
             try:
@@ -296,13 +294,13 @@ class AssignmentService:
 
     async def get_assignment_history(
         self, assignment_id: UUID, tenant_id: UUID, page: int = 1, page_size: int = 50
-    ) -> Tuple[List[AssignmentHistory], int]:
+    ) -> tuple[list[AssignmentHistory], int]:
         assignment = await self.get_assignment(assignment_id, tenant_id)
         return await self.repository.get_history_for_assignment(assignment_id, tenant_id, page, page_size)
 
     async def get_entity_assignment_history(
         self, entity_type: str, entity_id: UUID, tenant_id: UUID
-    ) -> List[AssignmentHistory]:
+    ) -> list[AssignmentHistory]:
         try:
             entity_type_enum = AssignableEntityType(entity_type)
         except ValueError:
@@ -381,13 +379,13 @@ class AssignmentService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        entity_type: Optional[str] = None,
-        escalated_to_id: Optional[UUID] = None,
-        escalated_by_id: Optional[UUID] = None,
-        is_resolved: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        entity_type: str | None = None,
+        escalated_to_id: UUID | None = None,
+        escalated_by_id: UUID | None = None,
+        is_resolved: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Escalation], int]:
+    ) -> tuple[list[Escalation], int]:
         entity_type_enum = None
         if entity_type:
             try:
@@ -401,7 +399,7 @@ class AssignmentService:
 
     async def get_escalations_for_entity(
         self, entity_type: str, entity_id: UUID, tenant_id: UUID
-    ) -> List[Escalation]:
+    ) -> list[Escalation]:
         try:
             entity_type_enum = AssignableEntityType(entity_type)
         except ValueError:
@@ -418,7 +416,7 @@ class AssignmentService:
             raise ValidationException(detail="Escalation is already resolved")
 
         escalation.is_resolved = True
-        escalation.resolved_at = datetime.now(timezone.utc)
+        escalation.resolved_at = datetime.now(UTC)
         escalation.resolved_by_id = actor_id
         escalation.resolution_notes = data.resolution_notes
         escalation.metadata = {**escalation.metadata, **(data.metadata or {})}

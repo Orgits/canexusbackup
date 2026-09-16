@@ -1,34 +1,36 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
-from sqlalchemy import String, Boolean, Text, DateTime, ForeignKey, func, ARRAY
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database.base import Base, TenantBaseModelMixin
+from app.core.database.encryption_mixin import PIIEncryptionMixin, encrypted_column
 
 if TYPE_CHECKING:
     from app.modules.firms.models import Firm
     from app.modules.users.models import Team
 
 
-class User(Base, TenantBaseModelMixin):
+class User(Base, TenantBaseModelMixin, PIIEncryptionMixin):
     __tablename__ = "users"
 
-    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    _email_encrypted: Mapped[bytes] = encrypted_column(nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    _phone_encrypted: Mapped[bytes | None] = encrypted_column()
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    roles: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    direct_permissions: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
-    department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    designation: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    employee_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    date_of_joining: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    roles: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    direct_permissions: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    department: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    designation: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    employee_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    date_of_joining: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -36,18 +38,18 @@ class User(Base, TenantBaseModelMixin):
         nullable=False,
         index=True,
     )
-    team_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    team_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("teams.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
 
-    tenant: Mapped["Firm"] = relationship("Firm", back_populates="users", lazy="selectin")
-    team: Mapped[Optional["Team"]] = relationship("Team", foreign_keys="User.team_id", back_populates="members", lazy="selectin")
+    tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
+    team: Mapped[Optional["Team"]] = relationship("Team", foreign_keys="User.team_id", lazy="selectin")
 
-    def get_all_permissions(self) -> List[str]:
-        from app.core.permissions.registry import get_permission_registry, Role
+    def get_all_permissions(self) -> list[str]:
+        from app.core.permissions.registry import Role, get_permission_registry
         registry = get_permission_registry()
         permissions = set(self.direct_permissions)
         for role_str in self.roles:
@@ -69,12 +71,12 @@ class Team(Base, TenantBaseModelMixin):
     __tablename__ = "teams"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    specialization: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    department: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    specialization: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    lead_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    lead_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
@@ -89,4 +91,4 @@ class Team(Base, TenantBaseModelMixin):
 
     tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     lead: Mapped[Optional["User"]] = relationship("User", foreign_keys=[lead_id], lazy="selectin")
-    members: Mapped[List["User"]] = relationship("User", foreign_keys="User.team_id", back_populates="team", lazy="dynamic")
+    members: Mapped[list["User"]] = relationship("User", foreign_keys="User.team_id", lazy="dynamic")

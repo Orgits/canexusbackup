@@ -1,17 +1,17 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.exceptions import NotFoundException, ConflictException
-from app.modules.tasks.models import Task, TaskStatus, TaskPriority
-from app.modules.tasks.schemas import TaskCreate, TaskUpdate, TaskAction
-from app.modules.tasks.repository import TaskRepository
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import ConflictException, NotFoundException
 from app.modules.clients.models import Client
-from app.modules.matters.models import Matter
-from app.modules.users.models import User, Team
 from app.modules.communications.models import Communication
+from app.modules.matters.models import Matter
+from app.modules.tasks.models import Task, TaskPriority, TaskStatus
+from app.modules.tasks.repository import TaskRepository
+from app.modules.tasks.schemas import TaskAction, TaskCreate, TaskUpdate
+from app.modules.users.models import Team, User
 
 
 class TaskService:
@@ -94,20 +94,20 @@ class TaskService:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        status: Optional[TaskStatus] = None,
-        priority: Optional[TaskPriority] = None,
-        assignee_id: Optional[UUID] = None,
-        team_id: Optional[UUID] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        tags: Optional[List[str]] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assignee_id: UUID | None = None,
+        team_id: UUID | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        tags: list[str] | None = None,
         overdue_only: bool = False,
-        sort_by: Optional[str] = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[Task], int]:
+    ) -> tuple[list[Task], int]:
         return await self.repository.get_all(
             tenant_id, page, page_size, search, client_id, matter_id,
             status, priority, assignee_id, team_id, due_date_from, due_date_to,
@@ -118,26 +118,26 @@ class TaskService:
         task = await self.get_by_id(task_id, tenant_id)
         update_data = data.model_dump(exclude_unset=True)
 
-        if "task_number" in update_data and update_data["task_number"]:
+        if update_data.get("task_number"):
             existing = await self.repository.get_by_number(update_data["task_number"], tenant_id)
             if existing and existing.id != task_id:
                 raise ConflictException(detail="Task with this number already exists")
 
-        if "assignee_id" in update_data and update_data["assignee_id"]:
+        if update_data.get("assignee_id"):
             user_result = await self.db.execute(
                 select(User).where(User.id == update_data["assignee_id"], User.tenant_id == tenant_id)
             )
             if not user_result.scalar_one_or_none():
                 raise NotFoundException(detail="Assignee not found")
 
-        if "team_id" in update_data and update_data["team_id"]:
+        if update_data.get("team_id"):
             team_result = await self.db.execute(
                 select(Team).where(Team.id == update_data["team_id"], Team.tenant_id == tenant_id)
             )
             if not team_result.scalar_one_or_none():
                 raise NotFoundException(detail="Team not found")
 
-        if "parent_task_id" in update_data and update_data["parent_task_id"]:
+        if update_data.get("parent_task_id"):
             parent_result = await self.db.execute(
                 select(Task).where(Task.id == update_data["parent_task_id"], Task.tenant_id == tenant_id)
             )
@@ -157,7 +157,7 @@ class TaskService:
         task.updated_by = updated_by
 
         if task.status == TaskStatus.COMPLETED and not task.completed_date:
-            task.completed_date = datetime.now(timezone.utc)
+            task.completed_date = datetime.now(UTC)
             task.progress_percentage = 100
 
         return await self.repository.update(task)
@@ -167,7 +167,7 @@ class TaskService:
 
         if action.action == "complete":
             task.status = TaskStatus.COMPLETED
-            task.completed_date = datetime.now(timezone.utc)
+            task.completed_date = datetime.now(UTC)
             task.progress_percentage = 100
         elif action.action == "reassign":
             if not action.assignee_id:
@@ -183,14 +183,14 @@ class TaskService:
                 raise ConflictException(detail="Status required for status change")
             task.status = action.status
             if action.status == TaskStatus.COMPLETED:
-                task.completed_date = datetime.now(timezone.utc)
+                task.completed_date = datetime.now(UTC)
                 task.progress_percentage = 100
         elif action.action == "submit_for_review":
             task.status = TaskStatus.IN_REVIEW
         elif action.action == "start":
             task.status = TaskStatus.IN_PROGRESS
             if not task.start_date:
-                task.start_date = datetime.now(timezone.utc)
+                task.start_date = datetime.now(UTC)
         elif action.action == "put_on_hold":
             task.status = TaskStatus.ON_HOLD
         elif action.action == "cancel":

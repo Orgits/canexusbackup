@@ -1,11 +1,16 @@
-from typing import Optional, List, Tuple
-from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, or_
+from uuid import UUID
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.modules.communications.models import Communication, CommunicationChannel, CommunicationDirection, CommunicationStatus
+from app.modules.communications.models import (
+    Communication,
+    CommunicationChannel,
+    CommunicationDirection,
+    CommunicationStatus,
+)
 
 
 class CommunicationRepository:
@@ -18,7 +23,7 @@ class CommunicationRepository:
         await self.db.refresh(communication)
         return communication
 
-    async def get_by_id(self, communication_id: UUID, tenant_id: UUID) -> Optional[Communication]:
+    async def get_by_id(self, communication_id: UUID, tenant_id: UUID) -> Communication | None:
         result = await self.db.execute(
             select(Communication)
             .options(
@@ -36,21 +41,21 @@ class CommunicationRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        client_id: Optional[UUID] = None,
-        matter_id: Optional[UUID] = None,
-        task_id: Optional[UUID] = None,
-        campaign_id: Optional[UUID] = None,
-        channel: Optional[CommunicationChannel] = None,
-        direction: Optional[CommunicationDirection] = None,
-        status: Optional[CommunicationStatus] = None,
-        thread_id: Optional[UUID] = None,
-        conversation_id: Optional[UUID] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        client_id: UUID | None = None,
+        matter_id: UUID | None = None,
+        task_id: UUID | None = None,
+        campaign_id: UUID | None = None,
+        channel: CommunicationChannel | None = None,
+        direction: CommunicationDirection | None = None,
+        status: CommunicationStatus | None = None,
+        thread_id: UUID | None = None,
+        conversation_id: UUID | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        sort_by: str | None = None,
         sort_order: str = "desc",
-    ) -> Tuple[List[Communication], int]:
+    ) -> tuple[list[Communication], int]:
         query = (
             select(Communication)
             .options(
@@ -133,7 +138,7 @@ class CommunicationRepository:
 
         return list(items), total
 
-    async def get_thread(self, thread_id: UUID, tenant_id: UUID) -> List[Communication]:
+    async def get_thread(self, thread_id: UUID, tenant_id: UUID) -> list[Communication]:
         result = await self.db.execute(
             select(Communication)
             .where(Communication.thread_id == thread_id, Communication.tenant_id == tenant_id)
@@ -141,7 +146,7 @@ class CommunicationRepository:
         )
         return list(result.scalars().all())
 
-    async def get_conversation(self, conversation_id: UUID, tenant_id: UUID) -> List[Communication]:
+    async def get_conversation(self, conversation_id: UUID, tenant_id: UUID) -> list[Communication]:
         result = await self.db.execute(
             select(Communication)
             .where(Communication.conversation_id == conversation_id, Communication.tenant_id == tenant_id)

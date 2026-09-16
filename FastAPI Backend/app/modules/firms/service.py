@@ -1,11 +1,11 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException, ConflictException
+from app.core.exceptions import ConflictException, NotFoundException
 from app.modules.firms.models import Firm
-from app.modules.firms.schemas import FirmCreate, FirmUpdate
 from app.modules.firms.repository import FirmRepository
+from app.modules.firms.schemas import FirmCreate, FirmUpdate
 
 
 class FirmService:
@@ -30,9 +30,9 @@ class FirmService:
         self,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-    ) -> Tuple[List[Firm], int]:
+        search: str | None = None,
+        is_active: bool | None = None,
+    ) -> tuple[list[Firm], int]:
         return await self.repository.get_all(page, page_size, search, is_active)
 
     async def update(self, firm_id: UUID, data: FirmUpdate) -> Firm:

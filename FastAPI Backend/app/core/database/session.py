@@ -1,6 +1,5 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -9,7 +8,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import get_settings
 
@@ -40,7 +38,7 @@ async def _set_tenant_context_on_session(session: AsyncSession) -> None:
     """
     # Lazy import to avoid circular dependency
     from app.core.tenancy.context import get_tenant_context
-    
+
     context = get_tenant_context()
     if context and context.tenant_id:
         # SET LOCAL doesn't support parameterized queries, use string interpolation

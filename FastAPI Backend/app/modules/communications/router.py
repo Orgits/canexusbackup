@@ -1,14 +1,15 @@
+from datetime import datetime
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
-from datetime import datetime
 
 from app.core.database import get_async_db
-from app.core.tenancy.dependencies import get_current_tenant
-from app.core.security.dependencies import get_current_active_user
 from app.core.permissions.dependencies import require_permission
 from app.core.permissions.registry import Permission
-from app.modules.communications.schemas import CommunicationCreate, CommunicationResponse, CommunicationListResponse
+from app.core.security.dependencies import get_current_active_user
+from app.core.tenancy.dependencies import get_current_tenant
+from app.modules.communications.schemas import CommunicationCreate, CommunicationListResponse, CommunicationResponse
 from app.modules.communications.service import CommunicationService
 from app.modules.users.models import User
 
@@ -21,6 +22,7 @@ async def create_communication(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_CREATE)),
 ):
     service = CommunicationService(db)
     communication = await service.create(data, current_tenant.id, current_user.id)
@@ -48,6 +50,7 @@ async def list_communications(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_READ)),
 ):
     service = CommunicationService(db)
     items, total = await service.get_all(
@@ -70,6 +73,7 @@ async def get_thread(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_READ)),
 ):
     service = CommunicationService(db)
     items = await service.get_thread(thread_id, current_tenant.id)
@@ -82,6 +86,7 @@ async def get_conversation(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_READ)),
 ):
     service = CommunicationService(db)
     items = await service.get_conversation(conversation_id, current_tenant.id)
@@ -94,6 +99,7 @@ async def get_communication(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_READ)),
 ):
     service = CommunicationService(db)
     communication = await service.get_by_id(communication_id, current_tenant.id)
@@ -106,6 +112,7 @@ async def send_communication(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_SEND)),
 ):
     service = CommunicationService(db)
     communication = await service.send(communication_id, current_tenant.id, current_user.id)
@@ -118,7 +125,7 @@ async def delete_communication(
     db: AsyncSession = Depends(get_async_db),
     current_tenant=Depends(get_current_tenant),
     current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission(Permission.COMMUNICATIONS_DELETE)),
 ):
     service = CommunicationService(db)
     await service.delete(communication_id, current_tenant.id)
-    return None

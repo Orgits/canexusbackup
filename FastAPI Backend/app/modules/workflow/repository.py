@@ -1,24 +1,15 @@
-from typing import Optional, List, Tuple
 from uuid import UUID
-from datetime import datetime
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
 from app.modules.workflow.models import (
     WorkflowDefinition,
-    WorkflowTransitionDefinition,
-    WorkflowInstance,
-    WorkflowTransitionHistory,
     WorkflowEntityType,
-)
-from app.modules.workflow.schemas import (
-    WorkflowDefinitionCreate,
-    WorkflowDefinitionUpdate,
-    WorkflowTransitionDefinitionCreate,
-    WorkflowTransitionDefinitionUpdate,
-    WorkflowInstanceCreate,
-    WorkflowInstanceUpdate,
+    WorkflowInstance,
+    WorkflowTransitionDefinition,
+    WorkflowTransitionHistory,
 )
 
 
@@ -33,7 +24,7 @@ class WorkflowRepository:
         await self.db.refresh(definition)
         return definition
 
-    async def get_definition_by_id(self, definition_id: UUID, tenant_id: UUID) -> Optional[WorkflowDefinition]:
+    async def get_definition_by_id(self, definition_id: UUID, tenant_id: UUID) -> WorkflowDefinition | None:
         result = await self.db.execute(
             select(WorkflowDefinition)
             .where(
@@ -44,7 +35,7 @@ class WorkflowRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_definition_by_code(self, code: str, tenant_id: UUID) -> Optional[WorkflowDefinition]:
+    async def get_definition_by_code(self, code: str, tenant_id: UUID) -> WorkflowDefinition | None:
         result = await self.db.execute(
             select(WorkflowDefinition)
             .where(
@@ -55,7 +46,7 @@ class WorkflowRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_default_definition(self, entity_type: WorkflowEntityType, tenant_id: UUID) -> Optional[WorkflowDefinition]:
+    async def get_default_definition(self, entity_type: WorkflowEntityType, tenant_id: UUID) -> WorkflowDefinition | None:
         result = await self.db.execute(
             select(WorkflowDefinition)
             .where(
@@ -73,12 +64,12 @@ class WorkflowRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        entity_type: Optional[WorkflowEntityType] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        entity_type: WorkflowEntityType | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[WorkflowDefinition], int]:
+    ) -> tuple[list[WorkflowDefinition], int]:
         query = select(WorkflowDefinition).where(WorkflowDefinition.tenant_id == tenant_id)
         count_query = select(func.count(WorkflowDefinition.id)).where(WorkflowDefinition.tenant_id == tenant_id)
 
@@ -147,7 +138,7 @@ class WorkflowRepository:
 
     async def get_transition_definition_by_id(
         self, transition_id: UUID, tenant_id: UUID
-    ) -> Optional[WorkflowTransitionDefinition]:
+    ) -> WorkflowTransitionDefinition | None:
         result = await self.db.execute(
             select(WorkflowTransitionDefinition).where(
                 WorkflowTransitionDefinition.id == transition_id,
@@ -158,7 +149,7 @@ class WorkflowRepository:
 
     async def get_transition_definition_by_code(
         self, workflow_definition_id: UUID, code: str, tenant_id: UUID
-    ) -> Optional[WorkflowTransitionDefinition]:
+    ) -> WorkflowTransitionDefinition | None:
         result = await self.db.execute(
             select(WorkflowTransitionDefinition).where(
                 WorkflowTransitionDefinition.workflow_definition_id == workflow_definition_id,
@@ -169,8 +160,8 @@ class WorkflowRepository:
         return result.scalar_one_or_none()
 
     async def get_transitions_for_definition(
-        self, workflow_definition_id: UUID, tenant_id: UUID, is_active: Optional[bool] = None
-    ) -> List[WorkflowTransitionDefinition]:
+        self, workflow_definition_id: UUID, tenant_id: UUID, is_active: bool | None = None
+    ) -> list[WorkflowTransitionDefinition]:
         query = select(WorkflowTransitionDefinition).where(
             WorkflowTransitionDefinition.workflow_definition_id == workflow_definition_id,
             WorkflowTransitionDefinition.tenant_id == tenant_id,
@@ -183,7 +174,7 @@ class WorkflowRepository:
 
     async def get_transitions_from_state(
         self, workflow_definition_id: UUID, from_state: str, tenant_id: UUID, is_active: bool = True
-    ) -> List[WorkflowTransitionDefinition]:
+    ) -> list[WorkflowTransitionDefinition]:
         result = await self.db.execute(
             select(WorkflowTransitionDefinition).where(
                 WorkflowTransitionDefinition.workflow_definition_id == workflow_definition_id,
@@ -210,7 +201,7 @@ class WorkflowRepository:
         await self.db.refresh(instance)
         return instance
 
-    async def get_instance_by_id(self, instance_id: UUID, tenant_id: UUID) -> Optional[WorkflowInstance]:
+    async def get_instance_by_id(self, instance_id: UUID, tenant_id: UUID) -> WorkflowInstance | None:
         result = await self.db.execute(
             select(WorkflowInstance)
             .where(
@@ -224,7 +215,7 @@ class WorkflowRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_instance_by_entity(self, entity_type: WorkflowEntityType, entity_id: UUID, tenant_id: UUID) -> Optional[WorkflowInstance]:
+    async def get_instance_by_entity(self, entity_type: WorkflowEntityType, entity_id: UUID, tenant_id: UUID) -> WorkflowInstance | None:
         result = await self.db.execute(
             select(WorkflowInstance)
             .where(
@@ -244,16 +235,16 @@ class WorkflowRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        search: Optional[str] = None,
-        entity_type: Optional[WorkflowEntityType] = None,
-        workflow_definition_id: Optional[UUID] = None,
-        current_state: Optional[str] = None,
-        assigned_user_id: Optional[UUID] = None,
-        assigned_team_id: Optional[UUID] = None,
-        is_active: Optional[bool] = None,
-        sort_by: Optional[str] = None,
+        search: str | None = None,
+        entity_type: WorkflowEntityType | None = None,
+        workflow_definition_id: UUID | None = None,
+        current_state: str | None = None,
+        assigned_user_id: UUID | None = None,
+        assigned_team_id: UUID | None = None,
+        is_active: bool | None = None,
+        sort_by: str | None = None,
         sort_order: str = "asc",
-    ) -> Tuple[List[WorkflowInstance], int]:
+    ) -> tuple[list[WorkflowInstance], int]:
         query = select(WorkflowInstance).where(WorkflowInstance.tenant_id == tenant_id)
         count_query = select(func.count(WorkflowInstance.id)).where(WorkflowInstance.tenant_id == tenant_id)
 
@@ -328,7 +319,7 @@ class WorkflowRepository:
         tenant_id: UUID,
         page: int = 1,
         page_size: int = 50,
-    ) -> Tuple[List[WorkflowTransitionHistory], int]:
+    ) -> tuple[list[WorkflowTransitionHistory], int]:
         query = (
             select(WorkflowTransitionHistory)
             .where(

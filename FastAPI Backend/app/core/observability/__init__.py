@@ -1,3 +1,3 @@
-from .metrics import setup_metrics, get_metrics
+from .metrics import get_metrics, setup_metrics
 
-__all__ = ["setup_metrics", "get_metrics"]
+__all__ = ["get_metrics", "setup_metrics"]

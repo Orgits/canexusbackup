@@ -1,22 +1,16 @@
-from typing import Optional, List, Tuple
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 
 from app.modules.collaboration.models import (
     Comment,
+    CommentableEntityType,
     CommentAttachment,
     CommentReaction,
-    CommentableEntityType,
     CommentType,
-)
-from app.modules.collaboration.schemas import (
-    CommentCreate,
-    CommentUpdate,
-    CommentAttachmentCreate,
-    CommentReactionCreate,
 )
 
 
@@ -31,7 +25,7 @@ class CollaborationRepository:
         await self.db.refresh(comment)
         return comment
 
-    async def get_comment_by_id(self, comment_id: UUID, tenant_id: UUID) -> Optional[Comment]:
+    async def get_comment_by_id(self, comment_id: UUID, tenant_id: UUID) -> Comment | None:
         result = await self.db.execute(
             select(Comment)
             .where(
@@ -56,8 +50,8 @@ class CollaborationRepository:
         page: int = 1,
         page_size: int = 50,
         include_replies: bool = False,
-        comment_type: Optional[CommentType] = None,
-    ) -> Tuple[List[Comment], int]:
+        comment_type: CommentType | None = None,
+    ) -> tuple[list[Comment], int]:
         query = select(Comment).where(
             Comment.entity_type == entity_type,
             Comment.entity_id == entity_id,
@@ -97,7 +91,7 @@ class CollaborationRepository:
 
     async def get_comment_thread(
         self, comment_id: UUID, tenant_id: UUID
-    ) -> List[Comment]:
+    ) -> list[Comment]:
         # Get all replies recursively
         result = await self.db.execute(
             select(Comment)
@@ -117,14 +111,14 @@ class CollaborationRepository:
 
     async def update_comment(self, comment: Comment) -> Comment:
         comment.is_edited = True
-        comment.edited_at = datetime.now(timezone.utc)
+        comment.edited_at = datetime.now(UTC)
         await self.db.flush()
         await self.db.refresh(comment)
         return comment
 
     async def delete_comment(self, comment: Comment) -> None:
         # Soft delete - mark as deleted in metadata
-        comment.metadata = {**comment.metadata, "deleted": True, "deleted_at": datetime.now(timezone.utc).isoformat()}
+        comment.metadata = {**comment.metadata, "deleted": True, "deleted_at": datetime.now(UTC).isoformat()}
         comment.content = "[Deleted]"
         await self.db.flush()
 
@@ -135,7 +129,7 @@ class CollaborationRepository:
         await self.db.refresh(attachment)
         return attachment
 
-    async def get_attachments_for_comment(self, comment_id: UUID, tenant_id: UUID) -> List[CommentAttachment]:
+    async def get_attachments_for_comment(self, comment_id: UUID, tenant_id: UUID) -> list[CommentAttachment]:
         result = await self.db.execute(
             select(CommentAttachment).where(
                 CommentAttachment.comment_id == comment_id,
@@ -157,7 +151,7 @@ class CollaborationRepository:
 
     async def get_reaction(
         self, comment_id: UUID, user_id: UUID, reaction_type: str, tenant_id: UUID
-    ) -> Optional[CommentReaction]:
+    ) -> CommentReaction | None:
         result = await self.db.execute(
             select(CommentReaction).where(
                 CommentReaction.comment_id == comment_id,
@@ -168,7 +162,7 @@ class CollaborationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_reactions_for_comment(self, comment_id: UUID, tenant_id: UUID) -> List[CommentReaction]:
+    async def get_reactions_for_comment(self, comment_id: UUID, tenant_id: UUID) -> list[CommentReaction]:
         result = await self.db.execute(
             select(CommentReaction)
             .where(
@@ -185,22 +179,20 @@ class CollaborationRepository:
 
     async def toggle_reaction(
         self, comment_id: UUID, user_id: UUID, reaction_type: str, tenant_id: UUID
-    ) -> Tuple[CommentReaction, bool]:
+    ) -> tuple[CommentReaction, bool]:
         """Toggle reaction - returns (reaction, created) where created is True if new, False if removed"""
         existing = await self.get_reaction(comment_id, user_id, reaction_type, tenant_id)
         if existing:
             await self.delete_reaction(existing)
             return existing, False
-        else:
-            reaction = CommentReaction(
-                comment_id=comment_id,
-                user_id=user_id,
-                reaction_type=reaction_type,
-                tenant_id=tenant_id,
-                created_by=user_id,
-            )
-            created = await self.create_reaction(reaction)
-            return created, True
+        reaction = CommentReaction(
+            comment_id=comment_id,
+            user_id=user_id,
+            reaction_type=reaction_type,
+            tenant_id=tenant_id,
+            created_by=user_id,
+        )
+        created = await self.create_reaction(reaction)
+        return created, True
 
 
-from datetime import timezone
