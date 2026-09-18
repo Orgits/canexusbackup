@@ -144,6 +144,68 @@ class Permission(str, Enum):
     CALENDAR_UPDATE = "calendar.update"
     CALENDAR_DELETE = "calendar.delete"
 
+    # Phase 4 - Audit Workspace
+    AUDIT_ENGAGEMENT_READ = "audit_engagement.read"
+    AUDIT_ENGAGEMENT_CREATE = "audit_engagement.create"
+    AUDIT_ENGAGEMENT_UPDATE = "audit_engagement.update"
+    AUDIT_ENGAGEMENT_DELETE = "audit_engagement.delete"
+    AUDIT_ENGAGEMENT_TRANSITION = "audit_engagement.transition"
+    AUDIT_WORKING_PAPER_READ = "audit_working_paper.read"
+    AUDIT_WORKING_PAPER_CREATE = "audit_working_paper.create"
+    AUDIT_WORKING_PAPER_UPDATE = "audit_working_paper.update"
+    AUDIT_WORKING_PAPER_DELETE = "audit_working_paper.delete"
+    AUDIT_EVIDENCE_READ = "audit_evidence.read"
+    AUDIT_EVIDENCE_CREATE = "audit_evidence.create"
+    AUDIT_EVIDENCE_UPDATE = "audit_evidence.update"
+    AUDIT_EVIDENCE_DELETE = "audit_evidence.delete"
+    AUDIT_REVIEW_READ = "audit_review.read"
+    AUDIT_REVIEW_CREATE = "audit_review.create"
+    AUDIT_REVIEW_UPDATE = "audit_review.update"
+    AUDIT_REVIEW_DELETE = "audit_review.delete"
+    AUDIT_REVIEW_TRANSITION = "audit_review.transition"
+    AUDIT_SIGN_OFF_READ = "audit_sign_off.read"
+    AUDIT_SIGN_OFF_CREATE = "audit_sign_off.create"
+    AUDIT_SIGN_OFF_UPDATE = "audit_sign_off.update"
+    AUDIT_SIGN_OFF_DELETE = "audit_sign_off.delete"
+
+    # Phase 4 - Attendance
+    ATTENDANCE_READ = "attendance.read"
+    ATTENDANCE_CREATE = "attendance.create"
+    ATTENDANCE_UPDATE = "attendance.update"
+    ATTENDANCE_DELETE = "attendance.delete"
+    ATTENDANCE_APPROVE = "attendance.approve"
+
+    # Phase 4 - Time Tracking
+    TIME_ENTRY_READ = "time_entry.read"
+    TIME_ENTRY_CREATE = "time_entry.create"
+    TIME_ENTRY_UPDATE = "time_entry.update"
+    TIME_ENTRY_DELETE = "time_entry.delete"
+    TIME_ENTRY_APPROVE = "time_entry.approve"
+    TIME_ENTRY_REPORT = "time_entry.report"
+
+    # Phase 4 - Leave
+    LEAVE_READ = "leave.read"
+    LEAVE_CREATE = "leave.create"
+    LEAVE_UPDATE = "leave.update"
+    LEAVE_DELETE = "leave.delete"
+    LEAVE_APPROVE = "leave.approve"
+    LEAVE_BALANCE = "leave.balance"
+
+    # Phase 4 - Physical Files
+    PHYSICAL_FILE_READ = "physical_file.read"
+    PHYSICAL_FILE_CREATE = "physical_file.create"
+    PHYSICAL_FILE_UPDATE = "physical_file.update"
+    PHYSICAL_FILE_DELETE = "physical_file.delete"
+    PHYSICAL_FILE_CHECKOUT = "physical_file.checkout"
+    PHYSICAL_FILE_CHECKIN = "physical_file.checkin"
+    PHYSICAL_FILE_MOVE = "physical_file.move"
+
+    # Phase 4 - Registers
+    REGISTER_READ = "register.read"
+    REGISTER_CREATE = "register.create"
+    REGISTER_UPDATE = "register.update"
+    REGISTER_DELETE = "register.delete"
+
 
 class Role(str, Enum):
     SUPER_ADMIN = "super_admin"
@@ -195,6 +257,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_DELETE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+            Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+            Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_DELETE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_DELETE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_DELETE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         partner_perms = {
@@ -225,6 +298,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_DELETE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+            Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+            Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_DELETE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_DELETE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_DELETE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         manager_perms = {
@@ -254,6 +338,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE, Permission.CALENDAR_DELETE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_DELETE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+            Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+            Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_DELETE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE, Permission.AUDIT_SIGN_OFF_UPDATE, Permission.AUDIT_SIGN_OFF_DELETE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_DELETE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_DELETE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         senior_associate_perms = {
@@ -282,6 +377,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+            Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+            Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE, Permission.AUDIT_SIGN_OFF_UPDATE, Permission.AUDIT_SIGN_OFF_DELETE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         associate_perms = {
@@ -310,6 +416,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+            Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+            Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE, Permission.AUDIT_SIGN_OFF_UPDATE, Permission.AUDIT_SIGN_OFF_DELETE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         junior_associate_perms = {
@@ -338,6 +455,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ,
             # Calendar
             Permission.CALENDAR_READ,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ,
+            Permission.AUDIT_WORKING_PAPER_READ,
+            Permission.AUDIT_EVIDENCE_READ,
+            Permission.AUDIT_REVIEW_READ,
+            Permission.AUDIT_SIGN_OFF_READ,
+            Permission.ATTENDANCE_READ,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ,
+            Permission.PHYSICAL_FILE_READ,
+            Permission.REGISTER_READ,
         }
 
         admin_staff_perms = {
@@ -365,6 +493,17 @@ class PermissionRegistry:
             Permission.EVENTS_READ, Permission.EVENTS_CREATE,
             # Calendar
             Permission.CALENDAR_READ, Permission.CALENDAR_CREATE, Permission.CALENDAR_UPDATE,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ, Permission.AUDIT_ENGAGEMENT_CREATE, Permission.AUDIT_ENGAGEMENT_UPDATE, Permission.AUDIT_ENGAGEMENT_TRANSITION,
+            Permission.AUDIT_WORKING_PAPER_READ, Permission.AUDIT_WORKING_PAPER_CREATE, Permission.AUDIT_WORKING_PAPER_UPDATE, Permission.AUDIT_WORKING_PAPER_DELETE,
+Permission.AUDIT_EVIDENCE_READ, Permission.AUDIT_EVIDENCE_CREATE, Permission.AUDIT_EVIDENCE_UPDATE, Permission.AUDIT_EVIDENCE_DELETE,
+Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_REVIEW_UPDATE, Permission.AUDIT_REVIEW_DELETE, Permission.AUDIT_REVIEW_TRANSITION,
+            Permission.AUDIT_SIGN_OFF_READ, Permission.AUDIT_SIGN_OFF_CREATE, Permission.AUDIT_SIGN_OFF_UPDATE, Permission.AUDIT_SIGN_OFF_DELETE,
+            Permission.ATTENDANCE_READ, Permission.ATTENDANCE_CREATE, Permission.ATTENDANCE_UPDATE, Permission.ATTENDANCE_DELETE, Permission.ATTENDANCE_APPROVE,
+            Permission.TIME_ENTRY_READ, Permission.TIME_ENTRY_CREATE, Permission.TIME_ENTRY_UPDATE, Permission.TIME_ENTRY_DELETE, Permission.TIME_ENTRY_APPROVE, Permission.TIME_ENTRY_REPORT,
+            Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
+            Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
+            Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
         }
 
         client_portal_perms = {
@@ -378,6 +517,17 @@ class PermissionRegistry:
             Permission.DOCUMENT_REQUESTS_READ,
             # Calendar
             Permission.CALENDAR_READ,
+            # Phase 4
+            Permission.AUDIT_ENGAGEMENT_READ,
+            Permission.AUDIT_WORKING_PAPER_READ,
+            Permission.AUDIT_EVIDENCE_READ,
+            Permission.AUDIT_REVIEW_READ,
+            Permission.AUDIT_SIGN_OFF_READ,
+            Permission.ATTENDANCE_READ,
+            Permission.TIME_ENTRY_READ,
+            Permission.LEAVE_READ,
+            Permission.PHYSICAL_FILE_READ,
+            Permission.REGISTER_READ,
         }
 
         self.role_permissions = {

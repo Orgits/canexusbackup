@@ -37,6 +37,7 @@ from app.modules.channels.router import router as channels_router
 from app.modules.ocr.router import router as ocr_router
 from app.modules.ai_processing.router import router as ai_processing_router
 from app.modules.document_intelligence.router import router as document_intelligence_router
+from app.modules.audit_workspace.router import router as audit_workspace_router
 
 settings = get_settings()
 
@@ -75,3 +76,4 @@ api_router.include_router(channels_router, prefix="/channels", tags=["Channel In
 api_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
 api_router.include_router(ai_processing_router, prefix="/ai", tags=["AI Processing"])
 api_router.include_router(document_intelligence_router, prefix="/document-intelligence", tags=["Document Intelligence"])
+api_router.include_router(audit_workspace_router, prefix="/audit-workspace", tags=["Audit Workspace"])

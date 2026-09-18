@@ -84,6 +84,15 @@ from app.modules.webhooks.models import WebhookEvent, WebhookEndpoint
 from app.modules.ocr.models import OCRJob, OCRTemplate
 from app.modules.ai_processing.models import AIModel, AIProcessingJob, AIConfidenceThreshold, AIReviewTask
 
+# Phase 4 modules
+from app.modules.audit_workspace.models import (
+    AuditEngagement,
+    AuditWorkingPaper,
+    AuditEvidence,
+    AuditReview,
+    AuditSignOff,
+)
+
 config = context.config
 
 settings = get_settings()
