@@ -35,12 +35,24 @@ celery_app.conf.update(
         "notifications": {},
         "workload": {},
         "outbox": {},
+        "reporting": {},
+        "dpdp": {},
+        "indexing": {},
     },
     task_routes={
         "app.workers.compliance_tasks.*": {"queue": "compliance"},
         "app.workers.notification_tasks.*": {"queue": "notifications"},
         "app.workers.workload_tasks.*": {"queue": "workload"},
         "app.workers.outbox_tasks.*": {"queue": "outbox"},
+        "app.workers.reporting_tasks.*": {"queue": "reporting"},
+        "app.workers.dpdp_tasks.*": {"queue": "dpdp"},
+        "app.workers.search_indexer_tasks.*": {"queue": "indexing"},
+        "app.workers.phase4.dsc_worker.*": {"queue": "compliance"},
+        "app.workers.phase4.license_worker.*": {"queue": "compliance"},
+        "app.workers.phase4.engagement_document_worker.*": {"queue": "notifications"},
+        "app.workers.phase4.e_signature_worker.*": {"queue": "notifications"},
+        "app.workers.phase4.mfa_worker.*": {"queue": "default"},
+        "app.workers.phase4.udin_worker.*": {"queue": "compliance"},
     },
     beat_schedule={
         "generate-compliance-cycles": {
@@ -72,6 +84,78 @@ celery_app.conf.update(
             "task": "app.workers.outbox_tasks.cleanup_processed_outbox",
             "schedule": 86400.0,
             "options": {"queue": "outbox"},
+        },
+        # Phase 4 scheduled tasks
+        "dsc-expiry-reminders": {
+            "task": "app.workers.phase4.dsc_worker.process_dsc_expiry_reminders",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "compliance"},
+        },
+        "dsc-auto-expiry": {
+            "task": "app.workers.phase4.dsc_worker.process_dsc_auto_expiry",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "compliance"},
+        },
+        "license-expiry-reminders": {
+            "task": "app.workers.phase4.license_worker.process_license_expiry_reminders",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "compliance"},
+        },
+        "license-auto-expiry": {
+            "task": "app.workers.phase4.license_worker.process_license_auto_expiry",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "compliance"},
+        },
+        "engagement-doc-reminders": {
+            "task": "app.workers.phase4.engagement_document_worker.process_engagement_document_reminders",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "notifications"},
+        },
+        "esignature-expiry-reminders": {
+            "task": "app.workers.phase4.e_signature_worker.process_esignature_expiry_reminders",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "notifications"},
+        },
+        "esignature-auto-expiry": {
+            "task": "app.workers.phase4.e_signature_worker.process_esignature_auto_expiry",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "notifications"},
+        },
+        "esignature-webhook-queue": {
+            "task": "app.workers.phase4.e_signature_worker.process_esignature_webhook_queue",
+            "schedule": 300.0,  # Every 5 minutes
+            "options": {"queue": "notifications"},
+        },
+        "mfa-lockout-cleanup": {
+            "task": "app.workers.phase4.mfa_worker.process_mfa_lockout_cleanup",
+            "schedule": 900.0,  # Every 15 minutes
+            "options": {"queue": "default"},
+        },
+        "mfa-enrollment-expiry": {
+            "task": "app.workers.phase4.mfa_worker.process_mfa_enrollment_expiry",
+            "schedule": 3600.0,  # Hourly
+            "options": {"queue": "default"},
+        },
+        "udin-expiry-check": {
+            "task": "app.workers.phase4.udin_worker.process_udin_expiry_check",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "compliance"},
+        },
+        # Phase 5 scheduled tasks
+        "process-scheduled-reports": {
+            "task": "app.workers.reporting_tasks.process_scheduled_reports",
+            "schedule": 300.0,  # Every 5 minutes
+            "options": {"queue": "reporting"},
+        },
+        "execute-retention-policies": {
+            "task": "app.workers.dpdp_tasks.execute_retention_policies",
+            "schedule": 86400.0,  # Daily
+            "options": {"queue": "dpdp"},
+        },
+        "process-search-index-queue": {
+            "task": "app.workers.search_indexer_tasks.process_search_index_queue",
+            "schedule": 60.0,  # Every minute
+            "options": {"queue": "indexing"},
         },
     },
     beat_scheduler="celery.beat.PersistentScheduler",

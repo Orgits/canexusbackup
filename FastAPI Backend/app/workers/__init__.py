@@ -18,6 +18,14 @@ from .workload_tasks import (
     generate_daily_workload_snapshots,
     generate_workload_summaries,
 )
+from .phase4 import (
+    dsc_worker,
+    udin_worker,
+    license_worker,
+    engagement_document_worker,
+    e_signature_worker,
+    mfa_worker,
+)
 
 __all__ = [
     "BaseWorker",

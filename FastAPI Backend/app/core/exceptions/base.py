@@ -151,3 +151,20 @@ class MalwareException(CAException):
             headers=headers,
             extra=extra,
         )
+
+
+class RateLimitException(CAException):
+    def __init__(
+        self,
+        detail: str = "Rate limit exceeded",
+        code: str = "RATE_LIMIT_EXCEEDED",
+        headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
+    ):
+        super().__init__(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=detail,
+            code=code,
+            headers=headers,
+            extra=extra,
+        )

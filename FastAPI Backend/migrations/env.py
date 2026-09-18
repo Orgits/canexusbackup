@@ -84,13 +84,60 @@ from app.modules.webhooks.models import WebhookEvent, WebhookEndpoint
 from app.modules.ocr.models import OCRJob, OCRTemplate
 from app.modules.ai_processing.models import AIModel, AIProcessingJob, AIConfidenceThreshold, AIReviewTask
 
-# Phase 4 modules
+# Phase 5 modules
+from app.modules.reporting.models import (
+    ReportDefinition,
+    ReportParameter,
+    ReportJob,
+    ReportOutput,
+    ReportSchedule,
+    DashboardWidget,
+)
+from app.modules.dpdp.models import (
+    DataAccessRequest,
+    DataCorrectionRequest,
+    DataErasureRequest,
+    RetentionPolicy,
+    RetentionExecution,
+    DataResidencyRecord,
+)
 from app.modules.audit_workspace.models import (
     AuditEngagement,
     AuditWorkingPaper,
     AuditEvidence,
     AuditReview,
     AuditSignOff,
+)
+from app.modules.dsc.models import (
+    DSCCertificate,
+    DSCSigningLog,
+    DSCRenewalRequest,
+)
+from app.modules.udin.models import (
+    UDINRecord,
+    UDINVerificationLog,
+)
+from app.modules.licenses.models import (
+    License,
+    LicenseDocument,
+    LicenseRenewalRequest,
+)
+from app.modules.engagement_documents.models import (
+    EngagementDocument,
+    EngagementDocumentSigner,
+    EngagementDocumentVersion,
+    EngagementDocumentTemplate,
+)
+from app.modules.e_signature.models import (
+    ESignatureRequest,
+    ESigner,
+    ESignatureProviderConfig,
+    ESignatureWebhookEvent,
+)
+from app.modules.mfa.models import (
+    MFAEnrollment,
+    MFAVerificationLog,
+    MFALoginChallenge,
 )
 
 config = context.config

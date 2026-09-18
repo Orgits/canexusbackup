@@ -5,9 +5,11 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import ARRAY, Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.core.database.base import Base, TenantBaseModelMixin
 from app.core.database.encryption_mixin import PIIEncryptionMixin, encrypted_column
+from app.core.security.encryption import encrypt_field, decrypt_field
 
 if TYPE_CHECKING:
     from app.modules.firms.models import Firm
@@ -18,9 +20,35 @@ class User(Base, TenantBaseModelMixin, PIIEncryptionMixin):
     __tablename__ = "users"
 
     _email_encrypted: Mapped[bytes] = encrypted_column(nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     _phone_encrypted: Mapped[bytes | None] = encrypted_column()
+    
+    @hybrid_property
+    def email(self) -> str | None:
+        return self._decrypt(self._email_encrypted)
+
+    @email.setter
+    def email(self, value: str | None) -> None:
+        self._email_encrypted = self._encrypt(value)
+    
+    @hybrid_property
+    def phone(self) -> str | None:
+        return self._decrypt(self._phone_encrypted)
+
+    @phone.setter
+    def phone(self, value: str | None) -> None:
+        self._phone_encrypted = self._encrypt(value)
+
+    def __init__(self, **kwargs):
+        """Initialize User with support for email and phone encryption."""
+        email = kwargs.pop('email', None)
+        phone = kwargs.pop('phone', None)
+        super().__init__(**kwargs)
+        if email is not None:
+            self.email = email
+        if phone is not None:
+            self.phone = phone
+
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

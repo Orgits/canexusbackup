@@ -206,6 +206,99 @@ class Permission(str, Enum):
     REGISTER_UPDATE = "register.update"
     REGISTER_DELETE = "register.delete"
 
+    # Phase 4 - DSC (Digital Signature Certificates)
+    DSC_READ = "dsc.read"
+    DSC_CREATE = "dsc.create"
+    DSC_UPDATE = "dsc.update"
+    DSC_DELETE = "dsc.delete"
+    DSC_SIGN = "dsc.sign"
+    DSC_RENEWAL_READ = "dsc.renewal.read"
+    DSC_RENEWAL_CREATE = "dsc.renewal.create"
+    DSC_RENEWAL_UPDATE = "dsc.renewal.update"
+    DSC_RENEWAL_DELETE = "dsc.renewal.delete"
+
+    # Phase 4 - UDIN
+    UDIN_READ = "udin.read"
+    UDIN_CREATE = "udin.create"
+    UDIN_UPDATE = "udin.update"
+    UDIN_DELETE = "udin.delete"
+    UDIN_VERIFY = "udin.verify"
+
+    # Phase 4 - Licenses
+    LICENSE_READ = "license.read"
+    LICENSE_CREATE = "license.create"
+    LICENSE_UPDATE = "license.update"
+    LICENSE_DELETE = "license.delete"
+    LICENSE_RENEWAL_READ = "license.renewal.read"
+    LICENSE_RENEWAL_CREATE = "license.renewal.create"
+    LICENSE_RENEWAL_UPDATE = "license.renewal.update"
+    LICENSE_RENEWAL_DELETE = "license.renewal.delete"
+
+    # Phase 4 - Engagement Documents
+    ENGAGEMENT_DOC_READ = "engagement_doc.read"
+    ENGAGEMENT_DOC_CREATE = "engagement_doc.create"
+    ENGAGEMENT_DOC_UPDATE = "engagement_doc.update"
+    ENGAGEMENT_DOC_DELETE = "engagement_doc.delete"
+    ENGAGEMENT_DOC_SIGN = "engagement_doc.sign"
+    ENGAGEMENT_DOC_TEMPLATE_READ = "engagement_doc_template.read"
+    ENGAGEMENT_DOC_TEMPLATE_CREATE = "engagement_doc_template.create"
+    ENGAGEMENT_DOC_TEMPLATE_UPDATE = "engagement_doc_template.update"
+    ENGAGEMENT_DOC_TEMPLATE_DELETE = "engagement_doc_template.delete"
+
+    # Phase 4 - E-Signature
+    E_SIGNATURE_READ = "e_signature.read"
+    E_SIGNATURE_CREATE = "e_signature.create"
+    E_SIGNATURE_UPDATE = "e_signature.update"
+    E_SIGNATURE_DELETE = "e_signature.delete"
+    E_SIGNATURE_SEND = "e_signature.send"
+    E_SIGNATURE_PROVIDER_CONFIG_READ = "e_signature_provider.read"
+    E_SIGNATURE_PROVIDER_CONFIG_CREATE = "e_signature_provider.create"
+    E_SIGNATURE_PROVIDER_CONFIG_UPDATE = "e_signature_provider.update"
+    E_SIGNATURE_PROVIDER_CONFIG_DELETE = "e_signature_provider.delete"
+    E_SIGNATURE_WEBHOOK_READ = "e_signature_webhook.read"
+
+    # Phase 4 - MFA
+    MFA_ENROLLMENT_READ = "mfa.read"
+    MFA_ENROLLMENT_CREATE = "mfa.create"
+    MFA_ENROLLMENT_UPDATE = "mfa.update"
+    MFA_ENROLLMENT_DELETE = "mfa.delete"
+    MFA_VERIFY = "mfa.verify"
+    MFA_CHALLENGE_CREATE = "mfa.challenge.create"
+    MFA_CHALLENGE_VERIFY = "mfa.challenge.verify"
+
+    # Phase 5 - Reporting & Analytics
+    REPORT_READ = "report.read"
+    REPORT_CREATE = "report.create"
+    REPORT_UPDATE = "report.update"
+    REPORT_DELETE = "report.delete"
+    REPORT_GENERATE = "report.generate"
+    REPORT_SCHEDULE_READ = "report_schedule.read"
+    REPORT_SCHEDULE_CREATE = "report_schedule.create"
+    REPORT_SCHEDULE_UPDATE = "report_schedule.update"
+    REPORT_SCHEDULE_DELETE = "report_schedule.delete"
+    ANALYTICS_READ = "analytics.read"
+
+    # Phase 5 - Global Search
+    SEARCH_GLOBAL = "search.global"
+
+    # Phase 5 - DPDP Workflows
+    DPDP_ACCESS_READ = "dpdp_access.read"
+    DPDP_ACCESS_CREATE = "dpdp_access.create"
+    DPDP_CORRECTION_READ = "dpdp_correction.read"
+    DPDP_CORRECTION_CREATE = "dpdp_correction.create"
+    DPDP_CORRECTION_UPDATE = "dpdp_correction.update"
+    DPDP_ERASURE_READ = "dpdp_erasure.read"
+    DPDP_ERASURE_CREATE = "dpdp_erasure.create"
+    DPDP_ERASURE_EXECUTE = "dpdp_erasure.execute"
+    DPDP_RESIDENCY_READ = "dpdp_residency.read"
+
+    # Phase 5 - Retention
+    RETENTION_READ = "retention.read"
+    RETENTION_CREATE = "retention.create"
+    RETENTION_UPDATE = "retention.update"
+    RETENTION_DELETE = "retention.delete"
+    RETENTION_EXECUTE = "retention.execute"
+
 
 class Role(str, Enum):
     SUPER_ADMIN = "super_admin"
@@ -268,6 +361,39 @@ class PermissionRegistry:
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 4 - DSC
+            Permission.DSC_READ, Permission.DSC_CREATE, Permission.DSC_UPDATE, Permission.DSC_DELETE, Permission.DSC_SIGN,
+            Permission.DSC_RENEWAL_READ, Permission.DSC_RENEWAL_CREATE, Permission.DSC_RENEWAL_UPDATE, Permission.DSC_RENEWAL_DELETE,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ, Permission.UDIN_CREATE, Permission.UDIN_UPDATE, Permission.UDIN_DELETE, Permission.UDIN_VERIFY,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ, Permission.LICENSE_CREATE, Permission.LICENSE_UPDATE, Permission.LICENSE_DELETE,
+            Permission.LICENSE_RENEWAL_READ, Permission.LICENSE_RENEWAL_CREATE, Permission.LICENSE_RENEWAL_UPDATE, Permission.LICENSE_RENEWAL_DELETE,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ, Permission.ENGAGEMENT_DOC_CREATE, Permission.ENGAGEMENT_DOC_UPDATE, Permission.ENGAGEMENT_DOC_DELETE, Permission.ENGAGEMENT_DOC_SIGN,
+            Permission.ENGAGEMENT_DOC_TEMPLATE_READ, Permission.ENGAGEMENT_DOC_TEMPLATE_CREATE, Permission.ENGAGEMENT_DOC_TEMPLATE_UPDATE, Permission.ENGAGEMENT_DOC_TEMPLATE_DELETE,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ, Permission.E_SIGNATURE_CREATE, Permission.E_SIGNATURE_UPDATE, Permission.E_SIGNATURE_DELETE, Permission.E_SIGNATURE_SEND,
+            Permission.E_SIGNATURE_PROVIDER_CONFIG_READ, Permission.E_SIGNATURE_PROVIDER_CONFIG_CREATE, Permission.E_SIGNATURE_PROVIDER_CONFIG_UPDATE, Permission.E_SIGNATURE_PROVIDER_CONFIG_DELETE,
+            Permission.E_SIGNATURE_WEBHOOK_READ,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_ENROLLMENT_CREATE, Permission.MFA_ENROLLMENT_UPDATE, Permission.MFA_ENROLLMENT_DELETE,
+            Permission.MFA_VERIFY, Permission.MFA_CHALLENGE_CREATE, Permission.MFA_CHALLENGE_VERIFY,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_UPDATE, Permission.REPORT_DELETE,
+            Permission.REPORT_GENERATE, Permission.REPORT_SCHEDULE_READ, Permission.REPORT_SCHEDULE_CREATE,
+            Permission.REPORT_SCHEDULE_UPDATE, Permission.REPORT_SCHEDULE_DELETE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ, Permission.DPDP_ACCESS_CREATE,
+            Permission.DPDP_CORRECTION_READ, Permission.DPDP_CORRECTION_CREATE, Permission.DPDP_CORRECTION_UPDATE,
+            Permission.DPDP_ERASURE_READ, Permission.DPDP_ERASURE_CREATE, Permission.DPDP_ERASURE_EXECUTE,
+            Permission.DPDP_RESIDENCY_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ, Permission.RETENTION_CREATE, Permission.RETENTION_UPDATE,
+            Permission.RETENTION_DELETE, Permission.RETENTION_EXECUTE,
         }
 
         partner_perms = {
@@ -309,6 +435,39 @@ class PermissionRegistry:
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 4 - DSC
+            Permission.DSC_READ, Permission.DSC_CREATE, Permission.DSC_UPDATE, Permission.DSC_DELETE, Permission.DSC_SIGN,
+            Permission.DSC_RENEWAL_READ, Permission.DSC_RENEWAL_CREATE, Permission.DSC_RENEWAL_UPDATE, Permission.DSC_RENEWAL_DELETE,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ, Permission.UDIN_CREATE, Permission.UDIN_UPDATE, Permission.UDIN_DELETE, Permission.UDIN_VERIFY,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ, Permission.LICENSE_CREATE, Permission.LICENSE_UPDATE, Permission.LICENSE_DELETE,
+            Permission.LICENSE_RENEWAL_READ, Permission.LICENSE_RENEWAL_CREATE, Permission.LICENSE_RENEWAL_UPDATE, Permission.LICENSE_RENEWAL_DELETE,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ, Permission.ENGAGEMENT_DOC_CREATE, Permission.ENGAGEMENT_DOC_UPDATE, Permission.ENGAGEMENT_DOC_DELETE, Permission.ENGAGEMENT_DOC_SIGN,
+            Permission.ENGAGEMENT_DOC_TEMPLATE_READ, Permission.ENGAGEMENT_DOC_TEMPLATE_CREATE, Permission.ENGAGEMENT_DOC_TEMPLATE_UPDATE, Permission.ENGAGEMENT_DOC_TEMPLATE_DELETE,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ, Permission.E_SIGNATURE_CREATE, Permission.E_SIGNATURE_UPDATE, Permission.E_SIGNATURE_DELETE, Permission.E_SIGNATURE_SEND,
+            Permission.E_SIGNATURE_PROVIDER_CONFIG_READ, Permission.E_SIGNATURE_PROVIDER_CONFIG_CREATE, Permission.E_SIGNATURE_PROVIDER_CONFIG_UPDATE, Permission.E_SIGNATURE_PROVIDER_CONFIG_DELETE,
+            Permission.E_SIGNATURE_WEBHOOK_READ,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_ENROLLMENT_CREATE, Permission.MFA_ENROLLMENT_UPDATE, Permission.MFA_ENROLLMENT_DELETE,
+            Permission.MFA_VERIFY, Permission.MFA_CHALLENGE_CREATE, Permission.MFA_CHALLENGE_VERIFY,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_UPDATE, Permission.REPORT_DELETE,
+            Permission.REPORT_GENERATE, Permission.REPORT_SCHEDULE_READ, Permission.REPORT_SCHEDULE_CREATE,
+            Permission.REPORT_SCHEDULE_UPDATE, Permission.REPORT_SCHEDULE_DELETE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ, Permission.DPDP_ACCESS_CREATE,
+            Permission.DPDP_CORRECTION_READ, Permission.DPDP_CORRECTION_CREATE, Permission.DPDP_CORRECTION_UPDATE,
+            Permission.DPDP_ERASURE_READ, Permission.DPDP_ERASURE_CREATE, Permission.DPDP_ERASURE_EXECUTE,
+            Permission.DPDP_RESIDENCY_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ, Permission.RETENTION_CREATE, Permission.RETENTION_UPDATE,
+            Permission.RETENTION_DELETE, Permission.RETENTION_EXECUTE,
         }
 
         manager_perms = {
@@ -349,6 +508,37 @@ class PermissionRegistry:
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 4 - DSC
+            Permission.DSC_READ, Permission.DSC_CREATE, Permission.DSC_UPDATE, Permission.DSC_DELETE, Permission.DSC_SIGN,
+            Permission.DSC_RENEWAL_READ, Permission.DSC_RENEWAL_CREATE, Permission.DSC_RENEWAL_UPDATE, Permission.DSC_RENEWAL_DELETE,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ, Permission.UDIN_CREATE, Permission.UDIN_UPDATE, Permission.UDIN_DELETE, Permission.UDIN_VERIFY,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ, Permission.LICENSE_CREATE, Permission.LICENSE_UPDATE, Permission.LICENSE_DELETE,
+            Permission.LICENSE_RENEWAL_READ, Permission.LICENSE_RENEWAL_CREATE, Permission.LICENSE_RENEWAL_UPDATE, Permission.LICENSE_RENEWAL_DELETE,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ, Permission.ENGAGEMENT_DOC_CREATE, Permission.ENGAGEMENT_DOC_UPDATE, Permission.ENGAGEMENT_DOC_DELETE, Permission.ENGAGEMENT_DOC_SIGN,
+            Permission.ENGAGEMENT_DOC_TEMPLATE_READ, Permission.ENGAGEMENT_DOC_TEMPLATE_CREATE, Permission.ENGAGEMENT_DOC_TEMPLATE_UPDATE, Permission.ENGAGEMENT_DOC_TEMPLATE_DELETE,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ, Permission.E_SIGNATURE_CREATE, Permission.E_SIGNATURE_UPDATE, Permission.E_SIGNATURE_DELETE, Permission.E_SIGNATURE_SEND,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_ENROLLMENT_CREATE, Permission.MFA_ENROLLMENT_UPDATE, Permission.MFA_ENROLLMENT_DELETE,
+            Permission.MFA_VERIFY, Permission.MFA_CHALLENGE_CREATE, Permission.MFA_CHALLENGE_VERIFY,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_UPDATE, Permission.REPORT_DELETE,
+            Permission.REPORT_GENERATE, Permission.REPORT_SCHEDULE_READ, Permission.REPORT_SCHEDULE_CREATE,
+            Permission.REPORT_SCHEDULE_UPDATE, Permission.REPORT_SCHEDULE_DELETE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ, Permission.DPDP_ACCESS_CREATE,
+            Permission.DPDP_CORRECTION_READ, Permission.DPDP_CORRECTION_CREATE, Permission.DPDP_CORRECTION_UPDATE,
+            Permission.DPDP_ERASURE_READ, Permission.DPDP_ERASURE_CREATE, Permission.DPDP_ERASURE_EXECUTE,
+            Permission.DPDP_RESIDENCY_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ, Permission.RETENTION_CREATE, Permission.RETENTION_UPDATE,
+            Permission.RETENTION_DELETE, Permission.RETENTION_EXECUTE,
         }
 
         senior_associate_perms = {
@@ -388,6 +578,37 @@ class PermissionRegistry:
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 4 - DSC
+            Permission.DSC_READ, Permission.DSC_CREATE, Permission.DSC_UPDATE, Permission.DSC_DELETE, Permission.DSC_SIGN,
+            Permission.DSC_RENEWAL_READ, Permission.DSC_RENEWAL_CREATE, Permission.DSC_RENEWAL_UPDATE, Permission.DSC_RENEWAL_DELETE,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ, Permission.UDIN_CREATE, Permission.UDIN_UPDATE, Permission.UDIN_DELETE, Permission.UDIN_VERIFY,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ, Permission.LICENSE_CREATE, Permission.LICENSE_UPDATE, Permission.LICENSE_DELETE,
+            Permission.LICENSE_RENEWAL_READ, Permission.LICENSE_RENEWAL_CREATE, Permission.LICENSE_RENEWAL_UPDATE, Permission.LICENSE_RENEWAL_DELETE,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ, Permission.ENGAGEMENT_DOC_CREATE, Permission.ENGAGEMENT_DOC_UPDATE, Permission.ENGAGEMENT_DOC_DELETE, Permission.ENGAGEMENT_DOC_SIGN,
+            Permission.ENGAGEMENT_DOC_TEMPLATE_READ, Permission.ENGAGEMENT_DOC_TEMPLATE_CREATE, Permission.ENGAGEMENT_DOC_TEMPLATE_UPDATE, Permission.ENGAGEMENT_DOC_TEMPLATE_DELETE,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ, Permission.E_SIGNATURE_CREATE, Permission.E_SIGNATURE_UPDATE, Permission.E_SIGNATURE_DELETE, Permission.E_SIGNATURE_SEND,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_ENROLLMENT_CREATE, Permission.MFA_ENROLLMENT_UPDATE, Permission.MFA_ENROLLMENT_DELETE,
+            Permission.MFA_VERIFY, Permission.MFA_CHALLENGE_CREATE, Permission.MFA_CHALLENGE_VERIFY,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_UPDATE,
+            Permission.REPORT_GENERATE, Permission.REPORT_SCHEDULE_READ, Permission.REPORT_SCHEDULE_CREATE,
+            Permission.REPORT_SCHEDULE_UPDATE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ, Permission.DPDP_ACCESS_CREATE,
+            Permission.DPDP_CORRECTION_READ, Permission.DPDP_CORRECTION_CREATE,
+            Permission.DPDP_ERASURE_READ, Permission.DPDP_ERASURE_CREATE,
+            Permission.DPDP_RESIDENCY_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ, Permission.RETENTION_CREATE, Permission.RETENTION_UPDATE,
+            Permission.RETENTION_EXECUTE,
         }
 
         associate_perms = {
@@ -427,6 +648,17 @@ class PermissionRegistry:
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_GENERATE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ,
+            Permission.DPDP_CORRECTION_READ,
+            Permission.DPDP_ERASURE_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ,
         }
 
         junior_associate_perms = {
@@ -466,6 +698,28 @@ class PermissionRegistry:
             Permission.LEAVE_READ,
             Permission.PHYSICAL_FILE_READ,
             Permission.REGISTER_READ,
+            # Phase 4 - DSC
+            Permission.DSC_READ,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ,
+            Permission.ENGAGEMENT_DOC_TEMPLATE_READ,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_VERIFY,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ,
         }
 
         admin_staff_perms = {
@@ -504,6 +758,21 @@ Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_R
             Permission.LEAVE_READ, Permission.LEAVE_CREATE, Permission.LEAVE_UPDATE, Permission.LEAVE_DELETE, Permission.LEAVE_APPROVE, Permission.LEAVE_BALANCE,
             Permission.PHYSICAL_FILE_READ, Permission.PHYSICAL_FILE_CREATE, Permission.PHYSICAL_FILE_UPDATE, Permission.PHYSICAL_FILE_DELETE, Permission.PHYSICAL_FILE_CHECKOUT, Permission.PHYSICAL_FILE_CHECKIN, Permission.PHYSICAL_FILE_MOVE,
             Permission.REGISTER_READ, Permission.REGISTER_CREATE, Permission.REGISTER_UPDATE, Permission.REGISTER_DELETE,
+            # Phase 5 - Reporting & Analytics
+            Permission.REPORT_READ, Permission.REPORT_CREATE, Permission.REPORT_UPDATE,
+            Permission.REPORT_GENERATE, Permission.REPORT_SCHEDULE_READ, Permission.REPORT_SCHEDULE_CREATE,
+            Permission.REPORT_SCHEDULE_UPDATE,
+            Permission.ANALYTICS_READ,
+            # Phase 5 - Global Search
+            Permission.SEARCH_GLOBAL,
+            # Phase 5 - DPDP Workflows
+            Permission.DPDP_ACCESS_READ, Permission.DPDP_ACCESS_CREATE,
+            Permission.DPDP_CORRECTION_READ, Permission.DPDP_CORRECTION_CREATE,
+            Permission.DPDP_ERASURE_READ, Permission.DPDP_ERASURE_CREATE,
+            Permission.DPDP_RESIDENCY_READ,
+            # Phase 5 - Retention
+            Permission.RETENTION_READ, Permission.RETENTION_CREATE, Permission.RETENTION_UPDATE,
+            Permission.RETENTION_EXECUTE,
         }
 
         client_portal_perms = {
@@ -528,6 +797,18 @@ Permission.AUDIT_REVIEW_READ, Permission.AUDIT_REVIEW_CREATE, Permission.AUDIT_R
             Permission.LEAVE_READ,
             Permission.PHYSICAL_FILE_READ,
             Permission.REGISTER_READ,
+            # Phase 4 - DSC
+            Permission.DSC_READ,
+            # Phase 4 - UDIN
+            Permission.UDIN_READ,
+            # Phase 4 - Licenses
+            Permission.LICENSE_READ,
+            # Phase 4 - Engagement Documents
+            Permission.ENGAGEMENT_DOC_READ,
+            # Phase 4 - E-Signature
+            Permission.E_SIGNATURE_READ,
+            # Phase 4 - MFA
+            Permission.MFA_ENROLLMENT_READ, Permission.MFA_VERIFY,
         }
 
         self.role_permissions = {

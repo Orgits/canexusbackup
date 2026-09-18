@@ -56,6 +56,15 @@ class OutboxEventType(str, PyEnum):
     ASSIGNMENT_REASSIGNED = "assignment.reassigned"
     ASSIGNMENT_ESCALATED = "assignment.escalated"
 
+    # Phase 5 - Reporting
+    REPORT_COMPLETED = "report.completed"
+    REPORT_FAILED = "report.failed"
+
+    # Phase 5 - DPDP
+    DATA_CORRECTION_APPLIED = "data_correction.applied"
+    DATA_ERASURE_COMPLETED = "data_erasure.completed"
+    RETENTION_EXECUTED = "retention.executed"
+
 
 class OutboxStatus(str, PyEnum):
     PENDING = "pending"

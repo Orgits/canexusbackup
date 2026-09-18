@@ -13,6 +13,12 @@ from app.modules.compliance.router import router as compliance_router
 from app.modules.communications.router import router as communications_router
 from app.modules.consent.router import router as consent_router
 from app.modules.documents.router import router as documents_router
+from app.modules.dsc.router import router as dsc_router
+from app.modules.udin.router import router as udin_router
+from app.modules.licenses.router import router as licenses_router
+from app.modules.engagement_documents.router import router as engagement_documents_router
+from app.modules.e_signature.router import router as e_signature_router
+from app.modules.mfa.router import router as mfa_router
 from app.modules.firms.router import router as firms_router
 from app.modules.matters.router import router as matters_router
 from app.modules.mca_roc.router import router as mca_roc_router
@@ -24,6 +30,9 @@ from app.modules.tds.router import router as tds_router
 from app.modules.users.router import router as users_router
 from app.modules.workflow.router import router as workflow_router
 from app.modules.workload.router import router as workload_router
+from app.modules.reporting.router import router as reporting_router
+from app.modules.dpdp.router import router as dpdp_router
+from app.modules.search.router import router as search_router
 
 # Phase 3 modules
 from app.modules.campaigns.router import router as campaigns_router
@@ -60,6 +69,9 @@ api_router.include_router(tds_router, prefix="/tds", tags=["TDS Compliance"])
 api_router.include_router(mca_roc_router, prefix="/mca-roc", tags=["MCA/ROC Compliance"])
 api_router.include_router(notices_router, prefix="/notices", tags=["Notice Management"])
 api_router.include_router(workload_router, prefix="/workload", tags=["Workload & Capacity"])
+api_router.include_router(reporting_router, prefix="/reporting", tags=["Reporting & Analytics"])
+api_router.include_router(dpdp_router, prefix="/dpdp", tags=["DPDP Workflows"])
+api_router.include_router(search_router, prefix="/search", tags=["Global Search"])
 api_router.include_router(assignments_router, prefix="/assignments", tags=["Assignment & Escalation"])
 api_router.include_router(collaboration_router, prefix="/collaboration", tags=["Collaboration & Comments"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
@@ -77,3 +89,11 @@ api_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
 api_router.include_router(ai_processing_router, prefix="/ai", tags=["AI Processing"])
 api_router.include_router(document_intelligence_router, prefix="/document-intelligence", tags=["Document Intelligence"])
 api_router.include_router(audit_workspace_router, prefix="/audit-workspace", tags=["Audit Workspace"])
+
+# Phase 4 routers
+api_router.include_router(dsc_router, prefix="/dsc", tags=["DSC (Digital Signature Certificates)"])
+api_router.include_router(udin_router, prefix="/udin", tags=["UDIN (Unique Document Identification Number)"])
+api_router.include_router(licenses_router, prefix="/licenses", tags=["Licenses & Registrations"])
+api_router.include_router(engagement_documents_router, prefix="/engagement-documents", tags=["Engagement Documents"])
+api_router.include_router(e_signature_router, prefix="/e-signature", tags=["E-Signature"])
+api_router.include_router(mfa_router, prefix="/mfa", tags=["Multi-Factor Authentication"])
