@@ -28,7 +28,7 @@ from app.modules.ai_processing.schemas import (
     AIReviewTaskUpdate,
     AIProcessRequest,
 )
-from app.modules.ai_processing.service import AIModelService, AIProcessingService, AIConfidenceService
+from app.modules.ai_processing.service import AIModelService, AIProcessingService, AIConfidenceService, AIReviewTaskService
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/ai", tags=["AI Processing"])
@@ -309,8 +309,9 @@ async def create_review_task(
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
-    # This would be implemented similarly to other services
-    raise NotImplementedError("Review task creation not yet implemented")
+    service = AIReviewTaskService(db)
+    task = await service.create_task(data.job_id, tenant_context.tenant_id, data.assignee_id, current_user.id)
+    return AIReviewTaskResponse.model_validate(task)
 
 
 @router.get("/review-tasks", response_model=AIReviewTaskListResponse)
@@ -323,8 +324,15 @@ async def list_review_tasks(
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
-    # This would be implemented similarly to other list endpoints
-    raise NotImplementedError("Review task listing not yet implemented")
+    service = AIReviewTaskService(db)
+    items, total = await service.list_tasks(tenant_context.tenant_id, page, page_size, status, assignee_id)
+    return AIReviewTaskListResponse(
+        items=[AIReviewTaskResponse.model_validate(item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
 
 
 @router.get("/review-tasks/{task_id}", response_model=AIReviewTaskResponse)
@@ -334,7 +342,9 @@ async def get_review_task(
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_READ)),
 ):
-    raise NotImplementedError("Review task retrieval not yet implemented")
+    service = AIReviewTaskService(db)
+    task = await service.get_task(task_id, tenant_context.tenant_id)
+    return AIReviewTaskResponse.model_validate(task)
 
 
 @router.patch("/review-tasks/{task_id}", response_model=AIReviewTaskResponse)
@@ -345,4 +355,6 @@ async def update_review_task(
     tenant_context=Depends(get_tenant_context),
     current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
-    raise NotImplementedError("Review task update not yet implemented")
+    service = AIReviewTaskService(db)
+    task = await service.update_task(task_id, tenant_context.tenant_id, data.model_dump(exclude_unset=True), current_user.id)
+    return AIReviewTaskResponse.model_validate(task)

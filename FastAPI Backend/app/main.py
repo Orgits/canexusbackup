@@ -20,6 +20,8 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.observability import get_metrics, setup_metrics, setup_tracing, instrument_app
 from app.core.redis.client import close_redis, get_redis, init_redis
+from app.modules.mongodb.manager import close_mongodb, get_mongodb
+from app.modules.opensearch.manager import close_opensearch, get_opensearch
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -31,10 +33,27 @@ async def lifespan(app: FastAPI):
     setup_metrics()
     setup_tracing()
     await init_redis()
+    
+    # Initialize MongoDB
+    try:
+        await get_mongodb()
+        logger.info("MongoDB connected")
+    except Exception as e:
+        logger.warning("MongoDB connection failed", error=str(e))
+    
+    # Initialize OpenSearch
+    try:
+        await get_opensearch()
+        logger.info("OpenSearch connected")
+    except Exception as e:
+        logger.warning("OpenSearch connection failed", error=str(e))
+    
     logger.info("Application starting up", environment=settings.ENVIRONMENT)
     yield
     logger.info("Application shutting down")
     await close_redis()
+    await close_mongodb()
+    await close_opensearch()
     await engine.dispose()
 
 

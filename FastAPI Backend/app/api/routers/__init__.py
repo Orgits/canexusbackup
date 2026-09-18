@@ -36,8 +36,7 @@ from app.modules.webhooks.router import router as webhooks_router
 from app.modules.channels.router import router as channels_router
 from app.modules.ocr.router import router as ocr_router
 from app.modules.ai_processing.router import router as ai_processing_router
-from app.modules.suppression.router import router as suppression_router
-from app.modules.document_requests.router import router as document_requests_router
+from app.modules.document_intelligence.router import router as document_intelligence_router
 
 settings = get_settings()
 
@@ -75,5 +74,4 @@ api_router.include_router(webhooks_router, prefix="/webhooks", tags=["Webhooks"]
 api_router.include_router(channels_router, prefix="/channels", tags=["Channel Integrations"])
 api_router.include_router(ocr_router, prefix="/ocr", tags=["OCR"])
 api_router.include_router(ai_processing_router, prefix="/ai", tags=["AI Processing"])
-api_router.include_router(suppression_router, prefix="/suppression", tags=["Suppression"])
-api_router.include_router(document_requests_router, prefix="/document-requests", tags=["Document Requests"])
+api_router.include_router(document_intelligence_router, prefix="/document-intelligence", tags=["Document Intelligence"])

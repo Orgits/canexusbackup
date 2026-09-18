@@ -81,6 +81,8 @@ from app.modules.suppression.models import Suppression
 from app.modules.document_requests.models import DocumentRequest, DocumentRequestDocument
 from app.modules.channels.models import ChannelProvider, MessageLog
 from app.modules.webhooks.models import WebhookEvent, WebhookEndpoint
+from app.modules.ocr.models import OCRJob, OCRTemplate
+from app.modules.ai_processing.models import AIModel, AIProcessingJob, AIConfidenceThreshold, AIReviewTask
 
 config = context.config
 
