@@ -85,6 +85,7 @@ class Communication(Base, TenantBaseModelMixin):
 
     campaign_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("campaigns.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -140,5 +141,9 @@ class Communication(Base, TenantBaseModelMixin):
     client: Mapped["Client"] = relationship("Client", lazy="selectin")
     matter: Mapped[Optional["Matter"]] = relationship("Matter", lazy="selectin")
     task: Mapped[Optional["Task"]] = relationship("Task", foreign_keys=[task_id], lazy="selectin")
+    campaign: Mapped[Optional["Campaign"]] = relationship("Campaign", foreign_keys=[campaign_id], back_populates="communications", lazy="selectin")
     parent_communication: Mapped[Optional["Communication"]] = relationship("Communication", remote_side="Communication.id", back_populates="replies", lazy="selectin")
     replies: Mapped[list["Communication"]] = relationship("Communication", back_populates="parent_communication", lazy="dynamic")
+
+# Import at bottom to resolve circular dependency
+from app.modules.campaigns.models import Campaign

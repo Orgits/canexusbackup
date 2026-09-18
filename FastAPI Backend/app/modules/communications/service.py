@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, ValidationException
 from app.modules.clients.models import Client
 from app.modules.communications.models import (
     Communication,
@@ -101,6 +101,38 @@ class CommunicationService:
 
     async def send(self, communication_id: UUID, tenant_id: UUID, sent_by: UUID) -> Communication:
         communication = await self.get_by_id(communication_id, tenant_id)
+        
+        # Check consent for outbound communications
+        if communication.direction == CommunicationDirection.OUTBOUND:
+            from app.modules.consent.models import ConsentChannel, ConsentStatus
+            from app.modules.consent.service import ConsentService
+            from app.modules.suppression.models import SuppressionChannel
+            from app.modules.suppression.service import SuppressionService
+            
+            consent_service = ConsentService(self.db)
+            consent = await consent_service.get_by_client_and_channel(
+                communication.client_id, 
+                communication.channel.value, 
+                tenant_id
+            )
+            if not consent or consent.status != ConsentStatus.GIVEN:
+                raise ValidationException(
+                    detail=f"Client has not given consent for {communication.channel.value} communications"
+                )
+            
+            # Check suppression for each recipient
+            suppression_service = SuppressionService(self.db)
+            for recipient in communication.to_addresses:
+                suppression_result = await suppression_service.check_suppression(
+                    recipient, 
+                    communication.channel.value, 
+                    tenant_id
+                )
+                if suppression_result["is_suppressed"]:
+                    raise ValidationException(
+                        detail=f"Recipient {recipient} is suppressed: {suppression_result['reason']}"
+                    )
+        
         communication.status = CommunicationStatus.SENT
         communication.sent_at = datetime.now()
         communication.updated_by = sent_by

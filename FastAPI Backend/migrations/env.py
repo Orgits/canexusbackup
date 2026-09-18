@@ -72,6 +72,16 @@ from app.modules.notifications.models import (
     NotificationPreference,
 )
 
+# Phase 3 modules
+from app.modules.campaigns.models import Campaign, CampaignRecipient
+from app.modules.conversations.models import Conversation, ConversationMessage
+from app.modules.templates.models import Template
+from app.modules.consent.models import Consent, ConsentTemplate
+from app.modules.suppression.models import Suppression
+from app.modules.document_requests.models import DocumentRequest, DocumentRequestDocument
+from app.modules.channels.models import ChannelProvider, MessageLog
+from app.modules.webhooks.models import WebhookEvent, WebhookEndpoint
+
 config = context.config
 
 settings = get_settings()

@@ -89,7 +89,7 @@ async def update_ai_model(
     data: AIModelUpdate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = AIModelService(db)
     model = await service.update(model_id, tenant_context.tenant_id, data.model_dump(exclude_unset=True), current_user.id)
@@ -101,7 +101,7 @@ async def set_default_ai_model(
     model_id: UUID,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = AIModelService(db)
     model = await service.set_default(model_id, tenant_context.tenant_id)
@@ -237,7 +237,7 @@ async def create_confidence_threshold(
     data: AIConfidenceThresholdCreate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = AIConfidenceService(db)
     threshold = await service.create_threshold(data, tenant_context.tenant_id, current_user.id)
@@ -281,7 +281,7 @@ async def update_confidence_threshold(
     data: AIConfidenceThresholdUpdate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = AIConfidenceService(db)
     threshold = await service.update(model_type, tenant_context.tenant_id, data.model_dump(exclude_unset=True), current_user.id)
@@ -307,7 +307,7 @@ async def create_review_task(
     data: AIReviewTaskCreate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     # This would be implemented similarly to other services
     raise NotImplementedError("Review task creation not yet implemented")
@@ -343,6 +343,6 @@ async def update_review_task(
     data: AIReviewTaskUpdate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     raise NotImplementedError("Review task update not yet implemented")

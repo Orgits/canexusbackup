@@ -101,7 +101,7 @@ class Campaign(Base, TenantBaseModelMixin):
     tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     template: Mapped[Optional["Template"]] = relationship("Template", foreign_keys=[template_id], lazy="selectin")
     created_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by_id], lazy="selectin")
-    communications: Mapped[list["Communication"]] = relationship("Communication", back_populates="campaign", lazy="dynamic")
+    communications: Mapped[list["Communication"]] = relationship("app.modules.communications.models.Communication", back_populates="campaign", lazy="dynamic")
 
 
 class CampaignRecipient(Base, TenantBaseModelMixin):
@@ -154,3 +154,6 @@ class CampaignRecipient(Base, TenantBaseModelMixin):
 
     tenant: Mapped["Firm"] = relationship("Firm", lazy="selectin")
     campaign: Mapped["Campaign"] = relationship("Campaign", lazy="selectin")
+
+# Import at bottom to resolve circular dependency
+from app.modules.communications.models import Communication

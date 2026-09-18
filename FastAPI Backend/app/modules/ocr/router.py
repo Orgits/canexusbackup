@@ -78,7 +78,7 @@ async def update_ocr_job(
     data: OCRJobUpdate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = OCRService(db)
     job = await service.get_job(job_id, tenant_context.tenant_id)
@@ -194,7 +194,7 @@ async def update_ocr_template(
     data: OCRTemplateUpdate,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = OCRService(db)
     template = await service.update_template(template_id, tenant_context.tenant_id, data, current_user.id)
@@ -206,7 +206,7 @@ async def set_default_ocr_template(
     template_id: UUID,
     db: AsyncSession = Depends(get_tenant_db_session),
     tenant_context=Depends(get_tenant_context),
-    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPDATE)),
+    current_user: User = Depends(require_permission(Permission.DOCUMENTS_UPLOAD)),
 ):
     service = OCRService(db)
     template = await service.set_default_template(template_id, tenant_context.tenant_id)

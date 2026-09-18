@@ -1,10 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, ValidationException
 from app.modules.campaigns.models import Campaign, CampaignRecipient, CampaignStatus
 from app.modules.campaigns.repository import CampaignRepository
 from app.modules.campaigns.schemas import CampaignCreate, CampaignUpdate
@@ -129,16 +129,82 @@ class CampaignService:
         if campaign.status not in [CampaignStatus.DRAFT, CampaignStatus.SCHEDULED]:
             raise ValueError("Campaign must be in draft or scheduled status to send")
 
+        # Check consent and suppression for all recipients
+        from app.modules.clients.models import Client
+        from app.modules.consent.models import ConsentChannel, ConsentStatus
+        from app.modules.consent.service import ConsentService
+        from app.modules.suppression.models import SuppressionChannel
+        from app.modules.suppression.service import SuppressionService
+        
+        consent_service = ConsentService(self.db)
+        suppression_service = SuppressionService(self.db)
+
+        # Get recipients
+        result = await self.db.execute(
+            select(CampaignRecipient).where(
+                CampaignRecipient.campaign_id == campaign_id,
+                CampaignRecipient.tenant_id == tenant_id,
+            )
+        )
+        recipients = result.scalars().all()
+
+        if not recipients:
+            raise ValueError("Campaign has no recipients")
+
+        sent_count = 0
+        for recipient in recipients:
+            # Get client to check consent
+            client_result = await self.db.execute(
+                select(Client).where(Client.id == recipient.client_id, Client.tenant_id == tenant_id)
+            )
+            client = client_result.scalar_one_or_none()
+            if not client:
+                recipient.status = "failed"
+                recipient.error_message = "Client not found"
+                continue
+
+            # Map campaign channel to consent/suppression channel
+            channel_map = {
+                "email": ConsentChannel.EMAIL,
+                "whatsapp": ConsentChannel.WHATSAPP,
+                "sms": ConsentChannel.SMS,
+            }
+            consent_channel = channel_map.get(campaign.channel.lower(), ConsentChannel.EMAIL)
+            suppression_channel = channel_map.get(campaign.channel.lower(), SuppressionChannel.EMAIL)
+
+            # Check consent
+            consent = await consent_service.get_by_client_and_channel(
+                recipient.client_id, consent_channel.value, tenant_id
+            )
+            if not consent or consent.status != ConsentStatus.GIVEN:
+                recipient.status = "failed"
+                recipient.error_message = f"Client has not given consent for {consent_channel.value}"
+                continue
+
+            # Check suppression (use client email/phone as value)
+            # This is a simplified check - in reality, you'd check the specific contact value
+            suppression_result = await suppression_service.check_suppression(
+                client.email or "", suppression_channel.value, tenant_id
+            )
+            if suppression_result["is_suppressed"]:
+                recipient.status = "failed"
+                recipient.error_message = f"Client is suppressed: {suppression_result['reason']}"
+                continue
+
+            # Mark as sent (actual sending would be done by background worker)
+            recipient.status = "sent"
+            recipient.sent_at = datetime.now()
+            sent_count += 1
+
         campaign.status = CampaignStatus.SENDING
         campaign.started_at = datetime.now()
+        campaign.sent_count = sent_count
         await self.db.flush()
 
-        # TODO: Actually send messages via channel providers
-        # This would be handled by a background worker
-
+        # TODO: Actually send messages via channel providers (background worker)
+        
         campaign.status = CampaignStatus.SENT
         campaign.sent_at = datetime.now()
-        campaign.sent_count = campaign.audience_count
         await self.db.flush()
 
         return campaign
